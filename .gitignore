@@ -26,3 +26,9 @@
 *.exe
 *.out
 *.app
+
+# CodeLite
+*.project
+
+# Project
+build/
