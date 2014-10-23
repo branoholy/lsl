@@ -27,15 +27,13 @@
 using namespace std;
 using namespace lsl::utils;
 
-namespace lsl
-{
-	namespace utils
-	{
-		const double MathUtils::PI = M_PI;
-		const double MathUtils::TWO_PI = 2 * M_PI;
-		const double MathUtils::ONE__TWO_PI = 1 / (2 * PI);
-	}
-}
+namespace lsl {
+namespace utils {
+
+const double MathUtils::PI = M_PI;
+const double MathUtils::TWO_PI = 2 * PI;
+const double MathUtils::ONE__TWO_PI = 1 / (2 * PI);
+const double MathUtils::SQRT_TWO_PI = sqrt(TWO_PI);
 
 double MathUtils::normAngle(double angle)
 {
@@ -46,3 +44,5 @@ double MathUtils::normAngle(double angle)
 
 	return angle;
 }
+
+}}

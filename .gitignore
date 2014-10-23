@@ -27,8 +27,8 @@
 *.out
 *.app
 
-# CodeLite
-*.project
+# QtCreator
+*.user
 
 # Project
 build/

@@ -19,31 +19,34 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
-
-// #include <cstring>
+#ifndef LSL_UTILS_CPPUTILS_HPP
+#define LSL_UTILS_CPPUTILS_HPP
 
 namespace lsl {
 namespace utils {
 
-class MathUtils
+class CppUtils
 {
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	template <typename T>
+	static T* getPointer(T& object);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
-
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	template <typename T>
+	static T* getPointer(T *object);
 };
+
+template <typename T>
+T* CppUtils::getPointer(T& object)
+{
+	return &object;
+}
+
+template <typename T>
+T* CppUtils::getPointer(T *object)
+{
+	return object;
+}
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_UTILS_CPPUTILS_HPP

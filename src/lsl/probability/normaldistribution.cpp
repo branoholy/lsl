@@ -19,31 +19,26 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#include "lsl/probability/normaldistribution.hpp"
 
-// #include <cstring>
+#include <cmath>
+#include "lsl/utils/mathutils.hpp"
+
+using namespace std;
+using namespace lsl::utils;
 
 namespace lsl {
-namespace utils {
+namespace probability {
 
-class MathUtils
+NormalDistribution::NormalDistribution(double mean, double stdDev)
 {
-public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	this->mean = mean;
+	this->stdDev = stdDev;
+}
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
-
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
-};
+double NormalDistribution::operator()(double x) const
+{
+	return 1 / (stdDev * MathUtils::SQRT_TWO_PI) * exp(- pow(x - mean, 2) / (2 * getVariance()));
+}
 
 }}
-
-#endif // LSL_UTILS_MATHUTILS_HPP

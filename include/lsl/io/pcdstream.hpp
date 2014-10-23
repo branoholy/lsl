@@ -19,31 +19,23 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#ifndef LSL_IO_PCDSTREAM_HPP
+#define LSL_IO_PCDSTREAM_HPP
 
-// #include <cstring>
+#include <vector>
+#include <string>
+
+#include "lsl/geom/vector.hpp"
 
 namespace lsl {
-namespace utils {
+namespace io {
 
-class MathUtils
+class PCDStream
 {
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
-
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
-
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	static std::vector<geom::Vector2d> load2d(const std::string& fileName);
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_IO_PCDSTREAM_HPP

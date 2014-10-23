@@ -19,31 +19,42 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#include "lsl/gui/window.hpp"
 
-// #include <cstring>
+using namespace std;
 
 namespace lsl {
-namespace utils {
+namespace gui {
 
-class MathUtils
+Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size)
 {
-public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	onSizeChangedMethod = nullptr;
+}
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+void Window::keyCharHook(wxKeyEvent& event)
+{
+	if(event.GetKeyCode() == WXK_ESCAPE)
+	{
+		Close(true);
+	}
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
-};
+	event.Skip();
+}
+
+void Window::setOnSizeChangedMethod(function<void(wxSizeEvent&)> onSizeChangedMethod)
+{
+	this->onSizeChangedMethod = onSizeChangedMethod;
+}
+
+void Window::onSizeChanged(wxSizeEvent& sizeEvent)
+{
+	if(onSizeChangedMethod != nullptr) onSizeChangedMethod(sizeEvent);
+	sizeEvent.Skip();
+}
+
+wxBEGIN_EVENT_TABLE(Window, wxFrame)
+EVT_CHAR_HOOK(Window::keyCharHook)
+EVT_SIZE(Window::onSizeChanged)
+wxEND_EVENT_TABLE()
 
 }}
-
-#endif // LSL_UTILS_MATHUTILS_HPP

@@ -19,31 +19,41 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#include "lsl/io/pcdstream.hpp"
 
-// #include <cstring>
+#include <cctype>
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+using namespace lsl::geom;
 
 namespace lsl {
-namespace utils {
+namespace io {
 
-class MathUtils
+vector<Vector2d> PCDStream::load2d(const string& fileName)
 {
-public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	vector<Vector2d> points;
+	ifstream file(fileName);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+	int i = 0;
+	string line;
+	while(getline(file, line))
+	{
+		if(line.empty()) continue;
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
-};
+		char firstChar = line.at(0);
+		if(firstChar == '#') continue;
+		if(isalpha(firstChar)) continue;
+
+		double x, y;
+		istringstream iss(line);
+		iss >> x >> y;
+
+		points.push_back({double(i++), x, y});
+	}
+
+	return points;
+}
 
 }}
-
-#endif // LSL_UTILS_MATHUTILS_HPP

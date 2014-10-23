@@ -19,31 +19,40 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#include "lsl/gui/lslapp.hpp"
 
-// #include <cstring>
+using namespace std;
 
 namespace lsl {
-namespace utils {
+namespace gui {
 
-class MathUtils
+LSLApp::LSLApp(const string& title, const wxSize& windowSize) :
+	title(title), windowSize(windowSize), onInitMethod(nullptr)
 {
-public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+}
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+bool LSLApp::OnInit()
+{
+	window = new Window(title, windowSize);
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
-};
+	if(onInitMethod != nullptr)
+	{
+		onInitMethod(window);
+	}
+
+	window->Show();
+
+	return true;
+}
+
+void LSLApp::Display(LSLApp *app, int& argc, char **argv)
+{
+	wxApp::SetInstance(app);
+	wxEntryStart(argc, argv);
+	app->CallOnInit();
+	app->OnRun();
+	app->OnExit();
+	wxEntryCleanup();
+}
 
 }}
-
-#endif // LSL_UTILS_MATHUTILS_HPP

@@ -19,31 +19,40 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#ifndef LSL_GUI_REPAINTINGAPP_HPP
+#define LSL_GUI_REPAINTINGAPP_HPP
 
-// #include <cstring>
+#include <string>
+#include <functional>
+
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
+
+#include "window.hpp"
 
 namespace lsl {
-namespace utils {
+namespace gui {
 
-class MathUtils
+class LSLApp : public wxApp
 {
+private:
+	std::string title;
+	wxSize windowSize;
+	Window *window;
+
+	std::function<void(Window*)> onInitMethod;
+
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	LSLApp(const std::string& title = "LSL App", const wxSize& windowSize = wxDefaultSize);
+	virtual bool OnInit();
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+	inline void setOnInitMethod(std::function<void(Window*)> onInitMethod) { this->onInitMethod = onInitMethod; }
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	static void Display(LSLApp *app, int& argc, char **argv);
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_GUI_REPAINTINGAPP_HPP

@@ -19,31 +19,30 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
-
-// #include <cstring>
+#ifndef LSL_PROBABILITY_NORMALDISTRIBUTION_HPP
+#define LSL_PROBABILITY_NORMALDISTRIBUTION_HPP
 
 namespace lsl {
-namespace utils {
+namespace probability {
 
-class MathUtils
+class NormalDistribution
 {
+private:
+	double mean;
+	double stdDev;
+
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	NormalDistribution(double mean = 0, double stdDev = 1);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+	inline double getMean() const { return mean; }
+	inline void setMean(double mean) { this->mean = mean; }
+	inline double getStdDev() const { return stdDev; }
+	inline void setStdDev(double stdDev) { this->stdDev = stdDev; }
+	inline double getVariance() const { return this->stdDev * this->stdDev; }
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	double operator()(double x) const;
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_PROBABILITY_NORMALDISTRIBUTION_HPP

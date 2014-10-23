@@ -19,31 +19,31 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#ifndef LSL_GUI_WINDOW_HPP
+#define LSL_GUI_WINDOW_HPP
 
-// #include <cstring>
+#include <functional>
+#include <wx/frame.h>
 
 namespace lsl {
-namespace utils {
+namespace gui {
 
-class MathUtils
+class Window : public wxFrame
 {
+private:
+	std::function<void(wxSizeEvent&)> onSizeChangedMethod;
+
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	Window(const wxString& title, const wxSize& size);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+	void keyCharHook(wxKeyEvent& event);
+	void onSizeChanged(wxSizeEvent& sizeEvent);
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	void setOnSizeChangedMethod(std::function<void(wxSizeEvent&)> onSizeChangedMethod);
+
+	wxDECLARE_EVENT_TABLE();
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_GUI_WINDOW_HPP

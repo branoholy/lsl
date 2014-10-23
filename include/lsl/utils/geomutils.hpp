@@ -19,31 +19,25 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#ifndef LSL_UTILS_GEOMUTILS_HPP
+#define LSL_UTILS_GEOMUTILS_HPP
 
-// #include <cstring>
+#include "lsl/geom/vector.hpp"
 
 namespace lsl {
 namespace utils {
 
-class MathUtils
+class GeomUtils
 {
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	static double dotProduct(double x, double y, double x0, double y0, double x1, double y1);
+	static double distance2ToPoint(double x, double y, double x0, double y0);
+	static double distance2ToLine(double x, double y, double x0, double y0, double x1, double y1);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
-
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	static geom::Vector2d getClosestLinePoint(double a, double b, double c, const geom::Vector2d& point);
+	static geom::Vector2d getClosestLinePoint(double a, double b, double c, double x, double y);
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_UTILS_GEOMUTILS_HPP

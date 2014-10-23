@@ -19,31 +19,36 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#ifndef LSL_GEOM_LIDARLINE2_HPP
+#define LSL_GEOM_LIDARLINE2_HPP
 
-// #include <cstring>
+#include <iostream>
+
+#include "line2.hpp"
+#include "vector.hpp"
 
 namespace lsl {
-namespace utils {
+namespace geom {
 
-class MathUtils
+class LidarLine2
 {
+private:
+	Vector2d v;
+
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	LidarLine2(const Line2& line);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+	double getL() const;
+	double getPhi() const;
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	void transform(double angle, double tx, double ty);
+	void transform(double c, double s, double tx, double ty);
+
+	double error(const LidarLine2& other, double phiA, double phiB);
+
+	friend std::ostream& operator<<(std::ostream& out, const LidarLine2& lidarLine);
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_GEOM_LIDARLINE2_HPP
