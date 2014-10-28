@@ -25,23 +25,25 @@
 #include <functional>
 #include <wx/frame.h>
 
+#include "lsl/system/event.hpp"
+
 namespace lsl {
 namespace gui {
 
 class Window : public wxFrame
 {
 private:
-	std::function<void(wxSizeEvent&)> onSizeChangedMethod;
+	bool exitOnEsc;
+	void exitOnEscHook(wxKeyEvent& e);
 
 public:
+	system::Event<void(wxSizeEvent&)> onSizeChanged;
+	system::Event<void(wxKeyEvent&)> onCharHooked;
+
 	Window(const wxString& title, const wxSize& size);
 
-	void keyCharHook(wxKeyEvent& event);
-	void onSizeChanged(wxSizeEvent& sizeEvent);
-
-	void setOnSizeChangedMethod(std::function<void(wxSizeEvent&)> onSizeChangedMethod);
-
-	wxDECLARE_EVENT_TABLE();
+	inline bool getExitOnEsc() const { return exitOnEsc; }
+	inline void setExitOnEsc(bool exitOnEsc = true) { this->exitOnEsc = exitOnEsc; }
 };
 
 }}

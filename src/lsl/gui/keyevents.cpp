@@ -19,35 +19,18 @@
  *
  */
 
-#include "lsl/gui/lslapp.hpp"
+#include "lsl/gui/keyevents.hpp"
 
 using namespace std;
+using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
 
-LSLApp::LSLApp(const string& title, const wxSize& windowSize) :
-	title(title), windowSize(windowSize)
+KeyEvents::KeyEvents(wxEvtHandler *evtHandler)
 {
-}
-
-bool LSLApp::OnInit()
-{
-	window = new Window(title, windowSize);
-	onInit(window);
-	window->Show();
-
-	return true;
-}
-
-void LSLApp::Display(LSLApp *app, int& argc, char **argv)
-{
-	wxApp::SetInstance(app);
-	wxEntryStart(argc, argv);
-	app->CallOnInit();
-	app->OnRun();
-	app->OnExit();
-	wxEntryCleanup();
+	evtHandler->Bind(wxEVT_KEY_DOWN, &Event<void(wxKeyEvent&)>::operator(), &onKeyDown);
+	evtHandler->Bind(wxEVT_KEY_UP, &Event<void(wxKeyEvent&)>::operator(), &onKeyUp);
 }
 
 }}

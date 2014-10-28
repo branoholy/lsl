@@ -19,35 +19,28 @@
  *
  */
 
-#include "lsl/gui/lslapp.hpp"
+#ifndef LSL_GUI_KEYEVENTS_HPP
+#define LSL_GUI_KEYEVENTS_HPP
 
-using namespace std;
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
+
+#include "lsl/system/event.hpp"
 
 namespace lsl {
 namespace gui {
 
-LSLApp::LSLApp(const string& title, const wxSize& windowSize) :
-	title(title), windowSize(windowSize)
+class KeyEvents
 {
-}
+public:
+	system::Event<void(wxKeyEvent&)> onKeyDown;
+	system::Event<void(wxKeyEvent&)> onKeyUp;
 
-bool LSLApp::OnInit()
-{
-	window = new Window(title, windowSize);
-	onInit(window);
-	window->Show();
-
-	return true;
-}
-
-void LSLApp::Display(LSLApp *app, int& argc, char **argv)
-{
-	wxApp::SetInstance(app);
-	wxEntryStart(argc, argv);
-	app->CallOnInit();
-	app->OnRun();
-	app->OnExit();
-	wxEntryCleanup();
-}
+	KeyEvents(wxEvtHandler *evtHandler);
+};
 
 }}
+
+#endif // LSL_GUI_KEYEVENTS_HPP

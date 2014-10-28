@@ -21,20 +21,20 @@
 
 #include "lsl/gui/repaintingpanel.hpp"
 
+using namespace lsl::system;
+
 namespace lsl {
 namespace gui {
 
-RepaintingPanel::RepaintingPanel(wxWindow *parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS)
+RepaintingPanel::RepaintingPanel(wxWindow *parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS), MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler())
 {
-	onKeyUpMethod = nullptr;
-	onMouseDownMethod = nullptr;
-	onMouseMoveMethod = nullptr;
-	onRepaintMethod = nullptr;
+	Bind(wxEVT_PAINT, &RepaintingPanel::evtPaint, this);
 }
 
+/*
 void RepaintingPanel::onKeyDown(wxKeyEvent& keyEvent)
 {
-	// Consume key down event to avoid focus change.
+	// TODO: Consume key down event to avoid focus change.
 	switch(keyEvent.GetKeyCode())
 	{
 	case WXK_UP:
@@ -47,63 +47,15 @@ void RepaintingPanel::onKeyDown(wxKeyEvent& keyEvent)
 		keyEvent.Skip();
 	}
 }
+*/
 
-void RepaintingPanel::onKeyUp(wxKeyEvent& keyEvent)
+void RepaintingPanel::evtPaint(wxPaintEvent& e)
 {
-	if(onKeyUpMethod != nullptr)
-	{
-		onKeyUpMethod(keyEvent);
-	}
-}
-
-void RepaintingPanel::onMouseDown(wxMouseEvent& mouseEvent)
-{
-	if(onMouseDownMethod != nullptr)
-	{
-		onMouseDownMethod(mouseEvent);
-	}
-}
-
-void RepaintingPanel::onMouseDClick(wxMouseEvent& mouseEvent)
-{
-	if(onMouseDClickMethod != nullptr)
-	{
-		onMouseDClickMethod(mouseEvent);
-	}
-}
-
-void RepaintingPanel::onMouseMove(wxMouseEvent& mouseEvent)
-{
-	if(onMouseMoveMethod != nullptr)
-	{
-		onMouseMoveMethod(mouseEvent);
-	}
-}
-
-void RepaintingPanel::onRepaint(wxPaintEvent& evt)
-{
-	if(onRepaintMethod != nullptr)
+	if(!onRepaint.isEmpty())
 	{
 		wxPaintDC dc(this);
-		onRepaintMethod(dc, evt);
+		onRepaint(dc, e);
 	}
 }
-
-wxBEGIN_EVENT_TABLE(RepaintingPanel, wxPanel)
-EVT_KEY_DOWN(RepaintingPanel::onKeyDown)
-EVT_KEY_UP(RepaintingPanel::onKeyUp)
-
-EVT_LEFT_DOWN(RepaintingPanel::onMouseDown)
-EVT_MIDDLE_DOWN(RepaintingPanel::onMouseDown)
-EVT_RIGHT_DOWN(RepaintingPanel::onMouseDown)
-
-EVT_LEFT_DCLICK(RepaintingPanel::onMouseDClick)
-EVT_MIDDLE_DCLICK(RepaintingPanel::onMouseDClick)
-EVT_RIGHT_DCLICK(RepaintingPanel::onMouseDClick)
-
-EVT_MOTION(RepaintingPanel::onMouseMove)
-
-EVT_PAINT(RepaintingPanel::onRepaint)
-wxEND_EVENT_TABLE()
 
 }}

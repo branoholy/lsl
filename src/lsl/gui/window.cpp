@@ -22,39 +22,27 @@
 #include "lsl/gui/window.hpp"
 
 using namespace std;
+using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
 
-Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size)
+Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
+	exitOnEsc(false)
 {
-	onSizeChangedMethod = nullptr;
+	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
+
+	Bind(wxEVT_SIZE, &Event<void(wxSizeEvent&)>::operator(), &onSizeChanged); // TODO: Test if "sizeEvent.Skip();" is still needed.
+	Bind(wxEVT_CHAR_HOOK, &Event<void(wxKeyEvent&)>::operator(), &onCharHooked);
 }
 
-void Window::keyCharHook(wxKeyEvent& event)
+void Window::exitOnEscHook(wxKeyEvent &e)
 {
-	if(event.GetKeyCode() == WXK_ESCAPE)
+	if(exitOnEsc)
 	{
-		Close(true);
+		if(e.GetKeyCode() == WXK_ESCAPE) Close(true);
+		// e.Skip(); // TODO: Test if this is still needed.
 	}
-
-	event.Skip();
 }
-
-void Window::setOnSizeChangedMethod(function<void(wxSizeEvent&)> onSizeChangedMethod)
-{
-	this->onSizeChangedMethod = onSizeChangedMethod;
-}
-
-void Window::onSizeChanged(wxSizeEvent& sizeEvent)
-{
-	if(onSizeChangedMethod != nullptr) onSizeChangedMethod(sizeEvent);
-	sizeEvent.Skip();
-}
-
-wxBEGIN_EVENT_TABLE(Window, wxFrame)
-EVT_CHAR_HOOK(Window::keyCharHook)
-EVT_SIZE(Window::onSizeChanged)
-wxEND_EVENT_TABLE()
 
 }}

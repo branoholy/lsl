@@ -19,33 +19,46 @@
  *
  */
 
-#ifndef LSL_GUI_REPAINTINGPANEL_HPP
-#define LSL_GUI_REPAINTINGPANEL_HPP
-
-#include <functional>
+#ifndef LSL_GUI_MOUSEEVENTS_HPP
+#define LSL_GUI_MOUSEEVENTS_HPP
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
 
-#include "keyevents.hpp"
-#include "mouseevents.hpp"
+#include "lsl/system/event.hpp"
 
 namespace lsl {
 namespace gui {
 
-class RepaintingPanel : public wxPanel, public MouseEvents, public KeyEvents
+class MouseEvents
 {
 private:
-	void evtPaint(wxPaintEvent& e);
+	void evtLeftDown(wxMouseEvent& e);
+	void evtMiddleDown(wxMouseEvent& e);
+	void evtRightDown(wxMouseEvent& e);
+
+	void evtLeftDClick(wxMouseEvent& e);
+	void evtMiddleDClick(wxMouseEvent& e);
+	void evtRightDClick(wxMouseEvent& e);
 
 public:
-	system::Event<void(wxPaintDC&, wxPaintEvent&)> onRepaint;
+	system::Event<void(wxMouseEvent&)> onMouseDown;
+	system::Event<void(wxMouseEvent&)> onLeftMouseDown;
+	system::Event<void(wxMouseEvent&)> onMiddleMouseDown;
+	system::Event<void(wxMouseEvent&)> onRightMouseDown;
 
-	RepaintingPanel(wxWindow *parent);
+	system::Event<void(wxMouseEvent&)> onMouseDoubleClick;
+	system::Event<void(wxMouseEvent&)> onLeftMouseDoubleClick;
+	system::Event<void(wxMouseEvent&)> onMiddleMouseDoubleClick;
+	system::Event<void(wxMouseEvent&)> onRightMouseDoubleClick;
+
+	system::Event<void(wxMouseEvent&)> onMouseMove;
+
+	MouseEvents(wxEvtHandler *evtHandler);
 };
 
 }}
 
-#endif // LSL_GUI_REPAINTINGPANEL_HPP
+#endif // LSL_GUI_MOUSEEVENTS_HPP

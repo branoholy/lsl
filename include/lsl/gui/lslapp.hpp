@@ -32,6 +32,8 @@
 
 #include "window.hpp"
 
+#include "lsl/system/event.hpp"
+
 namespace lsl {
 namespace gui {
 
@@ -42,13 +44,13 @@ private:
 	wxSize windowSize;
 	Window *window;
 
-	std::function<void(Window*)> onInitMethod;
-
 public:
+	system::Event<void(Window*)> onInit;
+
 	LSLApp(const std::string& title = "LSL App", const wxSize& windowSize = wxDefaultSize);
 	virtual bool OnInit();
 
-	inline void setOnInitMethod(std::function<void(Window*)> onInitMethod) { this->onInitMethod = onInitMethod; }
+	inline Window* getWindow() const { return window; }
 
 	static void Display(LSLApp *app, int& argc, char **argv);
 };
