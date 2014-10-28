@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LSL_GUI_REPAINTINGAPP_HPP
-#define LSL_GUI_REPAINTINGAPP_HPP
+#ifndef LSL_GUI_LSLAPP_HPP
+#define LSL_GUI_LSLAPP_HPP
 
 #include <string>
 #include <functional>
@@ -57,4 +57,4 @@ public:
 
 }}
 
-#endif // LSL_GUI_REPAINTINGAPP_HPP
+#endif // LSL_GUI_LSLAPP_HPP
