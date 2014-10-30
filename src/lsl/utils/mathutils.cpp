@@ -32,6 +32,7 @@ namespace utils {
 
 const double MathUtils::PI = M_PI;
 const double MathUtils::TWO_PI = 2 * PI;
+const double MathUtils::PI__TWO = PI / 2;
 const double MathUtils::ONE__TWO_PI = 1 / (2 * PI);
 const double MathUtils::SQRT_TWO_PI = sqrt(TWO_PI);
 

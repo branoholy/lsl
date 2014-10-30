@@ -32,6 +32,7 @@ class MathUtils
 public:
 	static const double PI;
 	static const double TWO_PI;
+	static const double PI__TWO;
 	static const double ONE__TWO_PI;
 	static const double SQRT_TWO_PI;
 

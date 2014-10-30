@@ -22,7 +22,9 @@
 #ifndef LSL_GUI_WINDOW_HPP
 #define LSL_GUI_WINDOW_HPP
 
-#include <functional>
+#include <algorithm>
+#include <vector>
+
 #include <wx/frame.h>
 
 #include "lsl/system/event.hpp"
@@ -33,7 +35,9 @@ namespace gui {
 class Window : public wxFrame
 {
 private:
-	bool exitOnEsc;
+	bool isExitOnClear;
+	std::vector<int> exitOnKeys;
+
 	void exitOnEscHook(wxKeyEvent& e);
 
 public:
@@ -42,9 +46,25 @@ public:
 
 	Window(const wxString& title, const wxSize& size);
 
-	inline bool getExitOnEsc() const { return exitOnEsc; }
-	inline void setExitOnEsc(bool exitOnEsc = true) { this->exitOnEsc = exitOnEsc; }
+	inline bool getExitOn(int key) const { return std::find(exitOnKeys.begin(), exitOnKeys.end(), key) != exitOnKeys.end(); }
+	void setExitOn(int key);
+
+	template<typename ...Args>
+	void setExitOn(int key, Args... keys);
 };
+
+template<typename ...Args>
+void Window::setExitOn(int key, Args... keys)
+{
+	if(!isExitOnClear)
+	{
+		exitOnKeys.clear();
+		isExitOnClear = true;
+	}
+
+	exitOnKeys.push_back(key);
+	setExitOn(keys...);
+}
 
 }}
 

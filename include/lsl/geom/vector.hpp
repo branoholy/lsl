@@ -43,7 +43,7 @@ public:
 	Vector();
 	Vector(unsigned int id);
 	Vector(std::initializer_list<T> data);
-	Vector(const Vector& vector);
+	Vector(const Vector<T, dim>& vector);
 
 	inline unsigned int getDim() const	{ return dim; }
 
@@ -51,7 +51,7 @@ public:
 	// inline T getH(unsigned int i) const { return data[i] / data[dim - 1]; }
 	inline void set(unsigned int dimension, T value) { data[dimension] = value; }
 
-	void set(const Vector& vector);
+	void set(const Vector<T, dim>& vector);
 
 	inline int getId() const { return id; }
 	inline void setId(unsigned int id) { this->id = id; }
@@ -134,13 +134,13 @@ Vector<T, dim>::Vector(std::initializer_list<T> initData) : Vector()
 }
 
 template<typename T, unsigned int dim>
-Vector<T, dim>::Vector(const Vector& vector) : Vector()
+Vector<T, dim>::Vector(const Vector<T, dim>& vector) : Vector()
 {
 	set(vector);
 }
 
 template<typename T, unsigned int dim>
-void Vector<T, dim>::set(const Vector& vector)
+void Vector<T, dim>::set(const Vector<T, dim>& vector)
 {
 	for(unsigned int i = 0; i < vector.getDim(); i++)
 	{

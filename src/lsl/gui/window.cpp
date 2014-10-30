@@ -28,21 +28,29 @@ namespace lsl {
 namespace gui {
 
 Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	exitOnEsc(false)
+	isExitOnClear(true)
 {
 	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
 
-	Bind(wxEVT_SIZE, &Event<void(wxSizeEvent&)>::operator(), &onSizeChanged); // TODO: Test if "sizeEvent.Skip();" is still needed.
+	Bind(wxEVT_SIZE, &Event<void(wxSizeEvent&)>::operator(), &onSizeChanged);
 	Bind(wxEVT_CHAR_HOOK, &Event<void(wxKeyEvent&)>::operator(), &onCharHooked);
 }
 
-void Window::exitOnEscHook(wxKeyEvent &e)
+void Window::exitOnEscHook(wxKeyEvent& e)
 {
-	if(exitOnEsc)
+	if(getExitOn(e.GetKeyCode())) Close(true);
+	// e.Skip(); // TODO: Test if this is still needed.
+}
+
+void Window::setExitOn(int key)
+{
+	if(!isExitOnClear)
 	{
-		if(e.GetKeyCode() == WXK_ESCAPE) Close(true);
-		// e.Skip(); // TODO: Test if this is still needed.
+		exitOnKeys.clear();
 	}
+
+	exitOnKeys.push_back(key);
+	isExitOnClear = false;
 }
 
 }}
