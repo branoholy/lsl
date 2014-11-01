@@ -27,6 +27,8 @@
 #include "line2.hpp"
 #include "vector.hpp"
 
+#include "lsl/utils/mathutils.hpp"
+
 namespace lsl {
 namespace geom {
 
@@ -35,16 +37,37 @@ class LidarLine2
 private:
 	Vector2d v;
 
+	double phiA;
+	double phiB;
+
+	Vector2d endPointA;
+	Vector2d endPointB;
+
 public:
 	LidarLine2(const Line2& line);
+	LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB);
 
-	double getL() const;
-	double getPhi() const;
+	inline double getL() const { return v.getLength(); }
+	inline double getPhi() const { return v.getAngle2D(); }
+
+	double getValue(double alpha) const;
+
+	inline double getPhiA() const { return phiA; }
+	void setPhiA(double phiA);
+
+	inline double getPhiB() const { return phiB; }
+	void setPhiB(double phiB);
+
+	inline Vector2d getEndPointA() const { return endPointA; }
+	void setEndPointA(const Vector2d& endPointA);
+
+	inline Vector2d getEndPointB() const { return endPointB; }
+	void setEndPointB(const Vector2d& endPointB);
 
 	void transform(double angle, double tx, double ty);
 	void transform(double c, double s, double tx, double ty);
 
-	double error(const LidarLine2& other, double phiA, double phiB);
+	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
 
 	friend std::ostream& operator<<(std::ostream& out, const LidarLine2& lidarLine);
 };

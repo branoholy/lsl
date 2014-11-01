@@ -213,13 +213,7 @@ double Vector<T, dim>::getDistanceTo2(const Vector<T, dim>& other) const
 template<typename T, unsigned int dim>
 double Vector<T, dim>::getAngle2D() const
 {
-	double angle = std::acos(get(0) / getLength2D(0, 1));
-	if(get(1) < 0)
-	{
-		angle = std::fmod(-angle + utils::MathUtils::TWO_PI, utils::MathUtils::TWO_PI);
-	}
-
-	return angle;
+	return utils::MathUtils::normAngle(atan2(get(1), get(0)));
 }
 
 template<typename T, unsigned int dim>
