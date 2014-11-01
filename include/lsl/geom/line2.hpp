@@ -66,13 +66,13 @@ public:
 
 	std::ostream& printSlopeInterceptForm(std::ostream& out) const;
 
-	template <typename ContainerT>
+	template<typename ContainerT>
 	static Line2 leastSquareLine(ContainerT points);
 
 	friend std::ostream& operator<<(std::ostream& out, const Line2& line);
 };
 
-template <typename ContainerT>
+template<typename ContainerT>
 Line2 Line2::leastSquareLine(ContainerT points)
 {
 	typedef typename std::remove_pointer<typename ContainerT::value_type>::type PointType;
