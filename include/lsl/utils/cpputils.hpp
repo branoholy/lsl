@@ -22,29 +22,67 @@
 #ifndef LSL_UTILS_CPPUTILS_HPP
 #define LSL_UTILS_CPPUTILS_HPP
 
+#include <type_traits>
+
 namespace lsl {
 namespace utils {
 
 class CppUtils
 {
 public:
-	template <typename T>
+	template<typename T>
 	static T* getPointer(T& object);
 
-	template <typename T>
+	template<typename T>
+	static const T* getPointer(const T& object);
+
+	template<typename T>
 	static T* getPointer(T *object);
+
+	template<typename T>
+	static const T* getPointer(const T *object);
+
+	template<typename R, typename T>
+	static typename std::enable_if<std::is_pointer<R>::value, R>::type getValue(T object);
+
+	template<typename R, typename T>
+	static R getValue(T object);
 };
 
-template <typename T>
+template<typename T>
 T* CppUtils::getPointer(T& object)
 {
 	return &object;
 }
 
-template <typename T>
+template<typename T>
+const T* CppUtils::getPointer(const T& object)
+{
+	return &object;
+}
+
+template<typename T>
 T* CppUtils::getPointer(T *object)
 {
 	return object;
+}
+
+template<typename T>
+const T* CppUtils::getPointer(const T *object)
+{
+	return object;
+}
+
+template<typename R, typename T>
+typename std::enable_if<std::is_pointer<R>::value, R>::type CppUtils::getValue(T object)
+{
+	return object;
+}
+
+template<typename R, typename T>
+R CppUtils::getValue(T object)
+{
+	return *object;
 }
 
 }}

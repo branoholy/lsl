@@ -27,6 +27,8 @@
 #include <limits>
 #include <algorithm>
 
+#include "cpputils.hpp"
+
 namespace lsl {
 namespace utils {
 
@@ -181,10 +183,9 @@ void ArrayUtils::eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardItera
 template <typename T>
 void ArrayUtils::deleteAll(const std::vector<T>& v)
 {
-	std::size_t size = v.size();
-	for(std::size_t i = 0; i < size; i++)
+	for(auto& item : v)
 	{
-		delete v.at(i);
+		delete item;
 	}
 }
 
@@ -199,7 +200,7 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
 		typename std::vector<T>::const_iterator it = v.begin();
 		while(true)
 		{
-			out << *it;
+			out << *lsl::utils::CppUtils::getPointer(*it);
 
 			if(++it != v.end()) out << ", ";
 			else break;

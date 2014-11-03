@@ -74,7 +74,7 @@ Event<R(Args...)>& Event<R(Args...)>::operator-=(const std::function<R(Args...)>
 template<typename R, typename... Args>
 void Event<R(Args...)>::operator()(Args... args)
 {
-	for(auto f : funcs)
+	for(auto& f : funcs)
 	{
 		f(args...);
 	}

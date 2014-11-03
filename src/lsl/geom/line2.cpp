@@ -34,8 +34,13 @@ Line2::Line2(double a, double b, double c) :
 {
 }
 
-Line2::Line2(double a, double b, double c, vector<Vector2d> points) :
+Line2::Line2(double a, double b, double c, const vector<Vector2d>& points) :
 	a(a), b(b), c(c), points(points)
+{
+}
+
+Line2::Line2(double a, double b, double c, vector<Vector2d>&& points) :
+	a(a), b(b), c(c), points(std::move(points))
 {
 }
 

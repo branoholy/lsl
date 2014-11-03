@@ -41,7 +41,8 @@ private:
 	std::vector<Vector2d> points;
 public:
 	Line2(double a, double b, double c);
-	Line2(double a, double b, double c, std::vector<Vector2d> points);
+	Line2(double a, double b, double c, const std::vector<Vector2d>& points);
+	Line2(double a, double b, double c, std::vector<Vector2d>&& points);
 	Line2(const Line2& line);
 
 	inline double getA() const { return a; }
@@ -67,33 +68,40 @@ public:
 	std::ostream& printSlopeInterceptForm(std::ostream& out) const;
 
 	template<typename ContainerT>
-	static Line2 leastSquareLine(ContainerT points);
+	static Line2 leastSquareLine(const ContainerT& points, bool savePoints = true);
 
 	friend std::ostream& operator<<(std::ostream& out, const Line2& line);
 };
 
 template<typename ContainerT>
-Line2 Line2::leastSquareLine(ContainerT points)
+Line2 Line2::leastSquareLine(const ContainerT& points, bool savePoints)
 {
-	typedef typename std::remove_pointer<typename ContainerT::value_type>::type PointType;
+	typedef typename ContainerT::value_type T;
+	typedef typename std::remove_pointer<T>::type PointType;
 
 	double sumX = 0;
 	double sumXX = 0;
 	double sumY = 0;
 	double sumXY = 0;
-	int size = points.size();
+	std::size_t size = points.size();
+
 	std::vector<Vector2d> linePoints;
 
-	for(typename ContainerT::iterator it = points.begin(); it != points.end(); it++)
-	{
-		typename ContainerT::value_type pointOrig = *it;
-		PointType *point = utils::CppUtils::getPointer(pointOrig);
+	if(savePoints) linePoints.reserve(size);
 
-		sumX += point->get(0);
-		sumXX += point->get(0) * point->get(0);
-		sumY += point->get(1);
-		sumXY += point->get(0) * point->get(1);
-		linePoints.push_back(*point);
+	for(const T& item : points)
+	{
+		const PointType *point = utils::CppUtils::getPointer(item);
+
+		double x = point->get(0);
+		double y = point->get(1);
+
+		sumX += x;
+		sumXX += x * x;
+		sumY += y;
+		sumXY += x * y;
+
+		if(savePoints) linePoints.push_back(*point);
 	}
 
 	double d = size * sumXX - sumX * sumX;
@@ -118,7 +126,8 @@ Line2 Line2::leastSquareLine(ContainerT points)
 		c = q;
 	}
 
-	return Line2(a, b, c, linePoints);
+	if(savePoints) return Line2(a, b, c, std::move(linePoints));
+	else return Line2(a, b, c);
 }
 
 }}

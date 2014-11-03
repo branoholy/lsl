@@ -52,6 +52,7 @@ public:
 	inline void set(unsigned int dimension, T value) { data[dimension] = value; }
 
 	void set(const Vector<T, dim>& vector);
+	void set(std::initializer_list<T> data);
 
 	inline int getId() const { return id; }
 	inline void setId(unsigned int id) { this->id = id; }
@@ -94,6 +95,8 @@ public:
 
 	double operator*(const Vector<T, dim>& other) const;
 
+	T& operator[](unsigned int i);
+
 	static Vector<T, dim> getCentroid(const std::vector<Vector<T, dim>>& points);
 	static Vector<T, dim> getCentroid(const std::vector<Vector<T, dim>*>& points);
 
@@ -110,8 +113,7 @@ typedef Vector<int, 3> Vector3i;
 typedef Vector<int, 4> Vector4i;
 
 template<typename T, unsigned int dim>
-Vector<T, dim>::Vector() :
-	id(-1)
+Vector<T, dim>::Vector() : Vector(-1)
 {
 }
 
@@ -119,18 +121,13 @@ template<typename T, unsigned int dim>
 Vector<T, dim>::Vector(unsigned int id) :
 	id(id)
 {
+	std::cout << "Vector created" << std::endl;
 }
 
 template<typename T, unsigned int dim>
-Vector<T, dim>::Vector(std::initializer_list<T> initData) : Vector()
+Vector<T, dim>::Vector(std::initializer_list<T> data) : Vector()
 {
-	typename std::initializer_list<T>::iterator it = initData.begin();
-	if(dim < initData.size()) id = *(it++);
-
-	for(unsigned int i = 0; it != initData.end(); i++, it++)
-	{
-		this->data[i] = *it;
-	}
+	set(data);
 }
 
 template<typename T, unsigned int dim>
@@ -142,11 +139,23 @@ Vector<T, dim>::Vector(const Vector<T, dim>& vector) : Vector()
 template<typename T, unsigned int dim>
 void Vector<T, dim>::set(const Vector<T, dim>& vector)
 {
-	for(unsigned int i = 0; i < vector.getDim(); i++)
+	for(unsigned int i = 0; i < dim; i++)
 	{
 		data[i] = vector.get(i);
 	}
 	id = vector.getId();
+}
+
+template<typename T, unsigned int dim>
+void Vector<T, dim>::set(std::initializer_list<T> data)
+{
+	typename std::initializer_list<T>::iterator it = data.begin();
+	if(dim < data.size()) id = *(it++);
+
+	for(unsigned int i = 0; it != data.end(); i++, it++)
+	{
+		this->data[i] = *it;
+	}
 }
 
 template<typename T, unsigned int dim>
@@ -372,6 +381,12 @@ double Vector<T, dim>::operator*(const Vector<T, dim>& other) const
 	}
 
 	return dotProduct;
+}
+
+template<typename T, unsigned int dim>
+T& Vector<T, dim>::operator[](unsigned int i)
+{
+	return data[i];
 }
 
 template<typename T, unsigned int dim>

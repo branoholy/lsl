@@ -22,7 +22,7 @@
 #ifndef LSL_GEOM_RANSAC_HPP
 #define LSL_GEOM_RANSAC_HPP
 
-#include <iostream>
+#include <algorithm>
 #include <limits>
 #include <random>
 #include <set>
@@ -62,8 +62,12 @@ public:
 template<typename T>
 std::vector<T> Ransac::run(const std::vector<T>& points)
 {
-	std::set<T> modelData;
+	typedef typename std::remove_pointer<T>::type PointType;
+	typedef typename std::conditional<std::is_pointer<T>::value, PointType*, const PointType*>::type ModelValueType;
+
+	std::set<ModelValueType> modelData;
 	std::vector<T> bestModelData;
+
 	double bestError2 = std::numeric_limits<double>::max();
 	double maxError2 = maxError * maxError;
 
@@ -73,21 +77,22 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 		int tries = 0;
 		while(modelData.size() < initModelSize && tries < initModelSize * 10)
 		{
-			modelData.insert(points.at(getRandom(points.size())));
+			const T& point = points.at(getRandom(points.size()));
+			modelData.insert(utils::CppUtils::getPointer(point));
 			tries++;
 		}
 
-		Line2 model = Line2::leastSquareLine(modelData);
+		Line2 model = Line2::leastSquareLine(modelData, false);
 
 		double error2 = 0;
 		for(int j = 0; j < points.size(); j++)
 		{
-			T point = points.at(j);
+			const T& point = points.at(j);
 			double distance2 = model.distance2To(*utils::CppUtils::getPointer(point));
 
 			if(distance2 < maxError2)
 			{
-				modelData.insert(point);
+				modelData.insert(utils::CppUtils::getPointer(point));
 				error2 += distance2;
 			}
 			else
@@ -101,7 +106,9 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 			if(error2 < bestError2)
 			{
 				bestModelData.clear();
-				std::copy(modelData.begin(), modelData.end(), back_inserter(bestModelData));
+				bestModelData.reserve(modelData.size());
+				std::transform(modelData.begin(), modelData.end(), back_inserter(bestModelData), utils::CppUtils::getValue<T, ModelValueType>);
+
 				bestError2 = error2;
 			}
 		}
