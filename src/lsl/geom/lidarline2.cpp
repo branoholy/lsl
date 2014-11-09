@@ -35,6 +35,9 @@ LidarLine2::LidarLine2(const Line2& line)
 	v = line.getNormal();
 	double norm = -line.getC() / v.getLength2();
 	v *= norm;
+
+	l = v.getLength();
+	alpha = v.getAngle2D();
 }
 
 LidarLine2::LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB) : LidarLine2(line)
@@ -43,9 +46,9 @@ LidarLine2::LidarLine2(const Line2& line, const Vector2d& endPointA, const Vecto
 	setEndPointB(endPointB);
 }
 
-double LidarLine2::getValue(double alpha) const
+double LidarLine2::getValue(double phi) const
 {
-	return getL() / cos(alpha - getPhi());
+	return l / cos(phi - alpha);
 }
 
 void LidarLine2::setPhiA(double phiA)
@@ -100,6 +103,9 @@ void LidarLine2::transform(double c, double s, double tx, double ty)
 	v.set(0, vx_);
 	v.set(1, vy_);
 
+	l = v.getLength();
+	alpha = v.getAngle2D();
+
 	endPointA.transform2D(c, s, tx, ty);
 	endPointB.transform2D(c, s, tx, ty);
 
@@ -109,31 +115,29 @@ void LidarLine2::transform(double c, double s, double tx, double ty)
 
 double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh) const
 {
-	double l0 = getL();
-	double l02 = l0 * l0;
-	double phi0 = getPhi();
+	double l2 = l * l;
 
 	double l1 = other.getL();
 	double l12 = l1 * l1;
-	double phi1 = other.getPhi();
+	double alpha1 = other.getAlpha();
 
-	double one__sin = 2 * l0 * l1;
+	double one__sin = 2 * l * l1;
 	double errLow = 0;
 	double errHigh = 0;
 
-	if(abs(phi0 - phi1) < numeric_limits<double>::epsilon())
+	if(abs(alpha - alpha1) <= numeric_limits<double>::epsilon())
 	{
-		double tanLow = tan(phiLow - phi0);
-		double tanHigh = tan(phiHigh - phi0);
+		double tanLow = tan(phiLow - alpha);
+		double tanHigh = tan(phiHigh - alpha);
 
-		errLow = l02 * tanLow + l12 * tanLow - one__sin * tanLow;
-		errHigh = l02 * tanHigh + l12 * tanHigh - one__sin * tanHigh;
+		errLow = l2 * tanLow + l12 * tanLow - one__sin * tanLow;
+		errHigh = l2 * tanHigh + l12 * tanHigh - one__sin * tanHigh;
 	}
 	else
 	{
-		one__sin /= sin(phi0 - phi1);
-		errLow = l02 * tan(phiLow - phi0) + l12 * tan(phiLow - phi1) - one__sin * (log(cos(phi0 - phiLow)) - log(cos(phi1 - phiLow)));
-		errHigh = l02 * tan(phiHigh - phi0) + l12 * tan(phiHigh - phi1) - one__sin * (log(cos(phi0 - phiHigh)) - log(cos(phi1 - phiHigh)));
+		one__sin /= sin(alpha - alpha1);
+		errLow = l2 * tan(phiLow - alpha) + l12 * tan(phiLow - alpha1) - one__sin * log(cos(alpha - phiLow) / cos(alpha1 - phiLow));
+		errHigh = l2 * tan(phiHigh - alpha) + l12 * tan(phiHigh - alpha1) - one__sin * log(cos(alpha - phiHigh) / cos(alpha1 - phiHigh));
 	}
 
 	return errHigh - errLow;
@@ -141,7 +145,7 @@ double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh)
 
 ostream& operator<<(ostream& out, const LidarLine2& lidarLine)
 {
-	return out << "LL(" << lidarLine.v << " |" << lidarLine.getL() << "|, " << lidarLine.getPhi() << ')';
+	return out << "LL(" << lidarLine.v << " |" << lidarLine.l << "|, " << lidarLine.alpha << ')';
 }
 
 }}

@@ -35,6 +35,8 @@ namespace geom {
 class LidarLine2
 {
 private:
+	double l;
+	double alpha;
 	Vector2d v;
 
 	double phiA;
@@ -47,10 +49,10 @@ public:
 	LidarLine2(const Line2& line);
 	LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB);
 
-	inline double getL() const { return v.getLength(); }
-	inline double getPhi() const { return v.getAngle2D(); }
+	inline double getL() const { return l; }
+	inline double getAlpha() const { return alpha; }
 
-	double getValue(double alpha) const;
+	double getValue(double phi) const;
 
 	inline double getPhiA() const { return phiA; }
 	void setPhiA(double phiA);
