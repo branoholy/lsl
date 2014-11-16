@@ -93,8 +93,8 @@ Line2 Line2::leastSquareLine(const ContainerT& points, bool savePoints)
 	{
 		const PointType *point = utils::CppUtils::getPointer(item);
 
-		double x = point->get(0);
-		double y = point->get(1);
+		double x = (*point)[0];
+		double y = (*point)[1];
 
 		sumX += x;
 		sumXX += x * x;

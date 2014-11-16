@@ -44,7 +44,7 @@ MultivariateNormalDistribution<2>** PolarNDT::createGaussians(const vector<Vecto
 	vector<Vector2d> *vectors = new vector<Vector2d>[size];
 	for(const Vector2d& p : points)
 	{
-		double theta = atan2(p.get(1), p.get(0)) + MathUtils::TWO_PI;
+		double theta = atan2(p[1], p[0]) + MathUtils::TWO_PI;
 		int index = int(size * theta * MathUtils::ONE__TWO_PI) % size;
 		vectors[index].push_back(p);
 	}
@@ -70,12 +70,9 @@ double PolarNDT::errorTransform(MultivariateNormalDistribution<2> **gaussians, c
 
 	for(const Vector2d& p : source)
 	{
-		double x = p.get(0);
-		double y = p.get(1);
-
 		// Transform x, y
-		double x_ = x * c - y * s + tx;
-		double y_ = x * s + y * c + ty;
+		double x_ = p[0] * c - p[1] * s + tx;
+		double y_ = p[0] * s + p[1] * c + ty;
 
 		double theta = atan2(y_, x_) + MathUtils::TWO_PI;
 		int index = int(size * theta * MathUtils::ONE__TWO_PI) % size;

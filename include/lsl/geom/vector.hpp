@@ -23,6 +23,8 @@
 #define LSL_GEOM_VECTOR_HPP
 
 #include <cmath>
+#include <cstring>
+#include <fstream>
 #include <initializer_list>
 #include <iostream>
 #include <vector>
@@ -42,17 +44,20 @@ protected:
 public:
 	Vector();
 	Vector(unsigned int id);
+	Vector(const T *data, std::size_t dataSize);
 	Vector(std::initializer_list<T> data);
+	Vector(const std::vector<T>& data);
 	Vector(const Vector<T, dim>& vector);
+
+	typedef T value_type;
+	static unsigned int dimension_size;
 
 	inline unsigned int getDim() const	{ return dim; }
 
-	inline T get(unsigned int i) const { return data[i]; }
-	// inline T getH(unsigned int i) const { return data[i] / data[dim - 1]; }
-	inline void set(unsigned int dimension, T value) { data[dimension] = value; }
-
-	void set(const Vector<T, dim>& vector);
+	void set(const T *data, std::size_t dataSize);
 	void set(std::initializer_list<T> data);
+	void set(const std::vector<T>& data);
+	void set(const Vector<T, dim>& vector);
 
 	inline int getId() const { return id; }
 	inline void setId(unsigned int id) { this->id = id; }
@@ -96,12 +101,16 @@ public:
 	double operator*(const Vector<T, dim>& other) const;
 
 	T& operator[](unsigned int i);
+	const T& operator[](unsigned int i) const;
 
 	static Vector<T, dim> getCentroid(const std::vector<Vector<T, dim>>& points);
 	static Vector<T, dim> getCentroid(const std::vector<Vector<T, dim>*>& points);
 
 	template<typename T_, unsigned int dim_>
 	friend std::ostream& operator<<(std::ostream& out, const Vector<T_, dim_>& vector);
+
+	template<typename T_, unsigned int dim_>
+	friend std::ofstream& operator<<(std::ofstream& out, const Vector<T_, dim_>& vector);
 };
 
 typedef Vector<double, 2> Vector2d;
@@ -113,6 +122,9 @@ typedef Vector<int, 3> Vector3i;
 typedef Vector<int, 4> Vector4i;
 
 template<typename T, unsigned int dim>
+unsigned int Vector<T, dim>::dimension_size = dim;
+
+template<typename T, unsigned int dim>
 Vector<T, dim>::Vector() : Vector(-1)
 {
 }
@@ -121,11 +133,22 @@ template<typename T, unsigned int dim>
 Vector<T, dim>::Vector(unsigned int id) :
 	id(id)
 {
-	std::cout << "Vector created" << std::endl;
+}
+
+template<typename T, unsigned int dim>
+Vector<T, dim>::Vector(const T *data, std::size_t dataSize) : Vector()
+{
+	set(data, dataSize);
 }
 
 template<typename T, unsigned int dim>
 Vector<T, dim>::Vector(std::initializer_list<T> data) : Vector()
+{
+	set(data);
+}
+
+template<typename T, unsigned int dim>
+Vector<T, dim>::Vector(const std::vector<T>& data) : Vector()
 {
 	set(data);
 }
@@ -137,13 +160,17 @@ Vector<T, dim>::Vector(const Vector<T, dim>& vector) : Vector()
 }
 
 template<typename T, unsigned int dim>
-void Vector<T, dim>::set(const Vector<T, dim>& vector)
+void Vector<T, dim>::set(const T *data, std::size_t dataSize)
 {
-	for(unsigned int i = 0; i < dim; i++)
+	if(dim < dataSize)
 	{
-		data[i] = vector.get(i);
+		id = data[0];
+		memcpy(this->data, data + 1, sizeof(T) * dim);
 	}
-	id = vector.getId();
+	else
+	{
+		memcpy(this->data, data, sizeof(T) * dim);
+	}
 }
 
 template<typename T, unsigned int dim>
@@ -152,10 +179,32 @@ void Vector<T, dim>::set(std::initializer_list<T> data)
 	typename std::initializer_list<T>::iterator it = data.begin();
 	if(dim < data.size()) id = *(it++);
 
-	for(unsigned int i = 0; it != data.end(); i++, it++)
+	for(unsigned int i = 0; i < dim; i++, it++)
 	{
 		this->data[i] = *it;
 	}
+}
+
+template<typename T, unsigned int dim>
+void Vector<T, dim>::set(const std::vector<T>& data)
+{
+	typename std::vector<T>::iterator it = data.begin();
+	if(dim < data.size()) id = *(it++);
+
+	for(unsigned int i = 0; i < dim; i++, it++)
+	{
+		this->data[i] = *it;
+	}
+}
+
+template<typename T, unsigned int dim>
+void Vector<T, dim>::set(const Vector<T, dim>& vector)
+{
+	for(unsigned int i = 0; i < dim; i++)
+	{
+		data[i] = vector[i];
+	}
+	id = vector.getId();
 }
 
 template<typename T, unsigned int dim>
@@ -170,7 +219,7 @@ double Vector<T, dim>::getLength2() const
 	T len2 = 0;
 	for(unsigned int i = 0; i < dim; i++)
 	{
-		len2 += std::pow(get(i), 2);
+		len2 += std::pow(data[i], 2);
 	}
 
 	return len2;
@@ -185,7 +234,7 @@ double Vector<T, dim>::getLength2D(unsigned int dim1, unsigned int dim2) const
 template<typename T, unsigned int dim>
 double Vector<T, dim>::getLength2D2(unsigned int dim1, unsigned int dim2) const
 {
-	return std::pow(get(dim1), 2) + std::pow(get(dim2), 2);
+	return std::pow(data[dim1], 2) + std::pow(data[dim2], 2);
 }
 
 template<typename T, unsigned int dim>
@@ -213,7 +262,7 @@ double Vector<T, dim>::getDistanceTo2(const Vector<T, dim>& other) const
 	T distance2 = 0;
 	for(unsigned int i = 0; i < dim; i++)
 	{
-		distance2 += std::pow(get(i) - other.get(i), 2);
+		distance2 += std::pow(data[i] - other[i], 2);
 	}
 
 	return distance2;
@@ -222,7 +271,7 @@ double Vector<T, dim>::getDistanceTo2(const Vector<T, dim>& other) const
 template<typename T, unsigned int dim>
 double Vector<T, dim>::getAngle2D() const
 {
-	return utils::MathUtils::normAngle(atan2(get(1), get(0)));
+	return utils::MathUtils::normAngle(atan2(data[1], data[0]));
 }
 
 template<typename T, unsigned int dim>
@@ -230,8 +279,8 @@ void Vector<T, dim>::setAngle2D(double angle)
 {
 	double length = getLength2D(0, 1);
 
-	set(0, std::cos(angle) * length);
-	set(1, std::sin(angle) * length);
+	data[0] = std::cos(angle) * length;
+	data[1] = std::sin(angle) * length;
 }
 
 template<typename T, unsigned int dim>
@@ -286,7 +335,7 @@ bool Vector<T, dim>::operator==(const Vector<T, dim>& other) const
 {
 	for(unsigned int i = 0; i < dim; i++)
 	{
-		if(get(i) != other.get(i))
+		if(data[i] != other[i])
 		{
 			return false;
 		}
@@ -377,7 +426,7 @@ double Vector<T, dim>::operator*(const Vector<T, dim>& other) const
 	double dotProduct = 0;
 	for(unsigned int i = 0; i < dim; i++)
 	{
-		dotProduct += data[i] * other.get(i);
+		dotProduct += data[i] * other[i];
 	}
 
 	return dotProduct;
@@ -385,6 +434,12 @@ double Vector<T, dim>::operator*(const Vector<T, dim>& other) const
 
 template<typename T, unsigned int dim>
 T& Vector<T, dim>::operator[](unsigned int i)
+{
+	return data[i];
+}
+
+template<typename T, unsigned int dim>
+const T& Vector<T, dim>::operator[](unsigned int i) const
 {
 	return data[i];
 }
@@ -429,12 +484,24 @@ std::ostream& operator<<(std::ostream& out, const Vector<T, dim>& vector)
 	out << "V:";
 	if(vector.id != -1) out << vector.id;
 
-	out << '[' << vector.get(0);
+	out << '[' << vector[0];
 	for(unsigned int i = 1; i < dim; i++)
 	{
-		out << ", " << vector.get(i);
+		out << ", " << vector[i];
 	}
 	out << ']';
+
+	return out;
+}
+
+template<typename T, unsigned int dim>
+std::ofstream& operator<<(std::ofstream& out, const Vector<T, dim>& vector)
+{
+	out << vector[0];
+	for(unsigned int i = 1; i < dim; i++)
+	{
+		out << ' ' << vector[i];
+	}
 
 	return out;
 }

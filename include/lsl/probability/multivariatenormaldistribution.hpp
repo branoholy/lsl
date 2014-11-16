@@ -77,7 +77,7 @@ MultivariateNormalDistribution<dim>::MultivariateNormalDistribution(const std::v
 	{
 		for(unsigned int d = 0; d < dim; d++)
 		{
-			meanVector(d) += p.get(d);
+			meanVector(d) += p[d];
 		}
 	}
 	meanVector /= points.size();
@@ -85,7 +85,7 @@ MultivariateNormalDistribution<dim>::MultivariateNormalDistribution(const std::v
 	covarianceMatrix = Eigen::Matrix<double, dim, dim>::Zero();
 	for(const geom::Vector<double, dim>& p : points)
 	{
-		Eigen::Matrix<double, dim, 1> diff(p.get(0), p.get(1));
+		Eigen::Matrix<double, dim, 1> diff(p[0], p[1]);
 		diff -= meanVector;
 		covarianceMatrix += diff * diff.transpose();
 	}

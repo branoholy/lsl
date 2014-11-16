@@ -57,12 +57,12 @@ void Line2::setParams(double a, double b, double c)
 
 double Line2::distanceTo(const Vector2d& point) const
 {
-	return abs(a * point.get(0) + b * point.get(1) + c) / sqrt(a * a + b * b);
+	return abs(a * point[0] + b * point[1] + c) / sqrt(a * a + b * b);
 }
 
 double Line2::distance2To(const Vector2d& point) const
 {
-	double dt = a * point.get(0) + b * point.get(1) + c;
+	double dt = a * point[0] + b * point[1] + c;
 	return dt * dt / (a * a + b * b);
 }
 
@@ -90,7 +90,7 @@ Vector2d Line2::getOrientedNormal() const
 		Vector2d pa = points.at(0);
 		Vector2d pb = points.at(1);
 
-		Vector2d n_ {pa.get(1) - pb.get(1), pb.get(0) - pa.get(0)};
+		Vector2d n_ {pa[1] - pb[1], pb[0] - pa[0]};
 		n_ *= pb.getId() - pa.getId();
 
 		// abs(n * n_) ???

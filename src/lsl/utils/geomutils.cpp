@@ -46,7 +46,7 @@ double GeomUtils::distance2ToLine(double x, double y, double x0, double y0, doub
 
 Vector2d GeomUtils::getClosestLinePoint(double a, double b, double c, const Vector2d& point)
 {
-	return getClosestLinePoint(a, b, c, point.get(0), point.get(1));
+	return getClosestLinePoint(a, b, c, point[0], point[1]);
 }
 
 Vector2d GeomUtils::getClosestLinePoint(double a, double b, double c, double x, double y)

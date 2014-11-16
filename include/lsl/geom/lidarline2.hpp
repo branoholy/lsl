@@ -37,7 +37,6 @@ class LidarLine2
 private:
 	double l;
 	double alpha;
-	Vector2d v;
 
 	double phiA;
 	double phiB;
@@ -66,8 +65,11 @@ public:
 	inline Vector2d getEndPointB() const { return endPointB; }
 	void setEndPointB(const Vector2d& endPointB);
 
+	double getPhiLow() const;
+	double getPhiHigh() const;
+
 	void transform(double angle, double tx, double ty);
-	void transform(double c, double s, double tx, double ty);
+	void transform(double angle, double c, double s, double tx, double ty);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
 

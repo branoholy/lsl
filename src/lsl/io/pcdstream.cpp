@@ -21,9 +21,7 @@
 
 #include "lsl/io/pcdstream.hpp"
 
-#include <cctype>
-#include <fstream>
-#include <sstream>
+#include "lsl/geom/vector.hpp"
 
 using namespace std;
 using namespace lsl::geom;
@@ -31,29 +29,10 @@ using namespace lsl::geom;
 namespace lsl {
 namespace io {
 
-vector<Vector2d> PCDStream::load2d(const string& fileName)
+PCDHeader* PCDStream::loadHeader(const string& fileName)
 {
-	vector<Vector2d> points;
 	ifstream file(fileName);
-
-	int i = 0;
-	string line;
-	while(getline(file, line))
-	{
-		if(line.empty()) continue;
-
-		char firstChar = line.at(0);
-		if(firstChar == '#') continue;
-		if(isalpha(firstChar)) continue;
-
-		double x, y;
-		istringstream iss(line);
-		iss >> x >> y;
-
-		points.push_back({double(i++), x, y});
-	}
-
-	return points;
+	return new PCDHeader(file);
 }
 
 }}

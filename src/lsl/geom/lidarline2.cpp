@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 using namespace std;
 using namespace lsl::utils;
@@ -32,12 +33,11 @@ namespace geom {
 
 LidarLine2::LidarLine2(const Line2& line)
 {
-	v = line.getNormal();
-	double norm = -line.getC() / v.getLength2();
-	v *= norm;
+	Vector2d normal = line.getNormal();
+	l = abs(line.getC() / normal.getLength());
 
-	l = v.getLength();
-	alpha = v.getAngle2D();
+	normal *= -line.getC();
+	alpha = normal.getAngle2D();
 }
 
 LidarLine2::LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB) : LidarLine2(line)
@@ -56,8 +56,8 @@ void LidarLine2::setPhiA(double phiA)
 	this->phiA = phiA;
 
 	double value = getValue(phiA);
-	endPointA.set(0, value * cos(phiA));
-	endPointA.set(1, value * sin(phiA));
+	endPointA[0] = value * cos(phiA);
+	endPointA[1] = value * sin(phiA);
 }
 
 void LidarLine2::setPhiB(double phiB)
@@ -65,8 +65,8 @@ void LidarLine2::setPhiB(double phiB)
 	this->phiB = phiB;
 
 	double value = getValue(phiB);
-	endPointB.set(0, value * cos(phiB));
-	endPointB.set(1, value * sin(phiB));
+	endPointB[0] = value * cos(phiB);
+	endPointB[1] = value * sin(phiB);
 }
 
 void LidarLine2::setEndPointA(const Vector2d& endPointA)
@@ -81,30 +81,28 @@ void LidarLine2::setEndPointB(const Vector2d& endPointB)
 	phiB = endPointB.getAngle2D();
 }
 
+double LidarLine2::getPhiLow() const
+{
+	return min(phiA, phiB);
+}
+
+double LidarLine2::getPhiHigh() const
+{
+	return max(phiA, phiB);
+}
+
 void LidarLine2::transform(double angle, double tx, double ty)
 {
 	double c = cos(angle);
 	double s = sin(angle);
 
-	transform(c, s, tx, ty);
+	transform(angle, c, s, tx, ty);
 }
 
-void LidarLine2::transform(double c, double s, double tx, double ty)
+void LidarLine2::transform(double angle, double c, double s, double tx, double ty)
 {
-	v.rotate2D(c, s);
-
-	double l2 = v.getLength2();
-	double vx = v.get(0);
-	double vy = v.get(1);
-
-	double vx_ = vx + (vx * vx * tx + vx * vy * ty) / l2;
-	double vy_ = vy + (vx * vy * tx + vy * vy * ty) / l2;
-
-	v.set(0, vx_);
-	v.set(1, vy_);
-
-	l = v.getLength();
-	alpha = v.getAngle2D();
+	alpha += angle;
+	l += tx * cos(alpha) + ty * sin(alpha);
 
 	endPointA.transform2D(c, s, tx, ty);
 	endPointB.transform2D(c, s, tx, ty);
@@ -145,7 +143,7 @@ double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh)
 
 ostream& operator<<(ostream& out, const LidarLine2& lidarLine)
 {
-	return out << "LL(" << lidarLine.v << " |" << lidarLine.l << "|, " << lidarLine.alpha << ')';
+	return out << "LL(|" << lidarLine.l << "|, " << lidarLine.alpha << ", <" << lidarLine.phiA << ", " << lidarLine.phiB << ">)";
 }
 
 }}
