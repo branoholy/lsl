@@ -52,7 +52,6 @@ Vector2d GeomUtils::getClosestLinePoint(double a, double b, double c, const Vect
 Vector2d GeomUtils::getClosestLinePoint(double a, double b, double c, double x, double y)
 {
 	double cx, cy;
-
 	if(a == 0)
 	{
 		cx = x;
@@ -65,8 +64,9 @@ Vector2d GeomUtils::getClosestLinePoint(double a, double b, double c, double x, 
 	}
 	else
 	{
-		cy = (a * y - b * x - (b * c) / a) / (a + (b * b) / a);
-		cx = (-b * cy - c) / a;
+		double one__a = 1 / a;
+		cy = (a * y - b * x - b * c * one__a) / (b * b * one__a + a);
+		cx = -(b * cy + c) * one__a;
 	}
 
 	return Vector2d({cx, cy});

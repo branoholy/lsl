@@ -22,6 +22,8 @@
 #ifndef LSL_CONTAINERS_POINTCLOUD_HPP
 #define LSL_CONTAINERS_POINTCLOUD_HPP
 
+#include <algorithm>
+#include <functional>
 #include <iostream>
 #include <vector>
 
@@ -38,8 +40,11 @@ class PointCloud : public std::vector<T>
 private:
 	io::PCDHeader *header;
 
+	void correctIds();
+
 public:
 	PointCloud();
+	PointCloud(const std::string& fileName);
 	~PointCloud();
 
 	inline io::PCDHeader* getHeader() const { return header; }
@@ -58,9 +63,27 @@ PointCloud<T>::PointCloud() :
 }
 
 template<typename T>
+PointCloud<T>::PointCloud(const std::string& fileName) : PointCloud()
+{
+	loadPCD(fileName);
+}
+
+template<typename T>
 PointCloud<T>::~PointCloud()
 {
 	delete header;
+}
+
+template<typename T>
+void PointCloud<T>::correctIds()
+{
+	std::sort(this->begin(), this->end(), [](const T& a, const T& b) { return a.getAngle2D() < b.getAngle2D(); });
+
+	size_t size = this->size();
+	for(size_t i = 0; i < size; i++)
+	{
+		(*this)[i].setId(i);
+	}
 }
 
 template<typename T>
@@ -72,6 +95,7 @@ void PointCloud<T>::loadPCD(const std::string& fileName)
 	this->reserve(header->points);
 
 	io::PCDStream::loadDataEmplace(pcdFile, header->fieldCount, *this);
+	correctIds();
 }
 
 template<typename T>

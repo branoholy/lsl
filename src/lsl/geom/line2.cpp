@@ -66,12 +66,12 @@ double Line2::distance2To(const Vector2d& point) const
 	return dt * dt / (a * a + b * b);
 }
 
-double Line2::getX(double y)
+double Line2::getX(double y) const
 {
 	return -(b * y + c) / a;
 }
 
-double Line2::getY(double x)
+double Line2::getY(double x) const
 {
 	return -(a * x + c) / b;
 }

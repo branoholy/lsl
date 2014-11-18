@@ -57,8 +57,8 @@ public:
 	double distanceTo(const Vector2d& point) const;
 	double distance2To(const Vector2d& point) const;
 
-	double getX(double y);
-	double getY(double x);
+	double getX(double y) const;
+	double getY(double x) const;
 
 	Vector2d getNormal() const;
 	Vector2d getOrientedNormal() const;
