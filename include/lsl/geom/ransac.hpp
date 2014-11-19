@@ -84,32 +84,58 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 
 		Line2 model = Line2::leastSquareLine(modelData, false);
 
+		modelData.clear();
 		double error2 = 0;
+		unsigned int lastPointId = -1;
 		for(int j = 0; j < points.size(); j++)
 		{
 			const T& point = points.at(j);
-			double distance2 = model.distance2To(*utils::CppUtils::getPointer(point));
+			ModelValueType pointPointer = utils::CppUtils::getPointer(point);
+			double distance2 = model.distance2To(*pointPointer);
 
-			if(distance2 < maxError2)
+			if(distance2 < maxError2 && (lastPointId == -1 || pointPointer->getId() == lastPointId + 1))
 			{
-				modelData.insert(utils::CppUtils::getPointer(point));
+				modelData.insert(pointPointer);
 				error2 += distance2;
+				lastPointId = pointPointer->getId();
 			}
 			else
 			{
-				error2 += maxError2;
+				if(modelData.size() >= minModelSize) break;
+				else
+				{
+					modelData.clear();
+					error2 = 0;
+				}
+
+				// error2 += maxError2;
 			}
 		}
 
 		if(modelData.size() >= minModelSize)
 		{
+			error2 /= modelData.size();
 			if(error2 < bestError2)
 			{
-				bestModelData.clear();
-				bestModelData.reserve(modelData.size());
-				std::transform(modelData.begin(), modelData.end(), back_inserter(bestModelData), utils::CppUtils::getValue<T, ModelValueType>);
+				bool testOk = true;
+				Line2 testModel = Line2::leastSquareLine(modelData, false);
+				for(const ModelValueType& testPoint : modelData)
+				{
+					if(testModel.distance2To(*testPoint) > maxError2)
+					{
+						testOk = false;
+						break;
+					}
+				}
 
-				bestError2 = error2;
+				if(testOk)
+				{
+					bestModelData.clear();
+					bestModelData.reserve(modelData.size());
+					std::transform(modelData.begin(), modelData.end(), back_inserter(bestModelData), utils::CppUtils::getValue<T, ModelValueType>);
+
+					bestError2 = error2;
+				}
 			}
 		}
 	}

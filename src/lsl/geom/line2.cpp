@@ -44,7 +44,7 @@ Line2::Line2(double a, double b, double c, vector<Vector2d>&& points) :
 {
 }
 
-Line2::Line2(const Line2& line) : Line2(line.getA(), line.getB(), line.getC())
+Line2::Line2(const Line2& line) : Line2(line.getA(), line.getB(), line.getC(), line.getPoints())
 {
 }
 

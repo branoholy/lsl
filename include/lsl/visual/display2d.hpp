@@ -37,6 +37,7 @@ namespace visual {
 class Display2d
 {
 private:
+	// Top-left corner
 	geom::Vector2d position;
 
 	double zoom;

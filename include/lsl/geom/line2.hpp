@@ -49,6 +49,8 @@ public:
 	inline double getB() const { return b; }
 	inline double getC() const { return c; }
 
+	inline const std::vector<Vector2d>& getPoints() const { return points; }
+
 	inline double getK() const { return - a / b; }
 	inline double getQ() const { return - c / b; }
 
