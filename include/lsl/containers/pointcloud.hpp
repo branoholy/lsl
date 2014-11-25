@@ -50,7 +50,7 @@ public:
 	inline io::PCDHeader* getHeader() const { return header; }
 
 	void loadPCD(const std::string& fileName);
-	void savePCD(const std::string& fileName);
+	void savePCD(const std::string& fileName) const;
 
 	template<typename T_>
 	friend std::ostream& operator<<(std::ostream& out, const PointCloud<T_>& pointCloud);
@@ -99,7 +99,7 @@ void PointCloud<T>::loadPCD(const std::string& fileName)
 }
 
 template<typename T>
-void PointCloud<T>::savePCD(const std::string& fileName)
+void PointCloud<T>::savePCD(const std::string& fileName) const
 {
 	if(header != nullptr)
 	{

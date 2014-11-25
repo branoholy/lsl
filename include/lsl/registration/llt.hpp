@@ -19,34 +19,29 @@
  *
  */
 
-#ifndef LSL_UTILS_MATHUTILS_HPP
-#define LSL_UTILS_MATHUTILS_HPP
+#ifndef LSL_REGISTRATION_LLT_HPP
+#define LSL_REGISTRATION_LLT_HPP
 
-// #include <cstring>
+#include <vector>
+
+#include "lsl/geom/vector.hpp"
+#include "lsl/geom/lidarline2.hpp"
 
 namespace lsl {
-namespace utils {
+namespace registration {
 
-class MathUtils
+class LLT
 {
 public:
-	static const double PI;
-	static const double TWO_PI;
-	static const double TWO_PI_EXCLUSIVE;
-	static const double PI__TWO;
-	static const double THREE_PI__TWO;
-	static const double ONE__TWO_PI;
-	static const double SQRT_TWO_PI;
+	void transform(std::vector<geom::LidarLine2>& lines, double phi, double tx, double ty);
+	void removeInvisible(std::vector<geom::LidarLine2>& lines);
 
-	// static double isNegative(double x, double c = 10000000000000.0);
-	static double normAngle(double angle);
+public:
+	LLT();
 
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
+	double alignWithSOMA(const std::vector<geom::Vector2d>& target, const std::vector<geom::Vector2d>& source, double& phi, double& tx, double& ty) const;
 };
 
 }}
 
-#endif // LSL_UTILS_MATHUTILS_HPP
+#endif // LSL_REGISTRATION_LLT_HPP

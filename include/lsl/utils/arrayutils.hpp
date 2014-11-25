@@ -22,10 +22,13 @@
 #ifndef LSL_UTILS_ARRAYUTILS_HPP
 #define LSL_UTILS_ARRAYUTILS_HPP
 
-#include <iostream>
-#include <vector>
-#include <limits>
 #include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <set>
+#include <vector>
+
 
 #include "cpputils.hpp"
 
@@ -200,7 +203,82 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
 		typename std::vector<T>::const_iterator it = v.begin();
 		while(true)
 		{
-			out << *lsl::utils::CppUtils::getPointer(*it);
+			out << *it;
+
+			if(++it != v.end()) out << ", ";
+			else break;
+		}
+	}
+	else
+	{
+		out << "--empty--";
+	}
+	out << ']';
+
+	return out;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::vector<T*>& v)
+{
+	out << '[';
+	if(v.size() > 0)
+	{
+		typename std::vector<T*>::const_iterator it = v.begin();
+		while(true)
+		{
+			if(*it == nullptr) out << "nullptr";
+			else out << **it;
+
+			if(++it != v.end()) out << ", ";
+			else break;
+		}
+	}
+	else
+	{
+		out << "--empty--";
+	}
+	out << ']';
+
+	return out;
+}
+
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::set<T>& v)
+{
+	out << '[';
+	if(v.size() > 0)
+	{
+		typename std::set<T>::const_iterator it = v.begin();
+		while(true)
+		{
+			out << *it;
+
+			if(++it != v.end()) out << ", ";
+			else break;
+		}
+	}
+	else
+	{
+		out << "--empty--";
+	}
+	out << ']';
+
+	return out;
+}
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const std::set<T*>& v)
+{
+	out << '[';
+	if(v.size() > 0)
+	{
+		typename std::set<T*>::const_iterator it = v.begin();
+		while(true)
+		{
+			if(*it == nullptr) out << "nullptr";
+			else out << **it;
 
 			if(++it != v.end()) out << ", ";
 			else break;

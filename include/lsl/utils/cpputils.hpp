@@ -22,6 +22,8 @@
 #ifndef LSL_UTILS_CPPUTILS_HPP
 #define LSL_UTILS_CPPUTILS_HPP
 
+#include <cstddef>
+#include <iostream>
 #include <type_traits>
 
 namespace lsl {

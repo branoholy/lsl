@@ -61,8 +61,10 @@ private:
 	void repaint(wxDC& dc);
 
 	void drawAxis(wxDC& dc);
+	void drawRulers(wxDC& dc);
 
 	void drawPoint(wxDC& dc, const geom::Vector2d& point, std::size_t size = 1, const wxColour& colour = *wxBLACK);
+	void drawPoint(wxDC& dc, const geom::Vector2d& point, std::size_t size, const wxColour& brushColour, const wxColour& penColour);
 	void drawLine(wxDC& dc, const geom::Line2& line, std::size_t size = 1, const wxColour& colour = *wxBLACK);
 	void drawLidarLine(wxDC& dc, const geom::LidarLine2& lidarLine, std::size_t size = 1, const wxColour& colour = *wxBLACK);
 	void drawPointCloud(wxDC& dc, const containers::PointCloud<geom::Vector2d> *pointCloud, size_t size = 1, const wxColour& colour = *wxBLACK);

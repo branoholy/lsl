@@ -33,11 +33,7 @@ namespace geom {
 
 LidarLine2::LidarLine2(const Line2& line)
 {
-	Vector2d normal = line.getNormal();
-	l = abs(line.getC() / normal.getLength());
-
-	normal *= -line.getC();
-	alpha = normal.getAngle2D();
+	set(line);
 }
 
 LidarLine2::LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB) : LidarLine2(line)
@@ -46,9 +42,35 @@ LidarLine2::LidarLine2(const Line2& line, const Vector2d& endPointA, const Vecto
 	setEndPointB(endPointB);
 }
 
+LidarLine2::LidarLine2(const std::vector<Vector2d>& points)
+{
+	Line2 line = Line2::leastSquareLine(points);
+	set(line);
+
+	size_t indexEndPointA = 0, indexEndPointB = 0;
+	for(size_t i = 1; i < points.size(); i++)
+	{
+		if(points[i].getId() < points[indexEndPointA].getId()) indexEndPointA = i;
+		if(points[i].getId() > points[indexEndPointB].getId()) indexEndPointB = i;
+	}
+
+	setEndPointA(line.getClosestPoint(points[indexEndPointA]));
+	setEndPointB(line.getClosestPoint(points[indexEndPointB]));
+}
+
+void LidarLine2::set(const Line2& line)
+{
+	Vector2d normal = line.getNormal();
+	l = abs(line.getC() / normal.getLength());
+
+	normal *= -line.getC();
+	alpha = normal.getAngle2D();
+}
+
 double LidarLine2::getValue(double phi) const
 {
-	return l / cos(phi - alpha);
+	if(phi >= getPhiLow() && phi <= getPhiHigh()) return l / cos(phi - alpha);
+	else return numeric_limits<double>::max();
 }
 
 void LidarLine2::setPhiA(double phiA)
@@ -91,6 +113,11 @@ double LidarLine2::getPhiHigh() const
 	return max(phiA, phiB);
 }
 
+bool LidarLine2::isVisible() const
+{
+	return phiA < phiB;
+}
+
 void LidarLine2::transform(double angle, double tx, double ty)
 {
 	double c = cos(angle);
@@ -109,6 +136,12 @@ void LidarLine2::transform(double angle, double c, double s, double tx, double t
 
 	phiA = endPointA.getAngle2D();
 	phiB = endPointB.getAngle2D();
+
+	if(l < 0)
+	{
+		alpha = MathUtils::normAngle(alpha - MathUtils::PI);
+		l *= -1;
+	}
 }
 
 double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh) const

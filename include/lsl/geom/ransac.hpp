@@ -55,8 +55,8 @@ public:
 	template<typename T>
 	std::vector<T> run(const std::vector<T>& points);
 
-	template<typename T>
-	std::vector<std::vector<T>> run(const std::vector<T>& points, unsigned int outterIterations);
+	template<typename R, typename T>
+	std::vector<R> run(const std::vector<T>& points, unsigned int outterIterations);
 };
 
 template<typename T>
@@ -107,8 +107,6 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 					modelData.clear();
 					error2 = 0;
 				}
-
-				// error2 += maxError2;
 			}
 		}
 
@@ -143,10 +141,10 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 	return bestModelData;
 }
 
-template<typename T>
-std::vector<std::vector<T>> Ransac::run(const std::vector<T>& points, unsigned int outterIterations)
+template<typename R, typename T>
+std::vector<R> Ransac::run(const std::vector<T>& points, unsigned int outterIterations)
 {
-	std::vector<std::vector<T>> allModelData;
+	std::vector<R> allModelData;
 	std::vector<T> remainingPoints = points;
 
 	for(unsigned int i = 0; i < outterIterations; i++)
@@ -156,7 +154,7 @@ std::vector<std::vector<T>> Ransac::run(const std::vector<T>& points, unsigned i
 		std::vector<T> modelData = run(remainingPoints);
 		if(modelData.size() > 0)
 		{
-			allModelData.push_back(modelData);
+			allModelData.emplace_back(modelData);
 			utils::ArrayUtils::eraseAll(remainingPoints, modelData.begin(), modelData.end());
 		}
 	}

@@ -35,7 +35,7 @@ using namespace lsl::utils;
 namespace lsl {
 namespace visual {
 
-const wxColour *LSLVisualizer2d::colours[] = {wxBLACK, wxRED, wxGREEN, wxBLUE};
+const wxColour *LSLVisualizer2d::colours[] = {wxBLACK, wxRED, wxGREEN, wxBLUE, wxCYAN};
 
 LSLVisualizer2d::LSLVisualizer2d(const string& title, const wxSize& windowSize) : LSLApp(title, windowSize),
 	initSizeSet(false), axisSize(3000)
@@ -136,6 +136,7 @@ void LSLVisualizer2d::repaint(wxDC& dc)
 	dc.SetBrush(*wxWHITE_BRUSH);
 
 	drawAxis(dc);
+	// drawRulers(dc);
 
 	size_t coloursSize = sizeof(colours) / sizeof(wxColour*);
 
@@ -153,6 +154,7 @@ void LSLVisualizer2d::repaint(wxDC& dc)
 	{
 		const Line2& line = lines[i];
 		drawLine(dc, line, 1, *colours[i % coloursSize]);
+		// drawLine(dc, line, 1, *wxRED);
 	}
 
 	// Draw lidar lines
@@ -161,6 +163,7 @@ void LSLVisualizer2d::repaint(wxDC& dc)
 	{
 		const LidarLine2& lidarLine = lidarLines[i];
 		drawLidarLine(dc, lidarLine, 1, *colours[i % coloursSize]);
+		// drawLidarLine(dc, lidarLine, 1, *wxRED);
 	}
 }
 
@@ -190,7 +193,32 @@ void LSLVisualizer2d::drawAxis(wxDC& dc)
 	dc.SetPen(*normalPen);
 }
 
+void LSLVisualizer2d::drawRulers(wxDC& dc)
+{
+	int w, h;
+	panel->GetSize(&w, &h);
+
+	// x ruler
+	dc.DrawLine(0, h - 5, w, h - 5);
+	for(int x = 1; x < 10; x += 1)
+	{
+		dc.DrawLine(x / 10.0 * w, h, x / 10.0 * w, h - 5);
+	}
+
+	// y ruler
+	dc.DrawLine(5, 0, 5, h);
+	for(int y = 1; y < 10; y += 1)
+	{
+		dc.DrawLine(0, y / 10.0 * h, 5, y / 10.0 * h);
+	}
+}
+
 void LSLVisualizer2d::drawPoint(wxDC& dc, const Vector2d& point, size_t size, const wxColour& colour)
+{
+	drawPoint(dc, point, size, colour, colour);
+}
+
+void LSLVisualizer2d::drawPoint(wxDC& dc, const Vector2d& point, size_t size, const wxColour& brushColour, const wxColour& penColour)
 {
 	double halfSize = 0.5 * size;
 
@@ -199,8 +227,9 @@ void LSLVisualizer2d::drawPoint(wxDC& dc, const Vector2d& point, size_t size, co
 	dx -= halfSize;
 	dy -= halfSize;
 
-	dc.SetPen(*wxThePenList->FindOrCreatePen(colour));
-	dc.SetBrush(*wxTheBrushList->FindOrCreateBrush(colour));
+	dc.SetBrush(*wxTheBrushList->FindOrCreateBrush(brushColour));
+	dc.SetPen(*wxThePenList->FindOrCreatePen(penColour));
+
 	dc.DrawRectangle(dx, dy, size, size);
 }
 
@@ -231,6 +260,11 @@ void LSLVisualizer2d::drawLine(wxDC& dc, const Line2& line, size_t size, const w
 
 	dc.SetPen(*wxThePenList->FindOrCreatePen(colour, size, wxPENSTYLE_DOT));
 	dc.DrawLine(dx1, dy1, dx2, dy2);
+
+	for(const Vector2d& point : line.getPoints())
+	{
+		drawPoint(dc, point, size, colour);
+	}
 }
 
 void LSLVisualizer2d::drawLidarLine(wxDC& dc, const LidarLine2& lidarLine, size_t size, const wxColour& colour)
@@ -239,11 +273,17 @@ void LSLVisualizer2d::drawLidarLine(wxDC& dc, const LidarLine2& lidarLine, size_
 	display.transformToDisplay(lidarLine.getEndPointA(), dx1, dy1);
 	display.transformToDisplay(lidarLine.getEndPointB(), dx2, dy2);
 
-	dc.SetPen(*wxThePenList->FindOrCreatePen(colour, size));
+	wxPenStyle style = wxPENSTYLE_SOLID;
+	if(!lidarLine.isVisible()) style = wxPENSTYLE_LONG_DASH;
+
+	dc.SetPen(*wxThePenList->FindOrCreatePen(colour, size, style));
 	dc.DrawLine(dx1, dy1, dx2, dy2);
 
-	drawPoint(dc, lidarLine.getEndPointA(), 8 * size, colour);
-	drawPoint(dc, lidarLine.getEndPointB(), 8 * size, colour);
+	drawPoint(dc, lidarLine.getEndPointA(), 8 * size, colour, *wxBLACK);
+
+	dc.SetPen(*wxThePenList->FindOrCreatePen(*wxBLACK, size, style));
+	dc.SetBrush(*wxTheBrushList->FindOrCreateBrush(colour));
+	dc.DrawCircle(dx2, dy2, 8 * size);
 }
 
 void LSLVisualizer2d::drawPointCloud(wxDC& dc, const containers::PointCloud<Vector2d> *pointCloud, size_t size, const wxColour& colour)

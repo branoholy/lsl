@@ -47,9 +47,11 @@ private:
 public:
 	LidarLine2(const Line2& line);
 	LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB);
+	LidarLine2(const std::vector<Vector2d>& points);
 
 	inline double getL() const { return l; }
 	inline double getAlpha() const { return alpha; }
+	void set(const Line2& line);
 
 	double getValue(double phi) const;
 
@@ -67,6 +69,8 @@ public:
 
 	double getPhiLow() const;
 	double getPhiHigh() const;
+
+	bool isVisible() const;
 
 	void transform(double angle, double tx, double ty);
 	void transform(double angle, double c, double s, double tx, double ty);
