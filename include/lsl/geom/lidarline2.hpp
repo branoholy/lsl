@@ -74,6 +74,7 @@ public:
 
 	void transform(double angle, double tx, double ty);
 	void transform(double angle, double c, double s, double tx, double ty);
+	static void transform(std::vector<LidarLine2>& lidarLines, double angle, double tx, double ty);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
 

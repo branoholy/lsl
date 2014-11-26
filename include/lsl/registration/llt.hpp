@@ -32,14 +32,23 @@ namespace registration {
 
 class LLT
 {
+private:
+	std::size_t evals;
+	bool converged;
+
 public:
-	void transform(std::vector<geom::LidarLine2>& lines, double phi, double tx, double ty);
-	void removeInvisible(std::vector<geom::LidarLine2>& lines);
+	void removeInvisible(std::vector<geom::LidarLine2>& lines) const;
+	double error(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines) const;
 
 public:
 	LLT();
 
-	double alignWithSOMA(const std::vector<geom::Vector2d>& target, const std::vector<geom::Vector2d>& source, double& phi, double& tx, double& ty) const;
+	inline std::size_t getEvaluationCount() const { return evals; }
+	inline bool hasConverged() const { return converged; }
+
+	double errorTransform(const std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2> sourceLines, double phi, double tx, double ty) const;
+	double alignWithSOMA(const std::vector<geom::Vector2d>& target, const std::vector<geom::Vector2d>& source, double& phi, double& tx, double& ty);
+	double alignWithSOMA(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, double& phi, double& tx, double& ty);
 };
 
 }}

@@ -144,6 +144,42 @@ void LidarLine2::transform(double angle, double c, double s, double tx, double t
 	}
 }
 
+void LidarLine2::transform(vector<LidarLine2>& lidarLines, double angle, double tx, double ty)
+{
+	double c = cos(angle);
+	double s = sin(angle);
+
+	vector<LidarLine2> linesToAdd;
+	for(LidarLine2& line : lidarLines)
+	{
+		line.transform(angle, c, s, tx, ty);
+
+		// Divide lines crossing x+ axis (could happened only after transformation)
+		double phiL = line.getPhiLow();
+		double phiH = line.getPhiHigh();
+
+		if(phiL > 0 && phiL < MathUtils::PI__TWO && phiH > MathUtils::THREE_PI__TWO && phiH < MathUtils::TWO_PI)
+		{
+			LidarLine2 lineDown = line;
+
+			if(phiL == line.getPhiA())
+			{
+				line.setPhiB(0);
+				lineDown.setPhiA(MathUtils::TWO_PI_EXCLUSIVE);
+			}
+			else
+			{
+				line.setPhiA(0);
+				lineDown.setPhiB(MathUtils::TWO_PI_EXCLUSIVE);
+			}
+
+			linesToAdd.push_back(lineDown);
+		}
+	}
+
+	lidarLines.insert(lidarLines.end(), linesToAdd.begin(), linesToAdd.end());
+}
+
 double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh) const
 {
 	double l2 = l * l;

@@ -46,12 +46,14 @@ private:
 	Speciman *specimen;
 	double **population;
 
+	std::size_t evals;
 	bool converged;
 
 public:
 	SOMA(std::size_t dimension, double mass, double step, double prt, std::size_t np, std::size_t migration, double acceptedError);
 	~SOMA();
 
+	inline std::size_t getEvaluationCount() const { return evals; }
 	inline bool hasConverged() const { return converged; }
 
 	double* minimize(std::function<double(const double*)> errorFunction, double& output);

@@ -52,6 +52,9 @@ public:
 	void loadPCD(const std::string& fileName);
 	void savePCD(const std::string& fileName) const;
 
+	void transform2D(double angle, double tx, double ty);
+	void transform2D(double c, double s, double tx, double ty);
+
 	template<typename T_>
 	friend std::ostream& operator<<(std::ostream& out, const PointCloud<T_>& pointCloud);
 };
@@ -107,6 +110,21 @@ void PointCloud<T>::savePCD(const std::string& fileName) const
 
 		header->save(pcdFile);
 		io::PCDStream::saveData(pcdFile, this->cbegin(), this->cend());
+	}
+}
+
+template<typename T>
+void PointCloud<T>::transform2D(double angle, double tx, double ty)
+{
+	transform2D(cos(angle), sin(angle), tx, ty);
+}
+
+template<typename T>
+void PointCloud<T>::transform2D(double c, double s, double tx, double ty)
+{
+	for(T& point : *this)
+	{
+		point.transform2D(c, s, tx, ty);
 	}
 }
 

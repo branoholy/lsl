@@ -67,6 +67,11 @@ void LSLVisualizer2d::addLidarLine(const LidarLine2& lidarLine)
 	lidarLines.push_back(lidarLine);
 }
 
+void LSLVisualizer2d::addLidarLines(const std::vector<LidarLine2>& lidarLines)
+{
+	this->lidarLines.insert(this->lidarLines.end(), lidarLines.begin(), lidarLines.end());
+}
+
 void LSLVisualizer2d::initGUI(Window *window)
 {
 	window->Maximize();

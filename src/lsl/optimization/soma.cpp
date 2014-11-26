@@ -33,7 +33,7 @@ namespace lsl {
 namespace optimization {
 
 SOMA::SOMA(size_t dimension, double mass, double step, double prt, size_t np, size_t migration, double acceptedError) :
-	dimension(dimension), oi(dimension + 1), mass(mass), step(step), prt(prt), np(np), migration(migration), acceptedError(acceptedError), converged(false)
+	dimension(dimension), oi(dimension + 1), mass(mass), step(step), prt(prt), np(np), migration(migration), acceptedError(acceptedError), evals(0), converged(false)
 {
 	specimen = new Speciman[dimension];
 	population = ArrayUtils::create2dArray<double>(np, oi);
@@ -113,6 +113,7 @@ void SOMA::initNormalPopulation(const double *mean, const double *sigmas)
 
 double* SOMA::minimize(function<double(const double*)> errorFunction, double& output)
 {
+	evals = 0;
 	converged = false;
 
 	size_t indSize = sizeof(double) * dimension;
@@ -127,6 +128,7 @@ double* SOMA::minimize(function<double(const double*)> errorFunction, double& ou
 	for(size_t i = 0; i < np; i++)
 	{
 		population[i][oi] = errorFunction(population[i]);
+		evals++;
 	}
 
 	double *leader;
@@ -181,6 +183,7 @@ double* SOMA::minimize(function<double(const double*)> errorFunction, double& ou
 					}
 				}
 				double output = errorFunction(tmpInd);
+				evals++;
 
 				if(output < bestOutput)
 				{

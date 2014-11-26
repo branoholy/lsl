@@ -78,6 +78,7 @@ public:
 	void addPointCloud(const containers::PointCloud<geom::Vector2d> *pointCloud);
 	void addLine(const geom::Line2& line);
 	void addLidarLine(const geom::LidarLine2& lidarLine);
+	void addLidarLines(const std::vector<geom::LidarLine2>& lidarLines);
 
 };
 
