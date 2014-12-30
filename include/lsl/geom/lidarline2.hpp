@@ -45,6 +45,7 @@ private:
 	Vector2d endPointB;
 
 public:
+	LidarLine2(double l, double alpha, double phiA, double phiB);
 	LidarLine2(const Line2& line);
 	LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB);
 	LidarLine2(const std::vector<Vector2d>& points);
@@ -77,6 +78,8 @@ public:
 	static void transform(std::vector<LidarLine2>& lidarLines, double angle, double tx, double ty);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
+
+	static double sumDf(const std::vector<LidarLine2>& lidarLines);
 
 	friend std::ostream& operator<<(std::ostream& out, const LidarLine2& lidarLine);
 };

@@ -113,6 +113,11 @@ void SOMA::initNormalPopulation(const double *mean, const double *sigmas)
 
 double* SOMA::minimize(function<double(const double*)> errorFunction, double& output)
 {
+	return minimize(errorFunction, nullptr, output);
+}
+
+double* SOMA::minimize(function<double(const double*)> errorFunction, const double* leaderTip, double& output)
+{
 	evals = 0;
 	converged = false;
 
@@ -125,6 +130,13 @@ double* SOMA::minimize(function<double(const double*)> errorFunction, double& ou
 	mt19937 rng(rd());
 	uniform_real_distribution<> dist(0, 1);
 
+	double leaderTipOutput = 0;
+	if(leaderTip != nullptr)
+	{
+		leaderTipOutput = errorFunction(leaderTip);
+		evals++;
+	}
+
 	for(size_t i = 0; i < np; i++)
 	{
 		population[i][oi] = errorFunction(population[i]);
@@ -135,6 +147,7 @@ double* SOMA::minimize(function<double(const double*)> errorFunction, double& ou
 	for(size_t lap = 0; ; lap++)
 	{
 		size_t leaderIndex = 0;
+		size_t worstIndex = 0; // not needed
 		double leaderOutput, worstOutput;
 		leaderOutput = worstOutput = population[0][oi];
 		for(size_t i = 1; i < np; i++)
@@ -148,10 +161,22 @@ double* SOMA::minimize(function<double(const double*)> errorFunction, double& ou
 			if(output > worstOutput)
 			{
 				worstOutput = output;
+				worstIndex = i;
 			}
 		}
 		leader = population[leaderIndex];
-		// cout << lap << ' ' << leaderOutput << endl;
+
+		if(leaderTip != nullptr && leaderTipOutput < leaderOutput)
+		{
+			memcpy(leader, leaderTip, indSize);
+			leaderOutput = leaderTipOutput;
+		}
+
+		cout << lap << ". lap, leader: " << leaderOutput << " = f(";
+		ArrayUtils::printArray(cout, leader, dimension);
+		cout << "), worst: " << worstOutput << " = f(";
+		ArrayUtils::printArray(cout, population[worstIndex], dimension);
+		cout << ')' << endl;
 
 		if(abs(leaderOutput - worstOutput) <= acceptedError)
 		{

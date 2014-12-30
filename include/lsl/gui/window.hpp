@@ -26,17 +26,21 @@
 #include <vector>
 
 #include <wx/frame.h>
+#include <wx/window.h>
 
-#include "lsl/system/event.hpp"
+#include "mouseevents.hpp"
 
 namespace lsl {
 namespace gui {
 
-class Window : public wxFrame
+class Window : public wxFrame, public MouseEvents
 {
 private:
-	bool isExitOnClear;
+	bool isExitOnKeysClear;
 	std::vector<int> exitOnKeys;
+
+	bool isExitOnControlsClear;
+	std::vector<wxWindow*> exitOnControls;
 
 	void exitOnEscHook(wxKeyEvent& e);
 
@@ -51,19 +55,42 @@ public:
 
 	template<typename ...Args>
 	void setExitOn(int key, Args... keys);
+
+	inline bool getExitOnControl(wxWindow *control) const { return std::find(exitOnControls.begin(), exitOnControls.end(), control) != exitOnControls.end(); }
+	void setExitOnControl(wxWindow *control);
+
+	template<typename ...Args>
+	void setExitOnControl(wxWindow *control, Args... controls);
+
+	void addExitOnControl(wxWindow *control);
+
+	bool hasAnyExitOnControlFocus() const;
 };
 
 template<typename ...Args>
 void Window::setExitOn(int key, Args... keys)
 {
-	if(!isExitOnClear)
+	if(!isExitOnKeysClear)
 	{
 		exitOnKeys.clear();
-		isExitOnClear = true;
+		isExitOnKeysClear = true;
 	}
 
 	exitOnKeys.push_back(key);
 	setExitOn(keys...);
+}
+
+template<typename ...Args>
+void Window::setExitOnControl(wxWindow *control, Args... controls)
+{
+	if(!isExitOnControlsClear)
+	{
+		exitOnControls.clear();
+		isExitOnControlsClear = true;
+	}
+
+	exitOnControls.push_back(control);
+	setExitOnControl(controls...);
 }
 
 }}

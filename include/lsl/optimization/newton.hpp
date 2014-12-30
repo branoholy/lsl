@@ -19,52 +19,38 @@
  *
  */
 
-#ifndef LSL_OPTIMIZATION_SOMA_HPP
-#define LSL_OPTIMIZATION_SOMA_HPP
+#ifndef LSL_OPTIMIZATION_NEWTON_HPP
+#define LSL_OPTIMIZATION_NEWTON_HPP
 
 #include <functional>
+#include <Eigen/Dense>
 
 namespace lsl {
 namespace optimization {
 
-class SOMA
+class Newton
 {
 private:
-	typedef struct { double low, high; } Speciman;
-
-private:
-	const std::size_t dimension;
-	const std::size_t oi;
-	double mass;
-	double step;
-	double prt;
-	std::size_t np;
-	std::size_t migration;
-	double acceptedError;
-
-	Speciman *specimen;
-	double **population;
+	std::size_t dimension;
+	double *deltas;
+	double *gammas;
+	double precision;
 
 	std::size_t evals;
 	bool converged;
 
+	double inputDistance(const double *input1, const double *input2) const;
+	void getGradientAndHessian(std::function<double(const double*)> f, double *input, double output, Eigen::VectorXd& gradient, Eigen::MatrixXd& hessian);
+
 public:
-	SOMA(std::size_t dimension, double mass, double step, double prt, std::size_t np, std::size_t migration, double acceptedError);
-	~SOMA();
+	Newton(std::size_t dimension, double *deltas, double *gammas, double precision);
 
 	inline std::size_t getEvaluationCount() const { return evals; }
 	inline bool hasConverged() const { return converged; }
 
-	double* minimize(std::function<double(const double*)> errorFunction, double& output);
-	double* minimize(std::function<double(const double*)> errorFunction, const double *leaderTip, double& output);
-
-	void setSpecimen(std::size_t dimension, double low, double high);
-	void setSpecimen(const double specimen[][2]);
-
-	void initUniformPopulation();
-	void initNormalPopulation(const double *mean, const double *sigmas);
+	double* minimize(std::function<double(const double*)> errorFunction, const double *guess, double& output);
 };
 
 }}
 
-#endif // LSL_OPTIMIZATION_SOMA_HPP
+#endif // LSL_OPTIMIZATION_NEWTON_HPP

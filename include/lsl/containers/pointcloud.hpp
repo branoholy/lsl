@@ -49,7 +49,16 @@ public:
 
 	inline io::PCDHeader* getHeader() const { return header; }
 
+	/**
+	 * @brief Load a PCD file.
+	 * @param fileName Path to the file.
+	 */
 	void loadPCD(const std::string& fileName);
+
+	/**
+	 * @brief Save points to a PCD file.
+	 * @param fileName Path to the save location.
+	 */
 	void savePCD(const std::string& fileName) const;
 
 	void transform2D(double angle, double tx, double ty);

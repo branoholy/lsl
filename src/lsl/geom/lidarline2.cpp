@@ -31,6 +31,13 @@ using namespace lsl::utils;
 namespace lsl {
 namespace geom {
 
+LidarLine2::LidarLine2(double l, double alpha, double phiA, double phiB) :
+	l(l), alpha(alpha)
+{
+	setPhiA(phiA);
+	setPhiB(phiB);
+}
+
 LidarLine2::LidarLine2(const Line2& line)
 {
 	set(line);
@@ -208,6 +215,17 @@ double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh)
 	}
 
 	return errHigh - errLow;
+}
+
+double LidarLine2::sumDf(const std::vector<LidarLine2>& lidarLines)
+{
+	double sum = 0;
+	for(const LidarLine2& line : lidarLines)
+	{
+		sum += line.getPhiHigh() - line.getPhiLow();
+	}
+
+	return sum;
 }
 
 ostream& operator<<(ostream& out, const LidarLine2& lidarLine)

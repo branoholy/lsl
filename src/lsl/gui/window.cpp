@@ -21,14 +21,16 @@
 
 #include "lsl/gui/window.hpp"
 
+#include <iostream>
+
 using namespace std;
 using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
 
-Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	isExitOnClear(true)
+Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size), MouseEvents(GetEventHandler()),
+	isExitOnKeysClear(true), isExitOnControlsClear(true)
 {
 	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
 
@@ -38,19 +40,46 @@ Window::Window(const wxString& title, const wxSize& size) : wxFrame(NULL, wxID_A
 
 void Window::exitOnEscHook(wxKeyEvent& e)
 {
-	if(getExitOn(e.GetKeyCode())) Close(true);
-	// e.Skip(); // TODO: Test if this is still needed.
+	if(getExitOn(e.GetKeyCode()) && hasAnyExitOnControlFocus()) Close(true);
+	else e.Skip();
 }
 
 void Window::setExitOn(int key)
 {
-	if(!isExitOnClear)
+	if(!isExitOnKeysClear)
 	{
 		exitOnKeys.clear();
 	}
 
 	exitOnKeys.push_back(key);
-	isExitOnClear = false;
+	isExitOnKeysClear = false;
+}
+
+void Window::setExitOnControl(wxWindow *control)
+{
+	if(!isExitOnControlsClear)
+	{
+		exitOnControls.clear();
+	}
+
+	exitOnControls.push_back(control);
+	isExitOnControlsClear = false;
+}
+
+void Window::addExitOnControl(wxWindow *control)
+{
+	exitOnControls.push_back(control);
+	isExitOnControlsClear = false;
+}
+
+bool Window::hasAnyExitOnControlFocus() const
+{
+	for(wxWindow *control : exitOnControls)
+	{
+		if(control->HasFocus()) return true;
+	}
+
+	return false;
 }
 
 }}

@@ -22,6 +22,7 @@
 #include "lsl/visual/lslvisualizer2d.hpp"
 
 #include "lsl/utils/mathutils.hpp"
+#include "lsl/registration/llt.hpp"
 
 using namespace std;
 using namespace std::placeholders;
@@ -38,7 +39,7 @@ namespace visual {
 const wxColour *LSLVisualizer2d::colours[] = {wxBLACK, wxRED, wxGREEN, wxBLUE, wxCYAN};
 
 LSLVisualizer2d::LSLVisualizer2d(const string& title, const wxSize& windowSize) : LSLApp(title, windowSize),
-	initSizeSet(false), axisSize(3000)
+	transControls(false), initSizeSet(false), axisSize(3000), transformationId(0)
 {
 	setAxisAngle(MathUtils::PI / 2);
 
@@ -52,7 +53,7 @@ void LSLVisualizer2d::setAxisAngle(double axisAngle)
 	axisAngleSin = sin(axisAngle);
 }
 
-void LSLVisualizer2d::addPointCloud(const containers::PointCloud<Vector2d> *pointCloud)
+void LSLVisualizer2d::addPointCloud(containers::PointCloud<Vector2d> *pointCloud)
 {
 	pointClouds.push_back(pointCloud);
 }
@@ -72,8 +73,19 @@ void LSLVisualizer2d::addLidarLines(const std::vector<LidarLine2>& lidarLines)
 	this->lidarLines.insert(this->lidarLines.end(), lidarLines.begin(), lidarLines.end());
 }
 
+void LSLVisualizer2d::addLidarLineClouds(const std::vector<LidarLine2>& lidarLineCloud)
+{
+	lidarLineClouds.push_back(lidarLineCloud);
+}
+
+void LSLVisualizer2d::setTransformations(const std::vector<double>& transformations)
+{
+	this->transformations = transformations;
+}
+
 void LSLVisualizer2d::initGUI(Window *window)
 {
+	window->SetMinSize(wxSize(800, 450));
 	window->Maximize();
 	window->setExitOn(WXK_ESCAPE, 'Q');
 
@@ -90,17 +102,29 @@ void LSLVisualizer2d::initGUI(Window *window)
 		e.Skip();
 	};
 
-	panel = new RepaintingPanel(window);
-	panel->SetBackgroundColour(*wxWHITE);
+	// Main sizer (splits window into left transfomation controls and panel with points)
+	mainSizer = new wxBoxSizer(wxHORIZONTAL);
 
-	panel->onRepaint += bind(&LSLVisualizer2d::repaint, this, _1);
+	// Transformation controls
+	transControlsSizer = new wxGridSizer(2, 2, 5, 5);
+	transControlsSizer->SetMinSize(wxSize(250, 250));
+	if(transControls) initTransContols(window);
 
-	panel->onLeftMouseDown += [this](wxMouseEvent& e)
+	mainSizer->Add(transControlsSizer, 1, wxSHAPED | wxTOP | wxBOTTOM | wxLEFT, 10);
+
+	// Panel with points
+	repaintingPanel = new RepaintingPanel(window);
+	repaintingPanel->SetBackgroundColour(*wxWHITE);
+	repaintingPanel->SetFocus();
+
+	repaintingPanel->onRepaint += bind(&LSLVisualizer2d::repaint, this, _1);
+
+	repaintingPanel->onLeftMouseDown += [this](wxMouseEvent& e)
 	{
 		mouseMoveStart = e.GetPosition();
 	};
 
-	panel->onMouseMove += [this](wxMouseEvent& e)
+	repaintingPanel->onMouseMove += [this](wxMouseEvent& e)
 	{
 		if(e.LeftIsDown())
 		{
@@ -108,17 +132,17 @@ void LSLVisualizer2d::initGUI(Window *window)
 			display.getPosition()[1] += (e.GetY() - mouseMoveStart.y) / display.getZoom();
 			mouseMoveStart = e.GetPosition();
 
-			panel->Refresh();
+			repaintingPanel->Refresh();
 		}
 	};
 
-	panel->onMouseDoubleClick += [this](wxMouseEvent& mouseEvent)
+	repaintingPanel->onMouseDoubleClick += [this](wxMouseEvent& mouseEvent)
 	{
 		if(mouseEvent.LeftDClick() || mouseEvent.RightDClick())
 		{
 			int width = 0;
 			int height = 0;
-			panel->GetClientSize(&width, &height);
+			repaintingPanel->GetClientSize(&width, &height);
 
 			double clickX, clickY;
 			display.transformFromDisplay(mouseEvent.GetPosition(), clickX, clickY);
@@ -131,9 +155,117 @@ void LSLVisualizer2d::initGUI(Window *window)
 			display.getPosition()[0] = zeroX;
 			display.getPosition()[1] = zeroY;
 
-			panel->Refresh();
+			repaintingPanel->Refresh();
 		}
 	};
+
+	repaintingPanel->onKeyUp += [this](wxKeyEvent& keyEvent)
+	{
+		if(keyEvent.GetKeyCode() == 'P')
+		{
+			if(transformations.size() > 3 * transformationId)
+			{
+				double phi = transformations.at(3 * transformationId);
+				double tx = transformations.at(3 * transformationId + 1);
+				double ty = transformations.at(3 * transformationId + 2);
+				transformationId++;
+
+				if(pointClouds.size() > 1) pointClouds.at(1)->transform2D(phi, tx, ty);
+				if(lidarLineClouds.size() > 1)
+				{
+					registration::LLT llt;
+					LidarLine2::transform(lidarLineClouds.at(1), phi, tx, ty);
+					llt.removeInvisible(lidarLineClouds.at(1));
+				}
+
+				repaintingPanel->Refresh();
+			}
+			else
+			{
+				cout << "No more transformations available." << endl;
+			}
+		}
+	};
+
+	mainSizer->Add(repaintingPanel, 3, wxEXPAND | wxALL, 10);
+
+	window->addExitOnControl(repaintingPanel);
+	window->onLeftMouseClick += [this](wxMouseEvent&)
+	{
+		// Workaround: Remove focus of text controls when clicking into main sizer and do not make TAB traversal.
+		repaintingPanel->SetFocus();
+
+		if(phiValue != nullptr) phiValue->SetSelection(0, 0);
+		if(phiStep != nullptr) phiStep->SetSelection(0, 0);
+
+		if(txValue != nullptr) txValue->SetSelection(0, 0);
+		if(txStep != nullptr) txStep->SetSelection(0, 0);
+
+		if(tyValue != nullptr) tyValue->SetSelection(0, 0);
+		if(tyStep != nullptr) tyStep->SetSelection(0, 0);
+	};
+
+	window->SetSizer(mainSizer);
+}
+
+void LSLVisualizer2d::initTransContols(Window *window)
+{
+	// Panel for phi*ty function
+	transPhiTy = new RepaintingPanel(window);
+	transPhiTy->SetBackgroundColour(*wxBLUE);
+
+	transControlsSizer->Add(transPhiTy, 1, wxEXPAND);
+
+	// Panel for tx*ty
+	transTxTy = new RepaintingPanel(window);
+	transTxTy->SetBackgroundColour(*wxGREEN);
+
+	transControlsSizer->Add(transTxTy, 1, wxEXPAND);
+
+	// Sizer for params controls
+	wxFlexGridSizer *paramsSizer = new wxFlexGridSizer(3, 3, 4, 4);
+	paramsSizer->AddGrowableCol(1, 1);
+
+	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "phi:"), 0, wxALIGN_CENTER_VERTICAL);
+	phiValue = new wxTextCtrl(window, wxID_ANY, "0.0");
+	phiValue->SetMinSize(wxSize(1, wxDefaultCoord));
+	paramsSizer->Add(phiValue, 1, wxEXPAND);
+
+	phiStep = new wxTextCtrl(window, wxID_ANY, "0.01", wxDefaultPosition, wxSize(40, wxDefaultCoord));
+	paramsSizer->Add(phiStep, 0);
+
+	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "tx:"), 0, wxALIGN_CENTER_VERTICAL);
+	txValue = new wxTextCtrl(window, wxID_ANY, "0.0");
+	txValue->SetMinSize(wxSize(1, wxDefaultCoord));
+	paramsSizer->Add(txValue, 1, wxEXPAND);
+
+	txStep = new wxTextCtrl(window, wxID_ANY, "1.0", wxDefaultPosition, wxSize(40, wxDefaultCoord));
+	paramsSizer->Add(txStep, 0);
+
+	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "ty:"), 0, wxALIGN_CENTER_VERTICAL);
+	tyValue = new wxTextCtrl(window, wxID_ANY, "0.0");
+	tyValue->SetMinSize(wxSize(1, wxDefaultCoord));
+	paramsSizer->Add(tyValue, 1, wxEXPAND);
+
+	tyStep = new wxTextCtrl(window, wxID_ANY, "1.0", wxDefaultPosition, wxSize(40, wxDefaultCoord));
+	paramsSizer->Add(tyStep, 0);
+
+	transControlsSizer->Add(paramsSizer, 1, wxEXPAND);
+
+	// Panel for tx*phi
+	transTxPhi = new RepaintingPanel(window);
+	transTxPhi->SetBackgroundColour(*wxRED);
+
+	transControlsSizer->Add(transTxPhi, 1, wxEXPAND);
+
+	window->addExitOnControl(transPhiTy);
+	window->addExitOnControl(transTxTy);
+	window->addExitOnControl(transTxPhi);
+}
+
+void LSLVisualizer2d::showTransControls()
+{
+	transControls = true;
 }
 
 void LSLVisualizer2d::repaint(wxDC& dc)
@@ -163,12 +295,13 @@ void LSLVisualizer2d::repaint(wxDC& dc)
 	}
 
 	// Draw lidar lines
-	size_t lidarLinesSize = lidarLines.size();
-	for(size_t i = 0; i < lidarLinesSize; i++)
+	drawLidarLineCloud(dc, lidarLines, 1);
+
+	// Draw lidar lines clouds
+	size_t lidarLineCloudsSize = lidarLineClouds.size();
+	for(size_t i = 0; i < lidarLineCloudsSize; i++)
 	{
-		const LidarLine2& lidarLine = lidarLines[i];
-		drawLidarLine(dc, lidarLine, 1, *colours[i % coloursSize]);
-		// drawLidarLine(dc, lidarLine, 1, *wxRED);
+		drawLidarLineCloud(dc, lidarLineClouds.at(i), 1, *colours[i % coloursSize]);
 	}
 }
 
@@ -201,7 +334,7 @@ void LSLVisualizer2d::drawAxis(wxDC& dc)
 void LSLVisualizer2d::drawRulers(wxDC& dc)
 {
 	int w, h;
-	panel->GetSize(&w, &h);
+	repaintingPanel->GetSize(&w, &h);
 
 	// x ruler
 	dc.DrawLine(0, h - 5, w, h - 5);
@@ -291,11 +424,31 @@ void LSLVisualizer2d::drawLidarLine(wxDC& dc, const LidarLine2& lidarLine, size_
 	dc.DrawCircle(dx2, dy2, 8 * size);
 }
 
-void LSLVisualizer2d::drawPointCloud(wxDC& dc, const containers::PointCloud<Vector2d> *pointCloud, size_t size, const wxColour& colour)
+void LSLVisualizer2d::drawPointCloud(wxDC& dc, const PointCloud<Vector2d> *pointCloud, size_t size, const wxColour& colour)
 {
 	for(const Vector2d& point : *pointCloud)
 	{
 		drawPoint(dc, point, size, colour);
+	}
+}
+
+void LSLVisualizer2d::drawLidarLineCloud(wxDC& dc, const vector<LidarLine2>& lineCloud, size_t size)
+{
+	size_t coloursSize = sizeof(colours) / sizeof(wxColour*);
+	size_t cloudSize = lineCloud.size();
+
+	for(size_t i = 0; i < cloudSize; i++)
+	{
+		const LidarLine2& lidarLine = lineCloud[i];
+		drawLidarLine(dc, lidarLine, size, *colours[i % coloursSize]);
+	}
+}
+
+void LSLVisualizer2d::drawLidarLineCloud(wxDC& dc, const vector<LidarLine2>& lineCloud, size_t size, const wxColour& colour)
+{
+	for(const LidarLine2& line : lineCloud)
+	{
+		drawLidarLine(dc, line, size, colour);
 	}
 }
 

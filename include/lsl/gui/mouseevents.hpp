@@ -39,6 +39,10 @@ private:
 	void evtMiddleDown(wxMouseEvent& e);
 	void evtRightDown(wxMouseEvent& e);
 
+	void evtLeftUp(wxMouseEvent& e);
+	void evtMiddleUp(wxMouseEvent& e);
+	void evtRightUp(wxMouseEvent& e);
+
 	void evtLeftDClick(wxMouseEvent& e);
 	void evtMiddleDClick(wxMouseEvent& e);
 	void evtRightDClick(wxMouseEvent& e);
@@ -48,6 +52,16 @@ public:
 	system::Event<void(wxMouseEvent&)> onLeftMouseDown;
 	system::Event<void(wxMouseEvent&)> onMiddleMouseDown;
 	system::Event<void(wxMouseEvent&)> onRightMouseDown;
+
+	system::Event<void(wxMouseEvent&)> onMouseUp;
+	system::Event<void(wxMouseEvent&)> onLeftMouseUp;
+	system::Event<void(wxMouseEvent&)> onMiddleMouseUp;
+	system::Event<void(wxMouseEvent&)> onRightMouseUp;
+
+	system::Event<void(wxMouseEvent&)> onMouseClick;
+	system::Event<void(wxMouseEvent&)> onLeftMouseClick;
+	system::Event<void(wxMouseEvent&)> onMiddleMouseClick;
+	system::Event<void(wxMouseEvent&)> onRightMouseClick;
 
 	system::Event<void(wxMouseEvent&)> onMouseDoubleClick;
 	system::Event<void(wxMouseEvent&)> onLeftMouseDoubleClick;

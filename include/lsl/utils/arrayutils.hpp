@@ -57,7 +57,7 @@ public:
 	static void delete2dArray(T ***array, std::size_t rowCount, std::size_t columnCount);
 
 	template <typename T>
-	static void printArray(const T *array, std::size_t size);
+	static void printArray(std::ostream& out, const T *array, std::size_t size);
 
 	template <typename T>
 	static void getMinMaxValues(const T **array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold = std::numeric_limits<T>::min());
@@ -144,14 +144,16 @@ void ArrayUtils::delete2dArray(T ***array, std::size_t rowCount, std::size_t col
 }
 
 template <typename T>
-void ArrayUtils::printArray(const T* array, std::size_t size)
+void ArrayUtils::printArray(std::ostream& out, const T* array, std::size_t size)
 {
-	std::cout << array[0];
-	for(std::size_t i = 1; i < size; i++)
+	if(size > 0)
 	{
-		std::cout << ',' << ' ' << array[i];
+		out << array[0];
+		for(std::size_t i = 1; i < size; i++)
+		{
+			out << ',' << ' ' << array[i];
+		}
 	}
-	std::cout << std::endl;
 }
 
 template <typename T>

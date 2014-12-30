@@ -33,6 +33,10 @@ MouseEvents::MouseEvents(wxEvtHandler *evtHandler)
 	evtHandler->Bind(wxEVT_MIDDLE_DOWN, &MouseEvents::evtMiddleDown, this);
 	evtHandler->Bind(wxEVT_RIGHT_DOWN, &MouseEvents::evtRightDown, this);
 
+	evtHandler->Bind(wxEVT_LEFT_UP, &MouseEvents::evtLeftUp, this);
+	evtHandler->Bind(wxEVT_MIDDLE_UP, &MouseEvents::evtMiddleUp, this);
+	evtHandler->Bind(wxEVT_RIGHT_UP, &MouseEvents::evtRightUp, this);
+
 	evtHandler->Bind(wxEVT_LEFT_DCLICK, &MouseEvents::evtLeftDClick, this);
 	evtHandler->Bind(wxEVT_MIDDLE_DCLICK, &MouseEvents::evtMiddleDClick, this);
 	evtHandler->Bind(wxEVT_RIGHT_DCLICK, &MouseEvents::evtRightDClick, this);
@@ -44,18 +48,51 @@ void MouseEvents::evtLeftDown(wxMouseEvent &e)
 {
 	onMouseDown(e);
 	onLeftMouseDown(e);
+	e.Skip();
 }
 
 void MouseEvents::evtMiddleDown(wxMouseEvent &e)
 {
 	onMouseDown(e);
 	onMiddleMouseDown(e);
+	e.Skip();
 }
 
 void MouseEvents::evtRightDown(wxMouseEvent &e)
 {
 	onMouseDown(e);
 	onRightMouseDown(e);
+	e.Skip();
+}
+
+void MouseEvents::evtLeftUp(wxMouseEvent &e)
+{
+	onMouseClick(e);
+	onLeftMouseClick(e);
+
+	onMouseUp(e);
+	onLeftMouseUp(e);
+	e.Skip();
+}
+
+void MouseEvents::evtMiddleUp(wxMouseEvent &e)
+{
+	onMouseClick(e);
+	onMiddleMouseClick(e);
+
+	onMouseUp(e);
+	onMiddleMouseUp(e);
+	e.Skip();
+}
+
+void MouseEvents::evtRightUp(wxMouseEvent &e)
+{
+	onMouseClick(e);
+	onRightMouseClick(e);
+
+	onMouseUp(e);
+	onRightMouseUp(e);
+	e.Skip();
 }
 
 void MouseEvents::evtLeftDClick(wxMouseEvent &e)

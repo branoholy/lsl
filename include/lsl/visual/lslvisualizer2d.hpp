@@ -41,7 +41,22 @@ class LSLVisualizer2d : public gui::LSLApp
 private:
 	static const wxColour *colours[];
 
-	gui::RepaintingPanel *panel;
+	wxSizer *mainSizer;
+
+	bool transControls;
+	wxSizer *transControlsSizer;
+	gui::RepaintingPanel *transPhiTy;
+	gui::RepaintingPanel *transTxTy;
+	gui::RepaintingPanel *transTxPhi;
+
+	wxTextCtrl *phiValue;
+	wxTextCtrl *phiStep;
+	wxTextCtrl *txValue;
+	wxTextCtrl *txStep;
+	wxTextCtrl *tyValue;
+	wxTextCtrl *tyStep;
+
+	gui::RepaintingPanel *repaintingPanel;
 
 	Display2d display;
 	bool initSizeSet;
@@ -53,9 +68,13 @@ private:
 
 	wxPoint mouseMoveStart;
 
-	std::vector<const containers::PointCloud<geom::Vector2d>*> pointClouds;
+	std::vector<containers::PointCloud<geom::Vector2d>*> pointClouds;
 	std::vector<geom::Line2> lines;
 	std::vector<geom::LidarLine2> lidarLines;
+	std::vector<std::vector<geom::LidarLine2>> lidarLineClouds;
+
+	std::size_t transformationId;
+	std::vector<double> transformations;
 
 	void initGUI(gui::Window *window);
 	void repaint(wxDC& dc);
@@ -68,6 +87,10 @@ private:
 	void drawLine(wxDC& dc, const geom::Line2& line, std::size_t size = 1, const wxColour& colour = *wxBLACK);
 	void drawLidarLine(wxDC& dc, const geom::LidarLine2& lidarLine, std::size_t size = 1, const wxColour& colour = *wxBLACK);
 	void drawPointCloud(wxDC& dc, const containers::PointCloud<geom::Vector2d> *pointCloud, size_t size = 1, const wxColour& colour = *wxBLACK);
+	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, std::size_t size);
+	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, std::size_t size, const wxColour& colour);
+
+	void initTransContols(gui::Window *window);
 
 public:
 	LSLVisualizer2d(const std::string& title = "LSL Visualizer 2D", const wxSize& windowSize = wxDefaultSize);
@@ -75,11 +98,15 @@ public:
 	inline double getAxisAngle() const { return axisAngle; }
 	void setAxisAngle(double axisAngle);
 
-	void addPointCloud(const containers::PointCloud<geom::Vector2d> *pointCloud);
+	void addPointCloud(containers::PointCloud<geom::Vector2d>* pointCloud);
 	void addLine(const geom::Line2& line);
 	void addLidarLine(const geom::LidarLine2& lidarLine);
 	void addLidarLines(const std::vector<geom::LidarLine2>& lidarLines);
+	void addLidarLineClouds(const std::vector<geom::LidarLine2>& lidarLineCloud);
 
+	void setTransformations(const std::vector<double>& transformations);
+
+	void showTransControls();
 };
 
 }}
