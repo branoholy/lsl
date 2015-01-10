@@ -19,39 +19,28 @@
  *
  */
 
-#include "lsl/gui/window.hpp"
-
-#include <iostream>
+#include "lsl/gui/events/sizeevents.hpp"
 
 using namespace std;
 using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
+namespace events {
 
-Window::Window(const wxString& title, const wxSize& size) :
-	wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), SizeEvents(this),
-	isExitOnKeysClear(true)
+SizeEvents::SizeEvents(const wxWindow *window) : SizeEvents(window->GetEventHandler())
 {
-	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
 }
 
-void Window::exitOnEscHook(wxKeyEvent& e)
+SizeEvents::SizeEvents(wxEvtHandler *evtHandler)
 {
-	if(getExitOn(e.GetKeyCode())) Close(true);
-	else e.Skip();
+	evtHandler->Bind(wxEVT_SIZE, &SizeEvents::evtSize, this);
 }
 
-void Window::setExitOn(int key)
+void SizeEvents::evtSize(wxSizeEvent &e)
 {
-	if(!isExitOnKeysClear)
-	{
-		exitOnKeys.clear();
-	}
-
-	exitOnKeys.push_back(key);
-	isExitOnKeysClear = false;
+	if(onSizeChanged.isEmpty()) e.Skip();
+	else onSizeChanged(e);
 }
 
-}}
+}}}

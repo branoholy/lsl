@@ -39,6 +39,9 @@ public:
 private:
 	std::size_t evals;
 	bool converged;
+	double sumOfErrors;
+	double coverFactor;
+	double coverAngleFactor;
 
 	void iterLines(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, iterFunc f) const;
 
@@ -48,11 +51,17 @@ public:
 	inline std::size_t getEvaluationCount() const { return evals; }
 	inline bool hasConverged() const { return converged; }
 
+	inline double getSumOfErrors() const { return sumOfErrors; }
+	inline double getCoverFactor() const { return coverFactor; }
+	inline double getCoverAngleFactor() const { return coverAngleFactor; }
+
 	void detectLines(const std::vector<geom::Vector2d>& target, const std::vector<geom::Vector2d>& source, std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2>& sourceLines) const;
 	void removeInvisible(std::vector<geom::LidarLine2>& lines) const;
-	double error(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines) const;
+	double error(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines);
 
-	double errorTransform(const std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2> sourceLines, double phi, double tx, double ty) const;
+	double errorTransform(const std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2> sourceLines, double phi, double tx, double ty);
+
+	std::vector<geom::Vector2d> errorAreas(const std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2> sourceLines, double phi, double tx, double ty) const;
 
 	double alignWithSOMA(const std::vector<geom::Vector2d>& target, const std::vector<geom::Vector2d>& source, double& phi, double& tx, double& ty, bool withGuess = false);
 	double alignWithSOMA(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, double& phi, double& tx, double& ty, bool withGuess = false);

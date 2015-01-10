@@ -19,43 +19,29 @@
  *
  */
 
-#include "lsl/gui/repaintingpanel.hpp"
+#include "lsl/gui/events/paintevents.hpp"
 
+using namespace std;
 using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
+namespace events {
 
-RepaintingPanel::RepaintingPanel(wxWindow *parent) : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS), MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler())
+PaintEvents::PaintEvents(wxWindow *window) :
+	window(window)
 {
-	Bind(wxEVT_PAINT, &RepaintingPanel::evtPaint, this);
+	window->Bind(wxEVT_PAINT, &PaintEvents::evtPaint, this);
 }
 
-/*
-void RepaintingPanel::onKeyDown(wxKeyEvent& keyEvent)
-{
-	// TODO: Consume key down event to avoid focus change.
-	switch(keyEvent.GetKeyCode())
-	{
-	case WXK_UP:
-	case WXK_DOWN:
-	case WXK_LEFT:
-	case WXK_RIGHT:
-		break;
-
-	default:
-		keyEvent.Skip();
-	}
-}
-*/
-
-void RepaintingPanel::evtPaint(wxPaintEvent& e)
+void PaintEvents::evtPaint(wxPaintEvent& e)
 {
 	if(!onRepaint.isEmpty())
 	{
-		wxPaintDC dc(this);
+		wxPaintDC dc(window);
 		onRepaint(dc, e);
 	}
+	else e.Skip();
 }
 
-}}
+}}}

@@ -19,39 +19,35 @@
  *
  */
 
-#include "lsl/gui/window.hpp"
+#include "lsl/gui/panel.hpp"
 
-#include <iostream>
-
-using namespace std;
 using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
 
-Window::Window(const wxString& title, const wxSize& size) :
-	wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), SizeEvents(this),
-	isExitOnKeysClear(true)
+Panel::Panel(wxWindow *parent, wxWindowID winid, const wxPoint& pos, const wxSize& size, long style, const wxString& name) :
+	wxPanel(parent, winid, pos, size, style, name),
+	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), PaintEvents(this), SizeEvents(this)
 {
-	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
 }
 
-void Window::exitOnEscHook(wxKeyEvent& e)
+/*
+void RepaintingPanel::onKeyDown(wxKeyEvent& keyEvent)
 {
-	if(getExitOn(e.GetKeyCode())) Close(true);
-	else e.Skip();
-}
-
-void Window::setExitOn(int key)
-{
-	if(!isExitOnKeysClear)
+	// TODO: Consume key down event to avoid focus change.
+	switch(keyEvent.GetKeyCode())
 	{
-		exitOnKeys.clear();
-	}
+	case WXK_UP:
+	case WXK_DOWN:
+	case WXK_LEFT:
+	case WXK_RIGHT:
+		break;
 
-	exitOnKeys.push_back(key);
-	isExitOnKeysClear = false;
+	default:
+		keyEvent.Skip();
+	}
 }
+*/
 
 }}

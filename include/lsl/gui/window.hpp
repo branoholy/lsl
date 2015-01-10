@@ -28,26 +28,22 @@
 #include <wx/frame.h>
 #include <wx/window.h>
 
-#include "mouseevents.hpp"
+#include "events/mouseevents.hpp"
+#include "events/keyevents.hpp"
+#include "events/sizeevents.hpp"
 
 namespace lsl {
 namespace gui {
 
-class Window : public wxFrame, public MouseEvents
+class Window : public wxFrame, public events::MouseEvents, public events::KeyEvents, public events::SizeEvents
 {
 private:
 	bool isExitOnKeysClear;
 	std::vector<int> exitOnKeys;
 
-	bool isExitOnControlsClear;
-	std::vector<wxWindow*> exitOnControls;
-
 	void exitOnEscHook(wxKeyEvent& e);
 
 public:
-	system::Event<void(wxSizeEvent&)> onSizeChanged;
-	system::Event<void(wxKeyEvent&)> onCharHooked;
-
 	Window(const wxString& title, const wxSize& size);
 
 	inline bool getExitOn(int key) const { return std::find(exitOnKeys.begin(), exitOnKeys.end(), key) != exitOnKeys.end(); }
@@ -55,16 +51,6 @@ public:
 
 	template<typename ...Args>
 	void setExitOn(int key, Args... keys);
-
-	inline bool getExitOnControl(wxWindow *control) const { return std::find(exitOnControls.begin(), exitOnControls.end(), control) != exitOnControls.end(); }
-	void setExitOnControl(wxWindow *control);
-
-	template<typename ...Args>
-	void setExitOnControl(wxWindow *control, Args... controls);
-
-	void addExitOnControl(wxWindow *control);
-
-	bool hasAnyExitOnControlFocus() const;
 };
 
 template<typename ...Args>
@@ -78,19 +64,6 @@ void Window::setExitOn(int key, Args... keys)
 
 	exitOnKeys.push_back(key);
 	setExitOn(keys...);
-}
-
-template<typename ...Args>
-void Window::setExitOnControl(wxWindow *control, Args... controls)
-{
-	if(!isExitOnControlsClear)
-	{
-		exitOnControls.clear();
-		isExitOnControlsClear = true;
-	}
-
-	exitOnControls.push_back(control);
-	setExitOnControl(controls...);
 }
 
 }}

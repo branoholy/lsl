@@ -19,33 +19,32 @@
  *
  */
 
-#ifndef LSL_GUI_REPAINTINGPANEL_HPP
-#define LSL_GUI_REPAINTINGPANEL_HPP
-
-#include <functional>
+#ifndef LSL_GUI_EVENTS_SIZEEVENTS_HPP
+#define LSL_GUI_EVENTS_SIZEEVENTS_HPP
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
 
-#include "keyevents.hpp"
-#include "mouseevents.hpp"
+#include "lsl/system/event.hpp"
 
 namespace lsl {
 namespace gui {
+namespace events {
 
-class RepaintingPanel : public wxPanel, public MouseEvents, public KeyEvents
+class SizeEvents
 {
 private:
-	void evtPaint(wxPaintEvent& e);
+	void evtSize(wxSizeEvent &e);
 
 public:
-	system::Event<void(wxPaintDC&, wxPaintEvent&)> onRepaint;
+	system::Event<void(wxSizeEvent&)> onSizeChanged;
 
-	RepaintingPanel(wxWindow *parent);
+	SizeEvents(const wxWindow *window);
+	SizeEvents(wxEvtHandler *evtHandler);
 };
 
-}}
+}}}
 
-#endif // LSL_GUI_REPAINTINGPANEL_HPP
+#endif // LSL_GUI_EVENTS_SIZEEVENTS_HPP

@@ -19,39 +19,34 @@
  *
  */
 
-#include "lsl/gui/window.hpp"
+#ifndef LSL_GUI_EVENTS_KEYEVENTS_HPP
+#define LSL_GUI_EVENTS_KEYEVENTS_HPP
 
-#include <iostream>
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
 
-using namespace std;
-using namespace lsl::system;
+#include "lsl/system/event.hpp"
 
 namespace lsl {
 namespace gui {
+namespace events {
 
-Window::Window(const wxString& title, const wxSize& size) :
-	wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), SizeEvents(this),
-	isExitOnKeysClear(true)
+class KeyEvents
 {
-	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
-}
+private:
+	void evtKeyUp(wxKeyEvent &e);
+	void evtCharHooked(wxKeyEvent &e);
 
-void Window::exitOnEscHook(wxKeyEvent& e)
-{
-	if(getExitOn(e.GetKeyCode())) Close(true);
-	else e.Skip();
-}
+public:
+	system::Event<void(wxKeyEvent&)> onKeyDown;
+	system::Event<void(wxKeyEvent&)> onKeyUp;
+	system::Event<void(wxKeyEvent&)> onCharHooked;
 
-void Window::setExitOn(int key)
-{
-	if(!isExitOnKeysClear)
-	{
-		exitOnKeys.clear();
-	}
+	KeyEvents(wxEvtHandler *evtHandler);
+};
 
-	exitOnKeys.push_back(key);
-	isExitOnKeysClear = false;
-}
+}}}
 
-}}
+#endif // LSL_GUI_EVENTS_KEYEVENTS_HPP

@@ -22,6 +22,8 @@
 #ifndef LSL_VISUAL_LSLVISUALIZER2D_HPP
 #define LSL_VISUAL_LSLVISUALIZER2D_HPP
 
+#include <wx/gbsizer.h>
+
 #include "lsl/containers/pointcloud.hpp"
 
 #include "lsl/geom/vector.hpp"
@@ -29,7 +31,9 @@
 #include "lsl/geom/line2.hpp"
 
 #include "lsl/gui/lslapp.hpp"
-#include "lsl/gui/repaintingpanel.hpp"
+#include "lsl/gui/panel.hpp"
+
+#include "lsl/registration/llt.hpp"
 
 #include "display2d.hpp"
 
@@ -45,18 +49,22 @@ private:
 
 	bool transControls;
 	wxSizer *transControlsSizer;
-	gui::RepaintingPanel *transPhiTy;
-	gui::RepaintingPanel *transTxTy;
-	gui::RepaintingPanel *transTxPhi;
+	gui::Panel *transPhiTy;
+	gui::Panel *transTxTy;
+	gui::Panel *transTxPhi;
 
-	wxTextCtrl *phiValue;
-	wxTextCtrl *phiStep;
-	wxTextCtrl *txValue;
-	wxTextCtrl *txStep;
-	wxTextCtrl *tyValue;
-	wxTextCtrl *tyStep;
+	wxTextCtrl *phiValueCtrl;
+	wxTextCtrl *phiStepCtrl;
+	wxTextCtrl *txValueCtrl;
+	wxTextCtrl *txStepCtrl;
+	wxTextCtrl *tyValueCtrl;
+	wxTextCtrl *tyStepCtrl;
 
-	gui::RepaintingPanel *repaintingPanel;
+	wxStaticText *errorValueCtrl;
+	wxStaticText *cfValueCtrl;
+	wxStaticText *cafValueCtrl;
+
+	gui::Panel *repaintingPanel;
 
 	Display2d display;
 	bool initSizeSet;
@@ -76,21 +84,39 @@ private:
 	std::size_t transformationId;
 	std::vector<double> transformations;
 
+	registration::LLT llt;
+
+	double phiValue, phiStep;
+	double txValue, txStep;
+	double tyValue, tyStep;
+	int valuePrecision, stepPrecision;
+	int errorValuePrecision;
+
+	std::vector<geom::Vector2d> errorAreas;
+
 	void initGUI(gui::Window *window);
-	void repaint(wxDC& dc);
+	void initTransContols(gui::Window *window);
+
+	void repaint(wxPaintDC& pdc);
 
 	void drawAxis(wxDC& dc);
 	void drawRulers(wxDC& dc);
 
-	void drawPoint(wxDC& dc, const geom::Vector2d& point, std::size_t size = 1, const wxColour& colour = *wxBLACK);
-	void drawPoint(wxDC& dc, const geom::Vector2d& point, std::size_t size, const wxColour& brushColour, const wxColour& penColour);
-	void drawLine(wxDC& dc, const geom::Line2& line, std::size_t size = 1, const wxColour& colour = *wxBLACK);
-	void drawLidarLine(wxDC& dc, const geom::LidarLine2& lidarLine, std::size_t size = 1, const wxColour& colour = *wxBLACK);
-	void drawPointCloud(wxDC& dc, const containers::PointCloud<geom::Vector2d> *pointCloud, size_t size = 1, const wxColour& colour = *wxBLACK);
-	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, std::size_t size);
-	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, std::size_t size, const wxColour& colour);
+	void drawPoint(wxDC& dc, const geom::Vector2d& point, const wxColour& colour = *wxBLACK, std::size_t size = 1);
+	void drawPoint(wxDC& dc, const geom::Vector2d& point, const wxColour& brushColour, const wxColour& penColour, std::size_t size = 1);
 
-	void initTransContols(gui::Window *window);
+	void drawLine(wxDC& dc, const geom::Line2& line, const wxColour& colour = *wxBLACK, std::size_t size = 1);
+	void drawLidarLine(wxDC& dc, const geom::LidarLine2& lidarLine, const wxColour& colour = *wxBLACK, std::size_t size = 1, std::size_t endPointsSize = 8);
+
+	void drawPointCloud(wxDC& dc, const containers::PointCloud<geom::Vector2d> *pointCloud, const wxColour& colour = *wxBLACK, size_t size = 1);
+	void drawPointCloud(wxDC& dc, const containers::PointCloud<geom::Vector2d> *pointCloud, double phi, double tx, double ty, const wxColour& colour = *wxBLACK, size_t size = 1);
+
+	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, std::size_t size = 1);
+	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, double phi, double tx, double ty, std::size_t size = 1);
+	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, const wxColour& colour, std::size_t size = 1);
+	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, double phi, double tx, double ty, const wxColour& colour, std::size_t size = 1);
+
+	void refreshLLTError();
 
 public:
 	LSLVisualizer2d(const std::string& title = "LSL Visualizer 2D", const wxSize& windowSize = wxDefaultSize);
@@ -102,7 +128,7 @@ public:
 	void addLine(const geom::Line2& line);
 	void addLidarLine(const geom::LidarLine2& lidarLine);
 	void addLidarLines(const std::vector<geom::LidarLine2>& lidarLines);
-	void addLidarLineClouds(const std::vector<geom::LidarLine2>& lidarLineCloud);
+	void addLidarLineCloud(const std::vector<geom::LidarLine2>& lidarLineCloud);
 
 	void setTransformations(const std::vector<double>& transformations);
 

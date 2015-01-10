@@ -19,39 +19,33 @@
  *
  */
 
-#include "lsl/gui/window.hpp"
+#ifndef LSL_GUI_EVENTS_PAINTEVENTS_HPP
+#define LSL_GUI_EVENTS_PAINTEVENTS_HPP
 
-#include <iostream>
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
 
-using namespace std;
-using namespace lsl::system;
+#include "lsl/system/event.hpp"
 
 namespace lsl {
 namespace gui {
+namespace events {
 
-Window::Window(const wxString& title, const wxSize& size) :
-	wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), SizeEvents(this),
-	isExitOnKeysClear(true)
+class PaintEvents
 {
-	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
-}
+private:
+	wxWindow *window;
 
-void Window::exitOnEscHook(wxKeyEvent& e)
-{
-	if(getExitOn(e.GetKeyCode())) Close(true);
-	else e.Skip();
-}
+	void evtPaint(wxPaintEvent &e);
 
-void Window::setExitOn(int key)
-{
-	if(!isExitOnKeysClear)
-	{
-		exitOnKeys.clear();
-	}
+public:
+	system::Event<void(wxPaintDC&, wxPaintEvent&)> onRepaint;
 
-	exitOnKeys.push_back(key);
-	isExitOnKeysClear = false;
-}
+	PaintEvents(wxWindow *window);
+};
 
-}}
+}}}
+
+#endif // LSL_GUI_EVENTS_PAINTEVENTS_HPP

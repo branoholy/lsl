@@ -19,13 +19,14 @@
  *
  */
 
-#include "lsl/gui/mouseevents.hpp"
+#include "lsl/gui/events/mouseevents.hpp"
 
 using namespace std;
 using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
+namespace events {
 
 MouseEvents::MouseEvents(wxEvtHandler *evtHandler)
 {
@@ -44,28 +45,28 @@ MouseEvents::MouseEvents(wxEvtHandler *evtHandler)
 	evtHandler->Bind(wxEVT_MOTION, &Event<void(wxMouseEvent&)>::operator(), &onMouseMove);
 }
 
-void MouseEvents::evtLeftDown(wxMouseEvent &e)
+void MouseEvents::evtLeftDown(wxMouseEvent& e)
 {
 	onMouseDown(e);
 	onLeftMouseDown(e);
 	e.Skip();
 }
 
-void MouseEvents::evtMiddleDown(wxMouseEvent &e)
+void MouseEvents::evtMiddleDown(wxMouseEvent& e)
 {
 	onMouseDown(e);
 	onMiddleMouseDown(e);
 	e.Skip();
 }
 
-void MouseEvents::evtRightDown(wxMouseEvent &e)
+void MouseEvents::evtRightDown(wxMouseEvent& e)
 {
 	onMouseDown(e);
 	onRightMouseDown(e);
 	e.Skip();
 }
 
-void MouseEvents::evtLeftUp(wxMouseEvent &e)
+void MouseEvents::evtLeftUp(wxMouseEvent& e)
 {
 	onMouseClick(e);
 	onLeftMouseClick(e);
@@ -75,7 +76,7 @@ void MouseEvents::evtLeftUp(wxMouseEvent &e)
 	e.Skip();
 }
 
-void MouseEvents::evtMiddleUp(wxMouseEvent &e)
+void MouseEvents::evtMiddleUp(wxMouseEvent& e)
 {
 	onMouseClick(e);
 	onMiddleMouseClick(e);
@@ -85,7 +86,7 @@ void MouseEvents::evtMiddleUp(wxMouseEvent &e)
 	e.Skip();
 }
 
-void MouseEvents::evtRightUp(wxMouseEvent &e)
+void MouseEvents::evtRightUp(wxMouseEvent& e)
 {
 	onMouseClick(e);
 	onRightMouseClick(e);
@@ -95,22 +96,22 @@ void MouseEvents::evtRightUp(wxMouseEvent &e)
 	e.Skip();
 }
 
-void MouseEvents::evtLeftDClick(wxMouseEvent &e)
+void MouseEvents::evtLeftDClick(wxMouseEvent& e)
 {
 	onMouseDoubleClick(e);
 	onLeftMouseDoubleClick(e);
 }
 
-void MouseEvents::evtMiddleDClick(wxMouseEvent &e)
+void MouseEvents::evtMiddleDClick(wxMouseEvent& e)
 {
 	onMouseDoubleClick(e);
 	onMiddleMouseDoubleClick(e);
 }
 
-void MouseEvents::evtRightDClick(wxMouseEvent &e)
+void MouseEvents::evtRightDClick(wxMouseEvent& e)
 {
 	onMouseDoubleClick(e);
 	onRightMouseDoubleClick(e);
 }
 
-}}
+}}}

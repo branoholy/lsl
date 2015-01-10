@@ -19,28 +19,31 @@
  *
  */
 
-#ifndef LSL_GUI_KEYEVENTS_HPP
-#define LSL_GUI_KEYEVENTS_HPP
+#ifndef LSL_GUI_PANEL_HPP
+#define LSL_GUI_PANEL_HPP
+
+#include <functional>
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
 
-#include "lsl/system/event.hpp"
+#include "events/keyevents.hpp"
+#include "events/mouseevents.hpp"
+#include "events/paintevents.hpp"
+#include "events/sizeevents.hpp"
 
 namespace lsl {
 namespace gui {
 
-class KeyEvents
+class Panel : public wxPanel, public events::MouseEvents, public events::KeyEvents, public events::PaintEvents, public events::SizeEvents
 {
 public:
-	system::Event<void(wxKeyEvent&)> onKeyDown;
-	system::Event<void(wxKeyEvent&)> onKeyUp;
-
-	KeyEvents(wxEvtHandler *evtHandler);
+	// add style wxWANTS_CHARS ??
+	Panel(wxWindow *parent, wxWindowID winid = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxTAB_TRAVERSAL | wxNO_BORDER, const wxString& name = wxPanelNameStr);
 };
 
 }}
 
-#endif // LSL_GUI_KEYEVENTS_HPP
+#endif // LSL_GUI_PANEL_HPP

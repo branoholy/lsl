@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LSL_GUI_MOUSEEVENTS_HPP
-#define LSL_GUI_MOUSEEVENTS_HPP
+#ifndef LSL_GUI_EVENTS_MOUSEEVENTS_HPP
+#define LSL_GUI_EVENTS_MOUSEEVENTS_HPP
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
@@ -31,6 +31,7 @@
 
 namespace lsl {
 namespace gui {
+namespace events {
 
 class MouseEvents
 {
@@ -73,6 +74,6 @@ public:
 	MouseEvents(wxEvtHandler *evtHandler);
 };
 
-}}
+}}}
 
-#endif // LSL_GUI_MOUSEEVENTS_HPP
+#endif // LSL_GUI_EVENTS_MOUSEEVENTS_HPP

@@ -19,39 +19,39 @@
  *
  */
 
-#include "lsl/gui/window.hpp"
-
-#include <iostream>
+#include "lsl/gui/events/keyevents.hpp"
 
 using namespace std;
 using namespace lsl::system;
 
 namespace lsl {
 namespace gui {
+namespace events {
 
-Window::Window(const wxString& title, const wxSize& size) :
-	wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), SizeEvents(this),
-	isExitOnKeysClear(true)
+KeyEvents::KeyEvents(wxEvtHandler *evtHandler)
 {
-	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
+	evtHandler->Bind(wxEVT_KEY_DOWN, &Event<void(wxKeyEvent&)>::operator(), &onKeyDown);
+	evtHandler->Bind(wxEVT_KEY_UP, &KeyEvents::evtKeyUp, this);
+	evtHandler->Bind(wxEVT_CHAR_HOOK, &KeyEvents::evtCharHooked, this);
 }
 
-void Window::exitOnEscHook(wxKeyEvent& e)
+void KeyEvents::evtKeyUp(wxKeyEvent& e)
 {
-	if(getExitOn(e.GetKeyCode())) Close(true);
+	onKeyUp(e);
+	e.Skip();
+}
+
+void KeyEvents::evtCharHooked(wxKeyEvent& e)
+{
+	wxWindow *focusedWindow = wxWindow::FindFocus();
+	wxTextEntry *textEntry = dynamic_cast<wxTextEntry*>(focusedWindow);
+
+	if(textEntry == nullptr)
+	{
+		if(onCharHooked.isEmpty()) e.Skip();
+		else onCharHooked(e);
+	}
 	else e.Skip();
 }
 
-void Window::setExitOn(int key)
-{
-	if(!isExitOnKeysClear)
-	{
-		exitOnKeys.clear();
-	}
-
-	exitOnKeys.push_back(key);
-	isExitOnKeysClear = false;
-}
-
-}}
+}}}

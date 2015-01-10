@@ -152,32 +152,33 @@ void LLT::iterLines(const vector<LidarLine2>& targetLines, const vector<LidarLin
 	}
 }
 
-double LLT::error(const vector<LidarLine2>& targetLines, const vector<LidarLine2>& sourceLines) const
+double LLT::error(const vector<LidarLine2>& targetLines, const vector<LidarLine2>& sourceLines)
 {
-	double error = 0;
-	double intersectDfSum = 0;
+	sumOfErrors = 0;
+	coverAngleFactor = 0;
 
-	iterLines(targetLines, sourceLines, [&error, &intersectDfSum](size_t, const LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
+	iterLines(targetLines, sourceLines, [this](size_t, const LidarLine2& targetLine, const LidarLine2& sourceLine, double phiA, double phiB)
 	{
 		double ei = targetLine.error(sourceLine, phiA, phiB);
-		if(ei >= 0)
+		if(ei >= 0) // TODO: Is it needed?
 		{
-			error += ei;
-			intersectDfSum += phiB - phiA;
+			sumOfErrors += ei;
+			coverAngleFactor += phiB - phiA;
 		}
 	});
 
-	// double targetDfSum = LidarLine2::sumDf(targetLines);
-	// double sourceDfSum = LidarLine2::sumDf(sourceLines);
-	// double minDfSum = (targetDfSum + sourceDfSum) / 2;
-
-	double finalError = numeric_limits<double>::max();
-	if(intersectDfSum > 0) finalError = (MathUtils::TWO_PI / (intersectDfSum * intersectDfSum)) * error;
+	double finalError = coverFactor = numeric_limits<double>::max();
+	if(coverAngleFactor > 0)
+	{
+		double one__caf = 1 / coverAngleFactor;
+		coverFactor = one__caf * MathUtils::TWO_PI;
+		finalError = coverFactor * one__caf * sumOfErrors;
+	}
 
 	return finalError;
 }
 
-double LLT::errorTransform(const std::vector<LidarLine2>& targetLines, std::vector<LidarLine2> sourceLines, double phi, double tx, double ty) const
+double LLT::errorTransform(const std::vector<LidarLine2>& targetLines, std::vector<LidarLine2> sourceLines, double phi, double tx, double ty)
 {
 	LidarLine2::transform(sourceLines, phi, tx, ty);
 	removeInvisible(sourceLines);
@@ -186,6 +187,34 @@ double LLT::errorTransform(const std::vector<LidarLine2>& targetLines, std::vect
 	// cout << '{' << phi << ", " << tx << ", " << ty << "} = " << errorT << endl;
 
 	return errorT;
+}
+
+vector<Vector2d> LLT::errorAreas(const std::vector<LidarLine2> &targetLines, std::vector<LidarLine2> sourceLines, double phi, double tx, double ty) const
+{
+	LidarLine2::transform(sourceLines, phi, tx, ty);
+	removeInvisible(sourceLines);
+
+	vector<Vector2d> areas;
+	iterLines(targetLines, sourceLines, [&areas](size_t, const LidarLine2& targetLine, const LidarLine2& sourceLine, double phiA, double phiB)
+	{
+		double ei = targetLine.error(sourceLine, phiA, phiB);
+		if(ei >= 0) // TODO: Is it needed?
+		{
+			double coses[] = {cos(phiA), cos(phiB)};
+			double sins[] = {sin(phiA), sin(phiB)};
+			double values[] = {targetLine.getValue(phiA), sourceLine.getValue(phiA), sourceLine.getValue(phiB), targetLine.getValue(phiB)};
+
+			for(size_t i = 0; i < 4; i++)
+			{
+				size_t gi = i / 2;
+
+				double pointData[] = {coses[gi] * values[i], sins[gi] * values[i]};
+				areas.emplace_back(pointData, 2);
+			}
+		}
+	});
+
+	return areas;
 }
 
 double LLT::alignWithSOMA(const vector<Vector2d>& target, const vector<Vector2d>& source, double& phi, double& tx, double& ty, bool withGuess)

@@ -21,8 +21,8 @@ include(${wxWidgets_USE_FILE})
 include_directories(${wxWidgets_INCLUDE_DIRS})
 add_definitions(${wxWidgets_CXX_FLAGS})
 
-file(GLOB CPPS "src/lsl/*/*.cpp")
-file(GLOB HPPS "include/lsl/*/*.hpp")
+file(GLOB_RECURSE CPPS "src/lsl/*.cpp")
+file(GLOB_RECURSE HPPS "include/lsl/*.hpp")
 
 add_library(${PROJECT_NAME} SHARED ${CPPS} ${HPPS})
 
