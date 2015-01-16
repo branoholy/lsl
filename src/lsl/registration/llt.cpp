@@ -165,6 +165,10 @@ double LLT::error(const vector<LidarLine2>& targetLines, const vector<LidarLine2
 			sumOfErrors += ei;
 			coverAngleFactor += phiB - phiA;
 		}
+		else
+		{
+			cout << "ei < 0: " << phiA << '-' << phiB << ": " << targetLine << ' ' << sourceLine << endl;
+		}
 	});
 
 	double finalError = coverFactor = numeric_limits<double>::max();
@@ -184,7 +188,7 @@ double LLT::errorTransform(const std::vector<LidarLine2>& targetLines, std::vect
 	removeInvisible(sourceLines);
 	double errorT = error(targetLines, sourceLines);
 
-	// cout << '{' << phi << ", " << tx << ", " << ty << "} = " << errorT << endl;
+	// cout << '{' << tx << ", " << ty << ", " << phi <<  "} = " << errorT << endl;
 
 	return errorT;
 }

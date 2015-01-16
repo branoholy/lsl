@@ -47,22 +47,19 @@ private:
 
 	wxSizer *mainSizer;
 
-	bool transControls;
-	wxSizer *transControlsSizer;
-	gui::Panel *transPhiTy;
-	gui::Panel *transTxTy;
-	gui::Panel *transTxPhi;
+	wxBoxSizer *leftSizer;
+	bool initLeftSide;
 
-	wxTextCtrl *phiValueCtrl;
-	wxTextCtrl *phiStepCtrl;
-	wxTextCtrl *txValueCtrl;
-	wxTextCtrl *txStepCtrl;
-	wxTextCtrl *tyValueCtrl;
-	wxTextCtrl *tyStepCtrl;
+	gui::Panel *frPanels[3];
+	wxTextCtrl *fValueCtrl[3];
+	wxTextCtrl *fStepCtrl[3];
 
 	wxStaticText *errorValueCtrl;
 	wxStaticText *cfValueCtrl;
 	wxStaticText *cafValueCtrl;
+
+	wxTextCtrl *maxErrorValueCtrl;
+	wxSlider *maxErrorSlider;
 
 	gui::Panel *repaintingPanel;
 
@@ -82,20 +79,24 @@ private:
 	std::vector<std::vector<geom::LidarLine2>> lidarLineClouds;
 
 	std::size_t transformationId;
-	std::vector<double> transformations;
 
 	registration::LLT llt;
 
-	double phiValue, phiStep;
-	double txValue, txStep;
-	double tyValue, tyStep;
+	std::string fNames[3];
+	double fValues[3];
+	double fSteps[3];
+
 	int valuePrecision, stepPrecision;
 	int errorValuePrecision;
+
+	double **frValues[3];
+	std::size_t frRows[3];
+	std::size_t frColumns[3];
 
 	std::vector<geom::Vector2d> errorAreas;
 
 	void initGUI(gui::Window *window);
-	void initTransContols(gui::Window *window);
+	void initLeftSideControls(wxWindow *parent, wxSizer *parentSizer);
 
 	void repaint(wxPaintDC& pdc);
 
@@ -116,10 +117,18 @@ private:
 	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, const wxColour& colour, std::size_t size = 1);
 	void drawLidarLineCloud(wxDC& dc, const std::vector<geom::LidarLine2>& lineCloud, double phi, double tx, double ty, const wxColour& colour, std::size_t size = 1);
 
+	void frRepaint(std::size_t i, wxPaintDC& pdc, wxPaintEvent& e);
+
 	void refreshLLTError();
+	void refreshLLTFunc();
+	void refreshLLTFunc(std::size_t i);
+	void refreshToolTips();
+
+	void getParams(std::size_t i, std::size_t x, std::size_t y, double& tx, double& ty, double& phi) const;
 
 public:
 	LSLVisualizer2d(const std::string& title = "LSL Visualizer 2D", const wxSize& windowSize = wxDefaultSize);
+	~LSLVisualizer2d();
 
 	inline double getAxisAngle() const { return axisAngle; }
 	void setAxisAngle(double axisAngle);
@@ -130,9 +139,7 @@ public:
 	void addLidarLines(const std::vector<geom::LidarLine2>& lidarLines);
 	void addLidarLineCloud(const std::vector<geom::LidarLine2>& lidarLineCloud);
 
-	void setTransformations(const std::vector<double>& transformations);
-
-	void showTransControls();
+	void showLeftSide();
 };
 
 }}

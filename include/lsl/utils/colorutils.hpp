@@ -30,10 +30,15 @@ namespace utils {
 class ColorUtils
 {
 public:
+	static double DEFAULT_MAX_H;
+
 	static void hsv2rgb(double h, double s, double v, double& r, double& g, double& b);
 	static void hsv2rgb(double h, double s, double v, int& r, int& g, int& b);
-	static void range2rgb(double value, double& r, double& g, double& b, double maxH = 4.0/3 * M_PI);
-	static void range2rgb(double value, int& r, int& g, int& b, double maxH = 4.0/3 * M_PI);
+	static unsigned long hsv2bgr(double h, double s, double v);
+
+	static void range2rgb(double value, double& r, double& g, double& b, double maxH = DEFAULT_MAX_H);
+	static void range2rgb(double value, int& r, int& g, int& b, double maxH = DEFAULT_MAX_H);
+	static unsigned long range2bgr(double value, double maxH = DEFAULT_MAX_H);
 };
 
 }}

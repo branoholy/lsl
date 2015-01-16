@@ -22,8 +22,11 @@
 #include "lsl/visual/lslvisualizer2d.hpp"
 
 #include <wx/dcgraph.h>
+#include <wx/rawbmp.h>
 #include <wx/valnum.h>
 
+#include "lsl/utils/arrayutils.hpp"
+#include "lsl/utils/colorutils.hpp"
 #include "lsl/utils/mathutils.hpp"
 #include "lsl/utils/stringutils.hpp"
 
@@ -42,13 +45,22 @@ namespace visual {
 const wxColour *LSLVisualizer2d::colours[] = {wxBLACK, wxRED, wxGREEN, wxBLUE, wxCYAN};
 
 LSLVisualizer2d::LSLVisualizer2d(const string& title, const wxSize& windowSize) : LSLApp(title, windowSize),
-	transControls(false), initSizeSet(false), axisSize(3000), transformationId(0),
-	phiValue(0), phiStep(0.01), txValue(0), txStep(1), tyValue(0), tyStep(1),
-	valuePrecision(6), stepPrecision(3), errorValuePrecision(20)
+	initLeftSide(false), initSizeSet(false), axisSize(3000), transformationId(0),
+	fNames{"tx", "ty", "phi"}, fValues{0, 0, 0}, fSteps{1, 1, 0.01},
+	valuePrecision(12), stepPrecision(12), errorValuePrecision(12),
+	frValues{nullptr, nullptr, nullptr}, frRows{0, 0, 0}, frColumns{0, 0, 0}
 {
 	setAxisAngle(MathUtils::PI / 2);
 
 	onInit += bind(&LSLVisualizer2d::initGUI, this, _1);
+}
+
+LSLVisualizer2d::~LSLVisualizer2d()
+{
+	for(size_t i = 0; i < 3; i++)
+	{
+		ArrayUtils::delete2dArray(frValues[i], frRows[i]);
+	}
 }
 
 void LSLVisualizer2d::setAxisAngle(double axisAngle)
@@ -83,14 +95,9 @@ void LSLVisualizer2d::addLidarLineCloud(const std::vector<LidarLine2>& lidarLine
 	lidarLineClouds.push_back(lidarLineCloud);
 }
 
-void LSLVisualizer2d::setTransformations(const std::vector<double>& transformations)
+void LSLVisualizer2d::showLeftSide()
 {
-	this->transformations = transformations;
-}
-
-void LSLVisualizer2d::showTransControls()
-{
-	transControls = true;
+	initLeftSide = true;
 }
 
 void LSLVisualizer2d::initGUI(Window *window)
@@ -101,32 +108,7 @@ void LSLVisualizer2d::initGUI(Window *window)
 
 	window->onCharHooked += [this, window](wxKeyEvent& keyEvent)
 	{
-		/*
-		if(keyEvent.GetKeyCode() == 'P')
-		{
-			if(transformations.size() > 3 * transformationId)
-			{
-				double phi = transformations.at(3 * transformationId);
-				double tx = transformations.at(3 * transformationId + 1);
-				double ty = transformations.at(3 * transformationId + 2);
-				transformationId++;
-
-				if(pointClouds.size() > 1) pointClouds.at(1)->transform2D(phi, tx, ty);
-				if(lidarLineClouds.size() > 1)
-				{
-					registration::LLT llt;
-					LidarLine2::transform(lidarLineClouds.at(1), phi, tx, ty);
-					llt.removeInvisible(lidarLineClouds.at(1));
-				}
-
-				repaintingPanel->Refresh();
-			}
-			else
-			{
-				cout << "No more transformations available." << endl;
-			}
-		}
-		*/
+		// TODO: Step by gradient
 
 		if(keyEvent.GetKeyCode() == 'A' || keyEvent.GetKeyCode() == 'D' ||
 		   keyEvent.GetKeyCode() == WXK_LEFT || keyEvent.GetKeyCode() == WXK_RIGHT ||
@@ -134,19 +116,21 @@ void LSLVisualizer2d::initGUI(Window *window)
 		{
 			window->TransferDataFromWindow();
 
+			int index = 0; // 1, 2, 3
 			switch (keyEvent.GetKeyCode())
 			{
-				case 'A': phiValue += phiStep; break;
-				case 'D': phiValue -= phiStep; break;
-				case WXK_RIGHT: txValue += txStep; break;
-				case WXK_LEFT: txValue -= txStep;; break;
-				case WXK_UP: tyValue += tyStep; break;
-				case WXK_DOWN: tyValue -= tyStep; break;
+				case WXK_RIGHT: index = 1; break;
+				case WXK_LEFT: index = -1; break;
+				case WXK_UP: index = 2; break;
+				case WXK_DOWN: index = -2; break;
+				case 'A': index = 3; break;
+				case 'D': index = -3; break;
 			}
 
-			window->TransferDataToWindow();
+			int absIndex = abs(index);
+			if(absIndex > 0) fValues[absIndex - 1] += (index / absIndex) * fSteps[absIndex - 1];
 
-			repaintingPanel->Refresh();
+			window->TransferDataToWindow();
 			refreshLLTError();
 		}
 		else keyEvent.Skip();
@@ -157,25 +141,19 @@ void LSLVisualizer2d::initGUI(Window *window)
 		// Workaround: Remove focus of text controls when clicking into main sizer and do not make TAB traversal.
 		repaintingPanel->SetFocus();
 
-		if(phiValueCtrl != nullptr) phiValueCtrl->SetSelection(0, 0);
-		if(phiStepCtrl != nullptr) phiStepCtrl->SetSelection(0, 0);
-
-		if(txValueCtrl != nullptr) txValueCtrl->SetSelection(0, 0);
-		if(txStepCtrl != nullptr) txStepCtrl->SetSelection(0, 0);
-
-		if(tyValueCtrl != nullptr) tyValueCtrl->SetSelection(0, 0);
-		if(tyStepCtrl != nullptr) tyStepCtrl->SetSelection(0, 0);
+		for(size_t i = 0; i < 3; i++)
+		{
+			fValueCtrl[i]->SetSelection(0, 0);
+			fStepCtrl[i]->SetSelection(0, 0);
+		}
 	};
 
-	// Main sizer (splits window into left transfomation controls and panel with points)
+	// Main sizer (splits window into left transfomation controls and right panel with points)
 	mainSizer = new wxBoxSizer(wxHORIZONTAL);
 
-	// Transformation controls
-	transControlsSizer = new wxGridSizer(2, 2, 5, 5);
-	transControlsSizer->SetMinSize(wxSize(300, 300));
-	if(transControls) initTransContols(window);
-
-	mainSizer->Add(transControlsSizer, 1, wxSHAPED | wxTOP | wxBOTTOM | wxLEFT, 10);
+	leftSizer = new wxBoxSizer(wxVERTICAL);
+	if(initLeftSide) initLeftSideControls(window, leftSizer);
+	mainSizer->Add(leftSizer, 0, wxLEFT | wxTOP, 10);
 
 	// Panel with points
 	repaintingPanel = new Panel(window);
@@ -191,6 +169,7 @@ void LSLVisualizer2d::initGUI(Window *window)
 			wxSize newSize = e.GetSize();
 			display.getPosition()[0] = -newSize.GetWidth() / 2;
 			display.getPosition()[1] = newSize.GetHeight() / 2;
+
 			initSizeSet = true;
 		}
 
@@ -237,104 +216,113 @@ void LSLVisualizer2d::initGUI(Window *window)
 		}
 	};
 
-	mainSizer->Add(repaintingPanel, 3, wxEXPAND | wxALL, 10);
+	mainSizer->Add(repaintingPanel, 1, wxEXPAND | wxALL, 10);
 	window->SetSizer(mainSizer);
+
+	refreshLLTError();
 }
 
-void LSLVisualizer2d::initTransContols(Window *window)
+void LSLVisualizer2d::initLeftSideControls(wxWindow *parent, wxSizer *parentSizer)
 {
 	int stepCtrlSize = 50;
-	auto refreshValueCtrls = [this, window](wxCommandEvent&){ window->TransferDataFromWindow(); repaintingPanel->Refresh(); refreshLLTError(); };
 
-	// Panel for phi*ty function
-	transPhiTy = new Panel(window);
-	transPhiTy->SetBackgroundColour(*wxBLUE);
+	// Sizer for functions
+	wxGridSizer *frSizer = new wxGridSizer(2, 2, 5, 5);
+	frSizer->SetMinSize(wxSize(350, 350));
 
-	transControlsSizer->Add(transPhiTy, 1, wxEXPAND);
+	parentSizer->Add(frSizer, 1, wxSHAPED);
 
-	// Panel for tx*ty
-	transTxTy = new Panel(window);
-	transTxTy->SetBackgroundColour(*wxGREEN);
+	// Panels for functions
+	for(size_t i = 0; i < 3; i++)
+	{
+		frPanels[i] = new Panel(parent);
+		frPanels[i]->SetBackgroundColour(*wxBLACK);
+		frPanels[i]->onRepaint += bind(&LSLVisualizer2d::frRepaint, this, i, _1, _2);
+		frPanels[i]->onMouseClick += [this, parent, i](wxMouseEvent& e)
+		{
+			getParams(i, e.GetX(), e.GetY(), fValues[0], fValues[1], fValues[2]);
 
-	transControlsSizer->Add(transTxTy, 1, wxEXPAND);
+			parent->TransferDataToWindow();
+			refreshLLTError();
+		};
+
+		frSizer->Add(frPanels[i], 1, wxEXPAND);
+	}
 
 	// Sizer for params controls
 	wxGridBagSizer *paramsSizer = new wxGridBagSizer(4, 4);
+	for(size_t i = 0; i < 3; i++)
+	{
+		paramsSizer->Add(new wxStaticText(parent, wxID_ANY, fNames[i] + ":"), wxGBPosition(i, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
 
-	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "phi:"), wxGBPosition(0, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-	phiValueCtrl = new wxTextCtrl(window, wxID_ANY, StringUtils::toString(phiValue, valuePrecision),
-								  wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER,
-								  wxFloatingPointValidator<double>(valuePrecision, &phiValue));
-	phiValueCtrl->SetMinSize(wxSize(1, wxDefaultCoord));
-	phiValueCtrl->SetToolTip("phi");
-	phiValueCtrl->Bind(wxEVT_TEXT_ENTER, refreshValueCtrls);
-	paramsSizer->Add(phiValueCtrl, wxGBPosition(0, 1), wxDefaultSpan, wxEXPAND);
+		fValueCtrl[i] = new wxTextCtrl(parent, wxID_ANY, StringUtils::toString(fValues[i], valuePrecision, false),
+									   wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER,
+									   wxFloatingPointValidator<double>(valuePrecision, &fValues[i], wxNUM_VAL_NO_TRAILING_ZEROES));
+		fValueCtrl[i]->SetMinSize(wxSize(1, wxDefaultCoord));
+		fValueCtrl[i]->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&) { refreshLLTError(); });
+		paramsSizer->Add(fValueCtrl[i], wxGBPosition(i, 1), wxDefaultSpan, wxEXPAND);
 
-	phiStepCtrl = new wxTextCtrl(window, wxID_ANY, StringUtils::toString(phiStep, stepPrecision),
-								 wxDefaultPosition, wxSize(stepCtrlSize, wxDefaultCoord), 0,
-								 wxFloatingPointValidator<double>(stepPrecision, &phiStep));
-	phiStepCtrl->SetToolTip("phi step");
-	paramsSizer->Add(phiStepCtrl, wxGBPosition(0, 2));
+		fStepCtrl[i] = new wxTextCtrl(parent, wxID_ANY, StringUtils::toString(fSteps[i], stepPrecision, false),
+									  wxDefaultPosition, wxSize(stepCtrlSize, wxDefaultCoord), wxTE_PROCESS_ENTER,
+									  wxFloatingPointValidator<double>(stepPrecision, &fSteps[i], wxNUM_VAL_NO_TRAILING_ZEROES));
+		fStepCtrl[i]->Bind(wxEVT_TEXT_ENTER, [this, i](wxCommandEvent&) { refreshLLTError(); });
+		paramsSizer->Add(fStepCtrl[i], wxGBPosition(i, 2));
+	}
+	refreshToolTips();
 
-	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "tx:"), wxGBPosition(1, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-	txValueCtrl = new wxTextCtrl(window, wxID_ANY, StringUtils::toString(txValue, valuePrecision),
-								 wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER,
-								 wxFloatingPointValidator<double>(valuePrecision, &txValue));
-	txValueCtrl->SetMinSize(wxSize(1, wxDefaultCoord));
-	txValueCtrl->SetToolTip("tx");
-	txValueCtrl->Bind(wxEVT_TEXT_ENTER, refreshValueCtrls);
-	paramsSizer->Add(txValueCtrl, wxGBPosition(1, 1), wxDefaultSpan, wxEXPAND);
-
-	txStepCtrl = new wxTextCtrl(window, wxID_ANY, StringUtils::toString(txStep, stepPrecision),
-								wxDefaultPosition, wxSize(stepCtrlSize, wxDefaultCoord), 0,
-								wxFloatingPointValidator<double>(stepPrecision, &txStep));
-	txStepCtrl->SetToolTip("tx step");
-	paramsSizer->Add(txStepCtrl, wxGBPosition(1, 2));
-
-	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "ty:"), wxGBPosition(2, 0), wxDefaultSpan, wxALIGN_CENTER_VERTICAL);
-	tyValueCtrl = new wxTextCtrl(window, wxID_ANY, StringUtils::toString(tyValue, valuePrecision),
-								 wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER,
-								 wxFloatingPointValidator<double>(valuePrecision, &tyValue));
-	tyValueCtrl->SetMinSize(wxSize(1, wxDefaultCoord));
-	tyValueCtrl->SetToolTip("ty");
-	tyValueCtrl->Bind(wxEVT_TEXT_ENTER, refreshValueCtrls);
-	paramsSizer->Add(tyValueCtrl, wxGBPosition(2, 1), wxDefaultSpan, wxEXPAND);
-
-	tyStepCtrl = new wxTextCtrl(window, wxID_ANY, StringUtils::toString(tyStep, stepPrecision),
-								wxDefaultPosition, wxSize(stepCtrlSize, wxDefaultCoord), 0,
-								wxFloatingPointValidator<double>(stepPrecision, &tyStep));
-	tyStepCtrl->SetToolTip("ty step");
-	paramsSizer->Add(tyStepCtrl, wxGBPosition(2, 2));
-
-	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "error:"), wxGBPosition(3, 0));
-	errorValueCtrl = new wxStaticText(window, wxID_ANY, StringUtils::toString(0.0, errorValuePrecision), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+	paramsSizer->Add(new wxStaticText(parent, wxID_ANY, "error:"), wxGBPosition(3, 0));
+	errorValueCtrl = new wxStaticText(parent, wxID_ANY, StringUtils::toString(0.0, errorValuePrecision), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
 	errorValueCtrl->SetMinSize(wxSize(1, wxDefaultCoord));
 	errorValueCtrl->SetToolTip(StringUtils::toString(0.0, errorValuePrecision));
 	paramsSizer->Add(errorValueCtrl, wxGBPosition(3, 1), wxGBSpan(1, 2), wxEXPAND);
 
-	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "CF:"), wxGBPosition(4, 0));
-	cfValueCtrl = new wxStaticText(window, wxID_ANY, StringUtils::toString(0.0, errorValuePrecision), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+	paramsSizer->Add(new wxStaticText(parent, wxID_ANY, "CF:"), wxGBPosition(4, 0));
+	cfValueCtrl = new wxStaticText(parent, wxID_ANY, StringUtils::toString(0.0, errorValuePrecision), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
 	cfValueCtrl->SetMinSize(wxSize(1, wxDefaultCoord));
 	cfValueCtrl->SetToolTip(StringUtils::toString(0.0, errorValuePrecision));
 	paramsSizer->Add(cfValueCtrl, wxGBPosition(4, 1), wxGBSpan(1, 2), wxEXPAND);
 
-	paramsSizer->Add(new wxStaticText(window, wxID_ANY, "CAF:"), wxGBPosition(5, 0));
-	cafValueCtrl = new wxStaticText(window, wxID_ANY, StringUtils::toString(0.0, errorValuePrecision), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
+	paramsSizer->Add(new wxStaticText(parent, wxID_ANY, "CAF:"), wxGBPosition(5, 0));
+	cafValueCtrl = new wxStaticText(parent, wxID_ANY, StringUtils::toString(0.0, errorValuePrecision), wxDefaultPosition, wxDefaultSize, wxST_ELLIPSIZE_END);
 	cafValueCtrl->SetMinSize(wxSize(1, wxDefaultCoord));
 	cafValueCtrl->SetToolTip(StringUtils::toString(0.0, errorValuePrecision));
 	paramsSizer->Add(cafValueCtrl, wxGBPosition(5, 1), wxGBSpan(1, 2), wxEXPAND);
 
 	paramsSizer->AddGrowableCol(1, 1);
 
-	transControlsSizer->Add(paramsSizer, 1, wxEXPAND);
+	frSizer->Insert(2, paramsSizer, 0, wxEXPAND);
 
-	// Panel for tx*phi
-	transTxPhi = new Panel(window);
-	transTxPhi->SetBackgroundColour(*wxRED);
+	// Max error value
+	wxFlexGridSizer *leftDownSizer = new wxFlexGridSizer(2, 5, 5);
+	leftDownSizer->Add(new wxStaticText(parent, wxID_ANY, "Max error:"), 0, wxALIGN_CENTER_VERTICAL);
 
-	transControlsSizer->Add(transTxPhi, 1, wxEXPAND);
+	wxBoxSizer *maxErrorSizer = new wxBoxSizer(wxHORIZONTAL);
+	maxErrorValueCtrl = new wxTextCtrl(parent, wxID_ANY, "5000", wxDefaultPosition, wxSize(50, wxDefaultCoord), wxTE_PROCESS_ENTER);
+	maxErrorValueCtrl->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&)
+	{
+		long value;
+		if(maxErrorValueCtrl->GetValue().ToLong(&value))
+		{
+			maxErrorSlider->SetValue(value);
+			for(size_t i = 0; i < 3; i++) frPanels[i]->Refresh();
+		}
+	});
+	maxErrorSizer->Add(maxErrorValueCtrl, 0, wxALIGN_CENTER_VERTICAL);
 
-	refreshLLTError();
+	maxErrorSlider = new wxSlider(parent, wxID_ANY, 5000, 10, 50000);
+	maxErrorSlider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&)
+	{
+		maxErrorValueCtrl->SetValue(to_string(maxErrorSlider->GetValue()));
+		for(size_t i = 0; i < 3; i++) frPanels[i]->Refresh();
+	});
+
+	maxErrorSizer->Add(maxErrorSlider, 1, wxEXPAND);
+	leftDownSizer->Add(maxErrorSizer, 1, wxEXPAND);
+
+	// TODO: Add show points/lines/areas ticks
+
+	leftDownSizer->AddGrowableCol(1, 1);
+	parentSizer->Add(leftDownSizer, 1, wxEXPAND);
 }
 
 void LSLVisualizer2d::repaint(wxPaintDC& pdc)
@@ -408,7 +396,7 @@ void LSLVisualizer2d::repaint(wxPaintDC& pdc)
 			// drawLidarLineCloud(dc, lineCloud, phiValue, txValue, tyValue, *colour);
 
 			vector<LidarLine2> transformedLineCloud = lineCloud;
-			LidarLine2::transform(transformedLineCloud, phiValue, txValue, tyValue);
+			LidarLine2::transform(transformedLineCloud, fValues[2], fValues[0], fValues[1]);
 			drawLidarLineCloud(dc, transformedLineCloud, *colour, 2);
 		}
 		else drawLidarLineCloud(dc, lineCloud, *colour, 2);
@@ -593,28 +581,141 @@ void LSLVisualizer2d::drawLidarLineCloud(wxDC& dc, const vector<LidarLine2>& lin
 	}
 }
 
+void LSLVisualizer2d::frRepaint(size_t i, wxPaintDC &pdc, wxPaintEvent&)
+{
+	wxGCDC dc(pdc);
+
+	wxBitmap bitmap(frColumns[i], frRows[i], 24);
+	wxNativePixelData bitmapData(bitmap);
+
+	wxNativePixelData::Iterator it(bitmapData);
+	for(size_t y = 0; y < frRows[i]; y++)
+	{
+		double *row = frValues[i][y];
+		wxNativePixelData::Iterator rowIt = it;
+
+		for(size_t x = 0; x < frColumns[i]; x++, it++)
+		{
+			double value01 = MathUtils::to01(row[x], 0, maxErrorSlider->GetValue());
+
+			int r, g, b;
+			ColorUtils::range2rgb(value01, r, g, b);
+
+			it.Red() = r;
+			it.Green() = g;
+			it.Blue() = b;
+		}
+
+		it = rowIt;
+		it.OffsetY(bitmapData, 1);
+	}
+
+	dc.DrawBitmap(bitmap, 0, 0);
+
+	dc.SetPen(*wxBLACK_PEN);
+	dc.SetBrush(*wxTRANSPARENT_BRUSH);
+	dc.DrawCircle(frColumns[i] / 2, frRows[i] / 2, 5);
+}
+
 void LSLVisualizer2d::refreshLLTError()
 {
 	if(lidarLineClouds.size() == 2)
 	{
 		getWindow()->TransferDataFromWindow();
-		errorAreas = llt.errorAreas(lidarLineClouds.at(0), lidarLineClouds.at(1), phiValue, txValue, tyValue);
+		errorAreas = llt.errorAreas(lidarLineClouds.at(0), lidarLineClouds.at(1), fValues[2], fValues[0], fValues[1]);
 
 		double values[3];
-		values[0] = llt.errorTransform(lidarLineClouds.at(0), lidarLineClouds.at(1), phiValue, txValue, tyValue);
+		values[0] = llt.errorTransform(lidarLineClouds.at(0), lidarLineClouds.at(1), fValues[2], fValues[0], fValues[1]);
 		values[1] = llt.getCoverFactor();
 		values[2] = llt.getCoverAngleFactor();
 
 		wxStaticText *ctrls[] = {errorValueCtrl, cfValueCtrl, cafValueCtrl};
 		for(size_t i = 0; i < 3; i++)
 		{
-			string strValue;
-			if(values[i] == numeric_limits<double>::max()) strValue = "DOUBLE_MAX";
-			else strValue = StringUtils::toString(values[i], errorValuePrecision);
+			wstring strValue;
+			if(values[i] == numeric_limits<double>::max()) strValue = L"DOUBLE_MAX";
+			else
+			{
+				strValue = WStringUtils::toString(values[i], errorValuePrecision);
+
+				if(i == 2)
+				{
+					strValue = WStringUtils::toString(MathUtils::toDegrees(values[i]), 3, true) + L"° (" + strValue + ')';
+				}
+			}
 
 			ctrls[i]->SetLabel(strValue);
 			ctrls[i]->SetToolTip(strValue);
 		}
+
+		repaintingPanel->Refresh();
+		refreshLLTFunc();
+		refreshToolTips();
+	}
+}
+
+void LSLVisualizer2d::refreshLLTFunc()
+{
+	for(size_t i = 0; i < 3; i++) refreshLLTFunc(i);
+}
+
+void LSLVisualizer2d::refreshLLTFunc(size_t i)
+{
+	ArrayUtils::delete2dArray(frValues[i], frRows[i]);
+
+	int width, height;
+	frPanels[i]->GetSize(&width, &height);
+	size_t ws = frRows[i] = height;
+	size_t hs = frColumns[i] = width;
+
+	double **values = frValues[i] = ArrayUtils::create2dArray<double>(height, width);
+	for(size_t y = 0; y < hs; y++)
+	{
+		double *row = values[y];
+		for(size_t x = 0; x < ws; x++)
+		{
+			double tx, ty, phi;
+			getParams(i, x, y, tx, ty, phi);
+			row[x] = llt.errorTransform(lidarLineClouds.at(0), lidarLineClouds.at(1), phi, tx, ty);
+		}
+	}
+
+	frPanels[i]->Refresh();
+}
+
+void LSLVisualizer2d::refreshToolTips()
+{
+	for(size_t i = 0; i < 3; i++)
+	{
+		fValueCtrl[i]->SetToolTip(fNames[i] + " = " + StringUtils::toString(fValues[i], valuePrecision));
+		fStepCtrl[i]->SetToolTip(fNames[i] + " step = " + StringUtils::toString(fSteps[i], stepPrecision));
+	}
+}
+
+void LSLVisualizer2d::getParams(size_t i, size_t x, size_t y, double &tx, double &ty, double &phi) const
+{
+	int width, height;
+	frPanels[i]->GetSize(&width, &height);
+	size_t w2 = width / 2;
+	size_t h2 = height / 2;
+
+	if(i == 0)
+	{
+		tx = fValues[0];
+		ty = fValues[1] + int(h2 - y) * fSteps[1];
+		phi = fValues[2] + int(w2 - x) * fSteps[2];
+	}
+	else if(i == 1)
+	{
+		tx = fValues[0] + int(x - w2) * fSteps[0];
+		ty = fValues[1] + int(h2 - y) * fSteps[1];
+		phi = fValues[2];
+	}
+	else if(i == 2)
+	{
+		tx = fValues[0] + int(x - w2) * fSteps[0];
+		ty = fValues[1];
+		phi = fValues[2] + int(y - h2) * fSteps[2];
 	}
 }
 

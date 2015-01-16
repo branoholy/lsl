@@ -40,6 +40,10 @@ public:
 
 	// static double isNegative(double x, double c = 10000000000000.0);
 	static double normAngle(double angle);
+	static double toDegrees(double radians);
+	static double toRadians(double degrees);
+
+	static double to01(double value, double minValue, double maxValue);
 
 	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
 	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);

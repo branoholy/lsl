@@ -49,4 +49,22 @@ double MathUtils::normAngle(double angle)
 	return angle;
 }
 
+double MathUtils::toDegrees(double radians)
+{
+	return 180 * radians / PI;
+}
+
+double MathUtils::toRadians(double degrees)
+{
+	return PI * degrees / 180;
+}
+
+double MathUtils::to01(double value, double minValue, double maxValue)
+{
+	if(value < minValue) value = minValue;
+	else if(value > maxValue) value = maxValue;
+
+	return (value - minValue) / (maxValue - minValue);
+}
+
 }}

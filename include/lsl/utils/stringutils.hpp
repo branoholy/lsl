@@ -22,28 +22,51 @@
 #ifndef LSL_UTILS_STRINGUTILS_HPP
 #define LSL_UTILS_STRINGUTILS_HPP
 
-#include <sstream>
+#include <cstdio>
 #include <iomanip>
+#include <sstream>
 
 namespace lsl {
 namespace utils {
 
-class StringUtils
+template <typename CharT>
+class BasicStringUtils
 {
 public:
 	template <typename T>
-	static std::string toString(const T& value, int precision = 6, bool fixed = true);
+	static std::basic_string<CharT> toString(const T& value, int precision = 6, bool fixed = true);
+
+	template <typename ...Args>
+	static std::basic_string<CharT> format(const std::basic_string<CharT>& format, Args... args);
 };
 
+template <typename CharT>
 template <typename T>
-std::string StringUtils::toString(const T& value, int precision, bool fixed)
+std::basic_string<CharT> BasicStringUtils<CharT>::toString(const T& value, int precision, bool fixed)
 {
-	std::ostringstream out;
+	std::basic_ostringstream<CharT> out;
 	if(fixed) out.setf(std::ios_base::fixed);
 
 	out << std::setprecision(precision) << value;
 	return out.str();
 }
+
+template <typename CharT>
+template <typename ...Args>
+std::basic_string<CharT> BasicStringUtils<CharT>::format(const std::basic_string<CharT>& format, Args... args)
+{
+	typename std::basic_string<CharT>::size_type size = std::snprintf(nullptr, 0, format.c_str(), args...);
+
+	std::basic_string<CharT> formatted;
+	formatted.reserve(size + 1);
+	formatted.resize(size);
+	std::sprintf(&formatted[0], size + 1, format.c_str(), args...);
+
+	return formatted;
+}
+
+typedef BasicStringUtils<char> StringUtils;
+typedef BasicStringUtils<wchar_t> WStringUtils;
 
 }}
 

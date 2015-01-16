@@ -166,8 +166,6 @@ void LidarLine2::transform(vector<LidarLine2>& lidarLines, double angle, double 
 		double phiH = line.getPhiHigh();
 
 		double phiDiff = phiH - phiL;
-
-		// if(phiL > 0 && phiL < MathUtils::PI__TWO && phiH > MathUtils::THREE_PI__TWO && phiH < MathUtils::TWO_PI)
 		if(phiDiff > MathUtils::PI)
 		{
 			LidarLine2 lineDown = line;

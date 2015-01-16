@@ -32,19 +32,19 @@ using namespace std;
 namespace lsl {
 namespace utils {
 
-void ImageUtils::saveToImage(const string& filename, const double **data, size_t rowCount, size_t columnCount)
+void ImageUtils::saveToImage(const string& filename, double ** const data, size_t rowCount, size_t columnCount)
 {
 	double minValue, maxValue;
 	ArrayUtils::getMinMaxValues(data, rowCount, columnCount, minValue, maxValue);
 	saveToImage(filename, data, rowCount, columnCount, minValue, maxValue);
 }
 
-void ImageUtils::saveToImage(const string& filename, const double **data, size_t rowCount, size_t columnCount, double maxValue)
+void ImageUtils::saveToImage(const string& filename, double ** const data, size_t rowCount, size_t columnCount, double maxValue)
 {
 	saveToImage(filename, data, rowCount, columnCount, 0, maxValue);
 }
 
-void ImageUtils::saveToImage(const string& filename, const double **data, size_t rowCount, size_t columnCount, double minValue, double maxValue)
+void ImageUtils::saveToImage(const string& filename, double ** const data, size_t rowCount, size_t columnCount, double minValue, double maxValue)
 {
 	double one__range = 1.0 / (maxValue - minValue);
 

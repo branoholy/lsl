@@ -60,7 +60,9 @@ public:
 	static void printArray(std::ostream& out, const T *array, std::size_t size);
 
 	template <typename T>
-	static void getMinMaxValues(const T **array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold = std::numeric_limits<T>::min());
+	static void getMinMaxValues(T ** const array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold = std::numeric_limits<T>::min());
+
+	static void to01(double **array, std::size_t rowCount, std::size_t columnCount, double minValue, double maxValue);
 
 	template <typename T, typename ForwardIterator>
 	static void eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardIterator end);
@@ -157,7 +159,7 @@ void ArrayUtils::printArray(std::ostream& out, const T* array, std::size_t size)
 }
 
 template <typename T>
-void ArrayUtils::getMinMaxValues(const T **array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold)
+void ArrayUtils::getMinMaxValues(T ** const array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold)
 {
 	minValue = std::numeric_limits<T>::max();
 	maxValue = std::numeric_limits<T>::min();

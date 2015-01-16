@@ -21,10 +21,14 @@
 
 #include "lsl/utils/colorutils.hpp"
 
+#include "lsl/utils/mathutils.hpp"
+
 using namespace std;
 
 namespace lsl {
 namespace utils {
+
+double ColorUtils::DEFAULT_MAX_H = 4.0/3 * MathUtils::PI;
 
 void ColorUtils::hsv2rgb(double h, double s, double v, double& r, double& g, double& b)
 {
@@ -88,6 +92,14 @@ void ColorUtils::hsv2rgb(double h, double s, double v, int& r, int& g, int& b)
 	b = bd * 255;
 }
 
+unsigned long ColorUtils::hsv2bgr(double h, double s, double v)
+{
+	int r, g, b;
+	hsv2rgb(h, s, v, r, g, b);
+
+	return (b << 16) | (g << 8) | r;
+}
+
 void ColorUtils::range2rgb(double value, double& r, double& g, double& b, double maxH)
 {
 	hsv2rgb(value * maxH, 1, 1, r, g, b);
@@ -96,6 +108,11 @@ void ColorUtils::range2rgb(double value, double& r, double& g, double& b, double
 void ColorUtils::range2rgb(double value, int& r, int& g, int& b, double maxH)
 {
 	hsv2rgb(value * maxH, 1, 1, r, g, b);
+}
+
+unsigned long ColorUtils::range2bgr(double value, double maxH)
+{
+	return hsv2bgr(value * maxH, 1, 1);
 }
 
 }}

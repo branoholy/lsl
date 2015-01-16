@@ -19,23 +19,28 @@
  *
  */
 
-#ifndef LSL_UTILS_IMAGEUTILS_HPP
-#define LSL_UTILS_IMAGEUTILS_HPP
+#include "lsl/utils/arrayutils.hpp"
 
-#include <string>
-#include <limits>
+using namespace std;
 
 namespace lsl {
 namespace utils {
 
-class ImageUtils
+void ArrayUtils::to01(double **array, std::size_t rowCount, std::size_t columnCount, double minValue, double maxValue)
 {
-public:
-	static void saveToImage(const std::string& filename, double ** const data, std::size_t rowCount, std::size_t columnCount);
-	static void saveToImage(const std::string& filename, double ** const data, std::size_t rowCount, std::size_t columnCount, double maxValue);
-	static void saveToImage(const std::string& filename, double ** const data, std::size_t rowCount, std::size_t columnCount, double minValue, double maxValue);
-};
+	double one__range = 1.0 / (maxValue - minValue);
+
+	for(size_t r = 0; r < rowCount; r++)
+	{
+		for(size_t c = 0; c < columnCount; c++)
+		{
+			double value = array[r][c];
+			if(value < minValue) value = minValue;
+			if(value > maxValue) value = maxValue;
+
+			if(value != 0) array[r][c] = (value - minValue) * one__range;
+		}
+	}
+}
 
 }}
-
-#endif // LSL_UTILS_IMAGEUTILS_HPP
