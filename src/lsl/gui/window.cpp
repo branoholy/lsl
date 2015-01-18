@@ -31,13 +31,13 @@ namespace gui {
 
 Window::Window(const wxString& title, const wxSize& size) :
 	wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, size),
-	MouseEvents(GetEventHandler()), KeyEvents(GetEventHandler()), SizeEvents(this),
+	MouseEvents(GetEventHandler()), SizeEvents(this),
 	isExitOnKeysClear(true)
 {
-	onCharHooked += bind(&Window::exitOnEscHook, this, placeholders::_1);
+	onKeyDown += bind(&Window::exitOn, this, placeholders::_1);
 }
 
-void Window::exitOnEscHook(wxKeyEvent& e)
+void Window::exitOn(wxKeyEvent& e)
 {
 	if(getExitOn(e.GetKeyCode())) Close(true);
 	else e.Skip();

@@ -27,7 +27,7 @@ namespace lsl {
 namespace gui {
 
 LSLApp::LSLApp(const string& title, const wxSize& windowSize) :
-	title(title), windowSize(windowSize)
+	title(title), windowSize(windowSize), window(nullptr)
 {
 }
 
@@ -38,6 +38,28 @@ bool LSLApp::OnInit()
 	window->Show();
 
 	return true;
+}
+
+int LSLApp::FilterEvent(wxEvent& event)
+{
+	if(window != nullptr)
+	{
+		if((event.GetEventType() == wxEVT_KEY_UP && !window->onKeyUp.isEmpty()) || (event.GetEventType() == wxEVT_KEY_DOWN && !window->onKeyDown.isEmpty()))
+		{
+			wxWindow *focusedWindow = wxWindow::FindFocus();
+			wxControl *focusedControl = dynamic_cast<wxControl*>(focusedWindow);
+
+			if(focusedControl == nullptr)
+			{
+				if(event.GetEventType() == wxEVT_KEY_UP) window->onKeyUp(static_cast<wxKeyEvent&>(event));
+				else if(event.GetEventType() == wxEVT_KEY_DOWN) window->onKeyDown(static_cast<wxKeyEvent&>(event));
+
+				return true;
+			}
+		}
+	}
+
+	return wxApp::FilterEvent(event);
 }
 
 void LSLApp::Display(LSLApp *app, int& argc, char **argv)

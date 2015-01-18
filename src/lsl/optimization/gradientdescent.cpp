@@ -68,21 +68,7 @@ double* GradientDescent::minimize(function<double(const double*)> errorFunction,
 		cout << ')' << endl << endl << "For Gradient:" << endl;
 #endif
 
-		for(size_t i = 0; i < dimension; i++)
-		{
-			newInput[i] += deltas[i];
-			double deltaOutput = errorFunction(newInput);
-			evals++;
-
-#ifdef LSL_OPTIMIZATION_GD_PRINT
-			cout << deltaOutput << " = ";
-			ArrayUtils::printArray(cout, newInput, dimension);
-			cout << endl;
-#endif
-
-			gradient[i] = (deltaOutput - output) / deltas[i];
-			newInput[i] -= deltas[i];
-		}
+		getGradient(errorFunction, newInput, output, gradient);
 
 #ifdef LSL_OPTIMIZATION_GD_PRINT
 		cout << endl << "Gradient: (";
@@ -188,6 +174,25 @@ double GradientDescent::inputDistance(const double *input1, const double *input2
 	}
 
 	return sqrt(distance);
+}
+
+void GradientDescent::getGradient(const function<double(const double *)>& errorFunction, double *input, double output, double *gradient)
+{
+	for(size_t i = 0; i < dimension; i++)
+	{
+		input[i] += deltas[i];
+		double deltaOutput = errorFunction(input);
+		evals++;
+
+#ifdef LSL_OPTIMIZATION_GD_PRINT
+		cout << deltaOutput << " = ";
+		ArrayUtils::printArray(cout, input, dimension);
+		cout << endl;
+#endif
+
+		gradient[i] = (deltaOutput - output) / deltas[i];
+		input[i] -= deltas[i];
+	}
 }
 
 }}

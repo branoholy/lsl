@@ -357,7 +357,7 @@ Vector<T, dim>& Vector<T, dim>::operator+=(const Vector<T, dim>& other)
 {
 	for(unsigned int i = 0; i < dim; i++)
 	{
-		data[i] += other.get(i);
+		data[i] += other[i];
 	}
 
 	return *this;
@@ -376,7 +376,7 @@ Vector<T, dim>& Vector<T, dim>::operator-=(const Vector<T, dim>& other)
 {
 	for(unsigned int i = 0; i < dim; i++)
 	{
-		data[i] -= other.get(i);
+		data[i] -= other[i];
 	}
 
 	return *this;

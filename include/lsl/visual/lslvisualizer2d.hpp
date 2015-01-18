@@ -22,6 +22,8 @@
 #ifndef LSL_VISUAL_LSLVISUALIZER2D_HPP
 #define LSL_VISUAL_LSLVISUALIZER2D_HPP
 
+#include <mutex>
+
 #include <wx/gbsizer.h>
 
 #include "lsl/containers/pointcloud.hpp"
@@ -58,8 +60,10 @@ private:
 	wxStaticText *cfValueCtrl;
 	wxStaticText *cafValueCtrl;
 
-	wxTextCtrl *maxErrorValueCtrl;
-	wxSlider *maxErrorSlider;
+	wxTextCtrl *intErrorValueCtrls[2];
+	wxSlider *intErrorSliders[2];
+
+	wxCheckBox *showCtrl[3];
 
 	gui::Panel *repaintingPanel;
 
@@ -81,10 +85,14 @@ private:
 	std::size_t transformationId;
 
 	registration::LLT llt;
+	std::mutex lltMutex;
 
 	std::string fNames[3];
 	double fValues[3];
 	double fSteps[3];
+
+	std::string intErrorNames[2];
+	std::string showNames[3];
 
 	int valuePrecision, stepPrecision;
 	int errorValuePrecision;
@@ -92,6 +100,7 @@ private:
 	double **frValues[3];
 	std::size_t frRows[3];
 	std::size_t frColumns[3];
+	std::mutex frMutexes[3];
 
 	std::vector<geom::Vector2d> errorAreas;
 
@@ -101,12 +110,15 @@ private:
 	void repaint(wxPaintDC& pdc);
 
 	void drawAxis(wxDC& dc);
+	void drawAxis(wxDC& dc, std::size_t i);
 	void drawRulers(wxDC& dc);
 
 	void drawPoint(wxDC& dc, const geom::Vector2d& point, const wxColour& colour = *wxBLACK, std::size_t size = 1);
 	void drawPoint(wxDC& dc, const geom::Vector2d& point, const wxColour& brushColour, const wxColour& penColour, std::size_t size = 1);
 
 	void drawLine(wxDC& dc, const geom::Line2& line, const wxColour& colour = *wxBLACK, std::size_t size = 1);
+	void drawArrow(wxDC& dc, const geom::Vector2d& pointA, const geom::Vector2d& pointB, double length = 5, double angle = utils::MathUtils::PI__FOUR);
+	void drawArrow(wxDC& dc, int dx1, int dy1, int dx2, int dy2, double length = 5, double angle = utils::MathUtils::PI__FOUR);
 	void drawLidarLine(wxDC& dc, const geom::LidarLine2& lidarLine, const wxColour& colour = *wxBLACK, std::size_t size = 1, std::size_t endPointsSize = 8);
 
 	void drawPointCloud(wxDC& dc, const containers::PointCloud<geom::Vector2d> *pointCloud, const wxColour& colour = *wxBLACK, size_t size = 1);
@@ -125,6 +137,7 @@ private:
 	void refreshToolTips();
 
 	void getParams(std::size_t i, std::size_t x, std::size_t y, double& tx, double& ty, double& phi) const;
+	void getCoords(std::size_t i, double tx, double ty, double phi, std::size_t& x, std::size_t& y) const;
 
 public:
 	LSLVisualizer2d(const std::string& title = "LSL Visualizer 2D", const wxSize& windowSize = wxDefaultSize);

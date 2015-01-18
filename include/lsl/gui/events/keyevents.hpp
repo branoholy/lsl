@@ -35,16 +35,19 @@ namespace events {
 
 class KeyEvents
 {
-private:
-	void evtKeyUp(wxKeyEvent &e);
-	void evtCharHooked(wxKeyEvent &e);
+protected:
+
+	// void evtCharHooked(wxKeyEvent &e);
 
 public:
 	system::Event<void(wxKeyEvent&)> onKeyDown;
 	system::Event<void(wxKeyEvent&)> onKeyUp;
-	system::Event<void(wxKeyEvent&)> onCharHooked;
+	// system::Event<void(wxKeyEvent&)> onCharHooked;
 
+	KeyEvents();
 	KeyEvents(wxEvtHandler *evtHandler);
+
+	// void evtKeyUp(wxKeyEvent &e);
 };
 
 }}}

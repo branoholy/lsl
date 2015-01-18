@@ -34,6 +34,7 @@ public:
 	static const double TWO_PI;
 	static const double TWO_PI_EXCLUSIVE;
 	static const double PI__TWO;
+	static const double PI__FOUR;
 	static const double THREE_PI__TWO;
 	static const double ONE__TWO_PI;
 	static const double SQRT_TWO_PI;

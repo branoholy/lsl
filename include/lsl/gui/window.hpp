@@ -41,7 +41,7 @@ private:
 	bool isExitOnKeysClear;
 	std::vector<int> exitOnKeys;
 
-	void exitOnEscHook(wxKeyEvent& e);
+	void exitOn(wxKeyEvent& e);
 
 public:
 	Window(const wxString& title, const wxSize& size);

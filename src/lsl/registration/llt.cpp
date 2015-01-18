@@ -87,6 +87,8 @@ void LLT::removeInvisible(vector<LidarLine2>& lines) const
 
 		for(LidarLine2& line : lines)
 		{
+			// if(!line.isVisible()) continue; // TODO: Should an invisible line creates shadow?
+
 			double value = line.getValue(phiC);
 			if(value < minValue)
 			{

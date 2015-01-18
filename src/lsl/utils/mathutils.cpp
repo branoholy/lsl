@@ -35,6 +35,7 @@ const double MathUtils::PI = M_PI;
 const double MathUtils::TWO_PI = 2 * PI;
 const double MathUtils::TWO_PI_EXCLUSIVE = TWO_PI - 10 * numeric_limits<double>::epsilon();
 const double MathUtils::PI__TWO = PI / 2;
+const double MathUtils::PI__FOUR = PI / 4;
 const double MathUtils::THREE_PI__TWO = 3 * PI__TWO;
 const double MathUtils::ONE__TWO_PI = 1 / (2 * PI);
 const double MathUtils::SQRT_TWO_PI = sqrt(TWO_PI);

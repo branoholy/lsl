@@ -28,19 +28,27 @@ namespace lsl {
 namespace gui {
 namespace events {
 
+KeyEvents::KeyEvents()
+{
+}
+
 KeyEvents::KeyEvents(wxEvtHandler *evtHandler)
 {
-	evtHandler->Bind(wxEVT_KEY_DOWN, &Event<void(wxKeyEvent&)>::operator(), &onKeyDown);
-	evtHandler->Bind(wxEVT_KEY_UP, &KeyEvents::evtKeyUp, this);
-	evtHandler->Bind(wxEVT_CHAR_HOOK, &KeyEvents::evtCharHooked, this);
-}
+	// FIXME: All Bind functions should check if event is not empty.
 
+	evtHandler->Bind(wxEVT_KEY_DOWN, &Event<void(wxKeyEvent&)>::operator(), &onKeyDown);
+	evtHandler->Bind(wxEVT_KEY_UP, &Event<void(wxKeyEvent&)>::operator(), &onKeyUp);
+	// evtHandler->Bind(wxEVT_KEY_UP, &KeyEvents::evtKeyUp, this);
+	// evtHandler->Bind(wxEVT_CHAR_HOOK, &KeyEvents::evtCharHooked, this);
+}
+/*
 void KeyEvents::evtKeyUp(wxKeyEvent& e)
 {
-	onKeyUp(e);
-	e.Skip();
+	if(onKeyUp.isEmpty()) e.Skip();
+	else onKeyUp(e);
 }
-
+*/
+/*
 void KeyEvents::evtCharHooked(wxKeyEvent& e)
 {
 	wxWindow *focusedWindow = wxWindow::FindFocus();
@@ -53,5 +61,6 @@ void KeyEvents::evtCharHooked(wxKeyEvent& e)
 	}
 	else e.Skip();
 }
+*/
 
 }}}

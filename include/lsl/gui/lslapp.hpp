@@ -50,6 +50,8 @@ public:
 	LSLApp(const std::string& title = "LSL App", const wxSize& windowSize = wxDefaultSize);
 	virtual bool OnInit();
 
+	int FilterEvent(wxEvent& event);
+
 	inline Window* getWindow() const { return window; }
 
 	static void Display(LSLApp *app, int& argc, char **argv);

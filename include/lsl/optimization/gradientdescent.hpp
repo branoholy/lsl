@@ -48,6 +48,8 @@ public:
 
 	double* minimize(std::function<double(const double*)> errorFunction, const double *guess, double& output);
 	double* minimizeByDimension(std::function<double(const double*)> errorFunction, const double *guess, double& output);
+
+	void getGradient(const std::function<double(const double*)>& errorFunction, double *input, double output, double *gradient);
 };
 
 }}

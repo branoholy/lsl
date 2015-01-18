@@ -21,9 +21,13 @@
 
 #include "lsl/visual/lslvisualizer2d.hpp"
 
+#include <thread>
+
 #include <wx/dcgraph.h>
 #include <wx/rawbmp.h>
 #include <wx/valnum.h>
+
+#include "lsl/optimization/gradientdescent.hpp"
 
 #include "lsl/utils/arrayutils.hpp"
 #include "lsl/utils/colorutils.hpp"
@@ -47,6 +51,7 @@ const wxColour *LSLVisualizer2d::colours[] = {wxBLACK, wxRED, wxGREEN, wxBLUE, w
 LSLVisualizer2d::LSLVisualizer2d(const string& title, const wxSize& windowSize) : LSLApp(title, windowSize),
 	initLeftSide(false), initSizeSet(false), axisSize(3000), transformationId(0),
 	fNames{"tx", "ty", "phi"}, fValues{0, 0, 0}, fSteps{1, 1, 0.01},
+	intErrorNames{"Min", "Max"}, showNames{"points", "lines", "areas"},
 	valuePrecision(12), stepPrecision(12), errorValuePrecision(12),
 	frValues{nullptr, nullptr, nullptr}, frRows{0, 0, 0}, frColumns{0, 0, 0}
 {
@@ -104,9 +109,9 @@ void LSLVisualizer2d::initGUI(Window *window)
 {
 	window->SetMinSize(wxSize(800, 450));
 	window->Maximize();
-	window->setExitOn(WXK_ESCAPE, 'Q');
+	window->setExitOn(WXK_ESCAPE);
 
-	window->onCharHooked += [this, window](wxKeyEvent& keyEvent)
+	window->onKeyUp += [this, window](wxKeyEvent& keyEvent)
 	{
 		// TODO: Step by gradient
 
@@ -131,6 +136,43 @@ void LSLVisualizer2d::initGUI(Window *window)
 			if(absIndex > 0) fValues[absIndex - 1] += (index / absIndex) * fSteps[absIndex - 1];
 
 			window->TransferDataToWindow();
+			refreshLLTError();
+		}
+		else if(keyEvent.GetKeyCode() == 'G')
+		{
+			lltMutex.lock();
+
+			double deltas[3], gammas[3], input[3], gradient[3];
+			size_t size = 3 * sizeof(double);
+			memcpy(deltas, fSteps, size);
+			memcpy(gammas, fSteps, size);
+			memcpy(input, fValues, size);
+
+			double output = llt.errorTransform(lidarLineClouds.at(0), lidarLineClouds.at(1), fValues[2], fValues[0], fValues[1]);
+
+			cout << "Output: " << output << " = ";
+			ArrayUtils::printArray(cout, fValues, 3);
+			cout << endl;
+
+			optimization::GradientDescent gd(3, deltas, gammas, 0.0001);
+			gd.getGradient([this](const double *input)
+			{
+				return llt.errorTransform(lidarLineClouds.at(0), lidarLineClouds.at(1), input[2], input[0], input[1]);
+			}, input, output, gradient);
+
+			cout << "Gradient: ";
+			ArrayUtils::printArray(cout, gradient, 3);
+			cout << endl;
+
+			for(size_t i = 0; i < 3; i++)
+			{
+				// fValues[i] -= gammas[i] * gradient[i];
+				fValues[i] -= gradient[i] / abs(gradient[i]) * fSteps[i];
+			}
+
+			window->TransferDataToWindow();
+			lltMutex.unlock();
+
 			refreshLLTError();
 		}
 		else keyEvent.Skip();
@@ -171,6 +213,9 @@ void LSLVisualizer2d::initGUI(Window *window)
 			display.getPosition()[1] = newSize.GetHeight() / 2;
 
 			initSizeSet = true;
+
+			thread t(&LSLVisualizer2d::refreshLLTError, this);
+			t.detach();
 		}
 
 		e.Skip();
@@ -218,8 +263,6 @@ void LSLVisualizer2d::initGUI(Window *window)
 
 	mainSizer->Add(repaintingPanel, 1, wxEXPAND | wxALL, 10);
 	window->SetSizer(mainSizer);
-
-	refreshLLTError();
 }
 
 void LSLVisualizer2d::initLeftSideControls(wxWindow *parent, wxSizer *parentSizer)
@@ -294,32 +337,48 @@ void LSLVisualizer2d::initLeftSideControls(wxWindow *parent, wxSizer *parentSize
 
 	// Max error value
 	wxFlexGridSizer *leftDownSizer = new wxFlexGridSizer(2, 5, 5);
-	leftDownSizer->Add(new wxStaticText(parent, wxID_ANY, "Max error:"), 0, wxALIGN_CENTER_VERTICAL);
-
-	wxBoxSizer *maxErrorSizer = new wxBoxSizer(wxHORIZONTAL);
-	maxErrorValueCtrl = new wxTextCtrl(parent, wxID_ANY, "5000", wxDefaultPosition, wxSize(50, wxDefaultCoord), wxTE_PROCESS_ENTER);
-	maxErrorValueCtrl->Bind(wxEVT_TEXT_ENTER, [this](wxCommandEvent&)
+	for(size_t i = 0; i < 2; i++)
 	{
-		long value;
-		if(maxErrorValueCtrl->GetValue().ToLong(&value))
+		leftDownSizer->Add(new wxStaticText(parent, wxID_ANY, intErrorNames[i] + " error:"), 0, wxALIGN_CENTER_VERTICAL);
+
+		wxBoxSizer *intErrorSizer = new wxBoxSizer(wxHORIZONTAL);
+
+		int defaultValue = i * 5000;
+		intErrorValueCtrls[i] = new wxTextCtrl(parent, wxID_ANY, to_string(defaultValue), wxDefaultPosition, wxSize(50, wxDefaultCoord), wxTE_PROCESS_ENTER);
+		intErrorValueCtrls[i]->Bind(wxEVT_TEXT_ENTER, [this, i](wxCommandEvent&)
 		{
-			maxErrorSlider->SetValue(value);
-			for(size_t i = 0; i < 3; i++) frPanels[i]->Refresh();
-		}
-	});
-	maxErrorSizer->Add(maxErrorValueCtrl, 0, wxALIGN_CENTER_VERTICAL);
+			long value;
+			if(intErrorValueCtrls[i]->GetValue().ToLong(&value))
+			{
+				intErrorSliders[i]->SetValue(value);
+				for(size_t j = 0; j < 3; j++) frPanels[j]->Refresh();
+			}
+		});
+		intErrorSizer->Add(intErrorValueCtrls[i], 0, wxALIGN_CENTER_VERTICAL);
 
-	maxErrorSlider = new wxSlider(parent, wxID_ANY, 5000, 10, 50000);
-	maxErrorSlider->Bind(wxEVT_SLIDER, [this](wxCommandEvent&)
+		intErrorSliders[i] = new wxSlider(parent, wxID_ANY, defaultValue, i * 10, 1000 + i * 49000);
+		intErrorSliders[i]->Bind(wxEVT_SLIDER, [this, i](wxCommandEvent&)
+		{
+			intErrorValueCtrls[i]->SetValue(to_string(intErrorSliders[i]->GetValue()));
+			for(size_t j = 0; j < 3; j++) frPanels[j]->Refresh();
+		});
+
+		intErrorSizer->Add(intErrorSliders[i], 1, wxEXPAND);
+		leftDownSizer->Add(intErrorSizer, 1, wxEXPAND);
+	}
+
+	// Show ticks
+	leftDownSizer->Add(new wxStaticText(parent, wxID_ANY, "Show:"), 0, wxALIGN_CENTER_VERTICAL);
+	wxBoxSizer *showSizer = new wxBoxSizer(wxHORIZONTAL);
+	for(size_t i = 0; i < 3; i++)
 	{
-		maxErrorValueCtrl->SetValue(to_string(maxErrorSlider->GetValue()));
-		for(size_t i = 0; i < 3; i++) frPanels[i]->Refresh();
-	});
+		showCtrl[i] = new wxCheckBox(parent, wxID_ANY, showNames[i]);
+		showCtrl[i]->SetValue(i);
+		showCtrl[i]->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent&) { repaintingPanel->Refresh(); });
 
-	maxErrorSizer->Add(maxErrorSlider, 1, wxEXPAND);
-	leftDownSizer->Add(maxErrorSizer, 1, wxEXPAND);
-
-	// TODO: Add show points/lines/areas ticks
+		showSizer->Add(showCtrl[i]);
+	}
+	leftDownSizer->Add(showSizer, 1, wxEXPAND);
 
 	leftDownSizer->AddGrowableCol(1, 1);
 	parentSizer->Add(leftDownSizer, 1, wxEXPAND);
@@ -333,7 +392,7 @@ void LSLVisualizer2d::repaint(wxPaintDC& pdc)
 	dc.SetBrush(*wxLIGHT_GREY_BRUSH);
 
 	// Draw error areas
-	if(errorAreas.size() % 4 == 0)
+	if(errorAreas.size() % 4 == 0 && showCtrl[2]->IsChecked())
 	{
 		wxPoint polyPoints[4];
 		size_t errorAreasSize = errorAreas.size() / 4;
@@ -360,46 +419,50 @@ void LSLVisualizer2d::repaint(wxPaintDC& pdc)
 	size_t coloursSize = sizeof(colours) / sizeof(wxColour*);
 
 	// Draw point clouds
-	/*
-	size_t cloudsSize = pointClouds.size();
-	for(size_t i = 0; i < cloudsSize; i++)
+	if(showCtrl[0]->IsChecked())
 	{
-		const auto *cloud = pointClouds[i];
-		const wxColour *colour = colours[i % coloursSize];
+		size_t cloudsSize = pointClouds.size();
+		for(size_t i = 0; i < cloudsSize; i++)
+		{
+			const auto *cloud = pointClouds[i];
+			const wxColour *colour = colours[i % coloursSize];
 
-		if(i == 1) drawPointCloud(dc, cloud, phiValue, txValue, tyValue, *colour);
-		else drawPointCloud(dc, cloud, *colour);
+			if(i == 1) drawPointCloud(dc, cloud, fValues[2], fValues[0], fValues[1], *colour, 2);
+			else drawPointCloud(dc, cloud, *colour, 2);
+		}
 	}
-	*/
 
 	// Draw lines
-	size_t linesSize = lines.size();
-	for(size_t i = 0; i < linesSize; i++)
+	if(showCtrl[1]->IsChecked())
 	{
-		const Line2& line = lines[i];
-		drawLine(dc, line, *colours[i % coloursSize]);
-		// drawLine(dc, line, 1, *wxRED);
-	}
-
-	// Draw lidar lines
-	drawLidarLineCloud(dc, lidarLines, 1);
-
-	// Draw lidar lines clouds
-	size_t lidarLineCloudsSize = lidarLineClouds.size();
-	for(size_t i = 0; i < lidarLineCloudsSize; i++)
-	{
-		const vector<LidarLine2>& lineCloud = lidarLineClouds[i];
-		const wxColour *colour = colours[i % coloursSize];
-
-		if(i == 1)
+		size_t linesSize = lines.size();
+		for(size_t i = 0; i < linesSize; i++)
 		{
-			// drawLidarLineCloud(dc, lineCloud, phiValue, txValue, tyValue, *colour);
-
-			vector<LidarLine2> transformedLineCloud = lineCloud;
-			LidarLine2::transform(transformedLineCloud, fValues[2], fValues[0], fValues[1]);
-			drawLidarLineCloud(dc, transformedLineCloud, *colour, 2);
+			const Line2& line = lines[i];
+			drawLine(dc, line, *colours[i % coloursSize]);
+			// drawLine(dc, line, 1, *wxRED);
 		}
-		else drawLidarLineCloud(dc, lineCloud, *colour, 2);
+
+		// Draw lidar lines
+		drawLidarLineCloud(dc, lidarLines, 1);
+
+		// Draw lidar lines clouds
+		size_t lidarLineCloudsSize = lidarLineClouds.size();
+		for(size_t i = 0; i < lidarLineCloudsSize; i++)
+		{
+			const vector<LidarLine2>& lineCloud = lidarLineClouds[i];
+			const wxColour *colour = colours[i % coloursSize];
+
+			if(i == 1)
+			{
+				// drawLidarLineCloud(dc, lineCloud, phiValue, txValue, tyValue, *colour);
+
+				vector<LidarLine2> transformedLineCloud = lineCloud;
+				LidarLine2::transform(transformedLineCloud, fValues[2], fValues[0], fValues[1]);
+				drawLidarLineCloud(dc, transformedLineCloud, *colour, 2);
+			}
+			else drawLidarLineCloud(dc, lineCloud, *colour, 2);
+		}
 	}
 }
 
@@ -427,6 +490,52 @@ void LSLVisualizer2d::drawAxis(wxDC& dc)
 	}
 
 	dc.SetPen(*normalPen);
+}
+
+void LSLVisualizer2d::drawAxis(wxDC& dc, size_t i)
+{
+	double arrowLength = 8, arrowAngle = MathUtils::PI / 6;
+	int width, height, offset = 10;
+	frPanels[i]->GetSize(&width, &height);
+
+	dc.SetPen(*wxThePenList->FindOrCreatePen(*wxWHITE, 2));
+	dc.SetFont(*wxTheFontList->FindOrCreateFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+	dc.SetTextForeground(*wxWHITE);
+
+	if(i == 0)
+	{
+		drawArrow(dc, width - offset, height - offset, offset, height - offset, arrowLength, arrowAngle);
+		drawArrow(dc, width - offset, height - offset, width - offset, offset, arrowLength, arrowAngle);
+
+		wxSize xSize = dc.GetTextExtent(fNames[2]);
+		wxSize ySize = dc.GetTextExtent(fNames[1]);
+
+		dc.DrawText(fNames[2], offset, height - 1.8 * offset - xSize.GetHeight());
+		dc.DrawText(fNames[1], width - 1.8 * offset - ySize.GetWidth(), offset);
+	}
+	else if(i == 1)
+	{
+		drawArrow(dc, offset, height - offset, width - offset, height - offset, arrowLength, arrowAngle);
+		drawArrow(dc, offset, height - offset, offset, offset, arrowLength, arrowAngle);
+
+		wxSize xSize = dc.GetTextExtent(fNames[0]);
+
+		dc.DrawText(fNames[0], width - offset - xSize.GetWidth(), height - 1.8 * offset - xSize.GetHeight());
+		dc.DrawText(fNames[1], 1.8 * offset, offset);
+	}
+	else if(i == 2)
+	{
+		drawArrow(dc, offset, offset, width - offset, offset, arrowLength, arrowAngle);
+		drawArrow(dc, offset, offset, offset, height - offset, arrowLength, arrowAngle);
+
+		wxSize xSize = dc.GetTextExtent(fNames[0]);
+		wxSize ySize = dc.GetTextExtent(fNames[2]);
+
+		dc.DrawText(fNames[0], width - offset - xSize.GetWidth(), 1.8 * offset);
+		dc.DrawText(fNames[2], 1.8 * offset, height - offset - ySize.GetHeight());
+	}
+
+	dc.SetLogicalFunction(wxCOPY);
 }
 
 void LSLVisualizer2d::drawRulers(wxDC& dc)
@@ -499,8 +608,34 @@ void LSLVisualizer2d::drawLine(wxDC& dc, const Line2& line, const wxColour& colo
 
 	for(const Vector2d& point : line.getPoints())
 	{
-		drawPoint(dc, point, size, colour);
+		drawPoint(dc, point, colour, size);
 	}
+}
+
+void LSLVisualizer2d::drawArrow(wxDC& dc, const Vector2d& pointA, const Vector2d& pointB, double length, double angle)
+{
+	int dx1, dy1, dx2, dy2;
+	display.transformToDisplay(pointA, dx1, dy1);
+	display.transformToDisplay(pointB, dx2, dy2);
+
+	drawArrow(dc, dx1, dy1, dx2, dy2, length, angle);
+}
+
+void LSLVisualizer2d::drawArrow(wxDC &dc, int dx1, int dy1, int dx2, int dy2, double length, double angle)
+{
+	dc.DrawLine(dx1, dy1, dx2, dy2);
+
+	wxPen pen(dc.GetPen().GetColour(), dc.GetPen().GetWidth(), wxPENSTYLE_SOLID);
+	dc.SetPen(pen);
+
+	Vector2d v({double(dx1 - dx2), double(dy1 - dy2)});
+	v.setLength(length);
+
+	v.setAngle2D(v.getAngle2D() + angle);
+	dc.DrawLine(dx2 + v[0], dy2 + v[1], dx2, dy2);
+
+	v.setAngle2D(v.getAngle2D() - 2 * angle);
+	dc.DrawLine(dx2 + v[0], dy2 + v[1], dx2, dy2);
 }
 
 void LSLVisualizer2d::drawLidarLine(wxDC& dc, const LidarLine2& lidarLine, const wxColour& colour, size_t size, size_t endPointsSize)
@@ -513,20 +648,18 @@ void LSLVisualizer2d::drawLidarLine(wxDC& dc, const LidarLine2& lidarLine, const
 	if(!lidarLine.isVisible()) style = wxPENSTYLE_LONG_DASH;
 
 	dc.SetPen(*wxThePenList->FindOrCreatePen(colour, size, style));
-	dc.DrawLine(dx1, dy1, dx2, dy2);
-
-	drawPoint(dc, lidarLine.getEndPointA(), colour, *wxBLACK, endPointsSize);
+	drawArrow(dc, lidarLine.getEndPointA(), lidarLine.getEndPointB(), 1.5 * endPointsSize, MathUtils::PI / 6);
 
 	dc.SetPen(*wxBLACK_PEN);
 	dc.SetBrush(*wxTheBrushList->FindOrCreateBrush(colour));
-	dc.DrawCircle(dx2, dy2, endPointsSize);
+	dc.DrawCircle(dx1, dy1, endPointsSize / 2);
 }
 
 void LSLVisualizer2d::drawPointCloud(wxDC& dc, const PointCloud<Vector2d> *pointCloud, const wxColour& colour, size_t size)
 {
 	for(const Vector2d& point : *pointCloud)
 	{
-		drawPoint(dc, point, size, colour);
+		drawPoint(dc, point, colour, size);
 	}
 }
 
@@ -535,7 +668,7 @@ void LSLVisualizer2d::drawPointCloud(wxDC& dc, const PointCloud<Vector2d> *point
 	for(Vector2d point : *pointCloud)
 	{
 		point.transform2D(phi, tx, ty);
-		drawPoint(dc, point, size, colour);
+		drawPoint(dc, point, colour, size);
 	}
 }
 
@@ -583,11 +716,29 @@ void LSLVisualizer2d::drawLidarLineCloud(wxDC& dc, const vector<LidarLine2>& lin
 
 void LSLVisualizer2d::frRepaint(size_t i, wxPaintDC &pdc, wxPaintEvent&)
 {
+	if(frColumns[i] == 0 || frRows[i] == 0) return;
+
+	frMutexes[i].lock();
+
+	double minValue = intErrorSliders[0]->GetValue();
+	double maxValue = intErrorSliders[1]->GetValue();
 	wxGCDC dc(pdc);
 
 	wxBitmap bitmap(frColumns[i], frRows[i], 24);
-	wxNativePixelData bitmapData(bitmap);
 
+	// TODO: Create wxMemoryDC (wxGCDC) here, draw axis into bitmap (is bitmap clear?), inverse color manually in for-loop
+	/*
+	wxMemoryDC memDC(bitmap);
+	wxGCDC memGCDC(memDC);
+
+	memGCDC.SetBrush(*wxBLACK_BRUSH);
+	memGCDC.DrawRectangle(0, 0, frColumns[i], frRows[i]);
+	drawAxis(memGCDC, i);
+
+	memDC.SelectObject(wxNullBitmap);
+	*/
+
+	wxNativePixelData bitmapData(bitmap);
 	wxNativePixelData::Iterator it(bitmapData);
 	for(size_t y = 0; y < frRows[i]; y++)
 	{
@@ -596,10 +747,12 @@ void LSLVisualizer2d::frRepaint(size_t i, wxPaintDC &pdc, wxPaintEvent&)
 
 		for(size_t x = 0; x < frColumns[i]; x++, it++)
 		{
-			double value01 = MathUtils::to01(row[x], 0, maxErrorSlider->GetValue());
+			double value01 = MathUtils::to01(row[x], minValue, maxValue);
 
 			int r, g, b;
 			ColorUtils::range2rgb(value01, r, g, b);
+
+			// int bw = (it.Red() - (r + g + b) / 3.0) / 2.0;
 
 			it.Red() = r;
 			it.Green() = g;
@@ -609,18 +762,22 @@ void LSLVisualizer2d::frRepaint(size_t i, wxPaintDC &pdc, wxPaintEvent&)
 		it = rowIt;
 		it.OffsetY(bitmapData, 1);
 	}
-
 	dc.DrawBitmap(bitmap, 0, 0);
 
 	dc.SetPen(*wxBLACK_PEN);
 	dc.SetBrush(*wxTRANSPARENT_BRUSH);
 	dc.DrawCircle(frColumns[i] / 2, frRows[i] / 2, 5);
+
+	drawAxis(dc, i);
+	frMutexes[i].unlock();
 }
 
 void LSLVisualizer2d::refreshLLTError()
 {
 	if(lidarLineClouds.size() == 2)
 	{
+		lltMutex.lock();
+
 		getWindow()->TransferDataFromWindow();
 		errorAreas = llt.errorAreas(lidarLineClouds.at(0), lidarLineClouds.at(1), fValues[2], fValues[0], fValues[1]);
 
@@ -651,23 +808,32 @@ void LSLVisualizer2d::refreshLLTError()
 		repaintingPanel->Refresh();
 		refreshLLTFunc();
 		refreshToolTips();
+
+		lltMutex.unlock();
 	}
 }
 
 void LSLVisualizer2d::refreshLLTFunc()
 {
-	for(size_t i = 0; i < 3; i++) refreshLLTFunc(i);
+	thread refreshThreads[3];
+
+	for(size_t i = 0; i < 3; i++) refreshThreads[i] = thread(static_cast<void(LSLVisualizer2d::*)(size_t)>(&LSLVisualizer2d::refreshLLTFunc), this, i);
+	for(size_t i = 0; i < 3; i++) refreshThreads[i].join();
 }
 
 void LSLVisualizer2d::refreshLLTFunc(size_t i)
 {
-	ArrayUtils::delete2dArray(frValues[i], frRows[i]);
-
 	int width, height;
 	frPanels[i]->GetSize(&width, &height);
+	if(width <= 0 || height <= 0) return;
+
+	frMutexes[i].lock();
+	ArrayUtils::delete2dArray(frValues[i], frRows[i]);
+
 	size_t ws = frRows[i] = height;
 	size_t hs = frColumns[i] = width;
 
+	registration::LLT llt;
 	double **values = frValues[i] = ArrayUtils::create2dArray<double>(height, width);
 	for(size_t y = 0; y < hs; y++)
 	{
@@ -679,6 +845,7 @@ void LSLVisualizer2d::refreshLLTFunc(size_t i)
 			row[x] = llt.errorTransform(lidarLineClouds.at(0), lidarLineClouds.at(1), phi, tx, ty);
 		}
 	}
+	frMutexes[i].unlock();
 
 	frPanels[i]->Refresh();
 }
@@ -716,6 +883,30 @@ void LSLVisualizer2d::getParams(size_t i, size_t x, size_t y, double &tx, double
 		tx = fValues[0] + int(x - w2) * fSteps[0];
 		ty = fValues[1];
 		phi = fValues[2] + int(y - h2) * fSteps[2];
+	}
+}
+
+void LSLVisualizer2d::getCoords(size_t i, double tx, double ty, double phi, size_t& x, size_t& y) const
+{
+	int width, height;
+	frPanels[i]->GetSize(&width, &height);
+	size_t w2 = width / 2;
+	size_t h2 = height / 2;
+
+	if(i == 0)
+	{
+		x = (fValues[2] - phi) / fSteps[2] + w2;
+		y = (fValues[1] - ty) / fSteps[1] + h2;
+	}
+	else if(i == 1)
+	{
+		x = (tx - fValues[0]) / fSteps[0] + w2;
+		y = (fValues[1] - ty) / fSteps[1] + h2;
+	}
+	else if(i == 2)
+	{
+		x = (tx - fValues[0]) / fSteps[0] + w2;
+		y = (phi - fValues[2]) / fSteps[2] + h2;
 	}
 }
 
