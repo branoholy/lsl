@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -24,30 +24,55 @@
 #include <algorithm>
 #include <sstream>
 
-using namespace std;
-
 namespace lsl {
 namespace io {
 
-string PCDHeader::NAME_VERSION = "VERSION";
-string PCDHeader::NAME_FIELDS = "FIELDS";
-string PCDHeader::NAME_SIZE = "SIZE";
-string PCDHeader::NAME_TYPE = "TYPE";
-string PCDHeader::NAME_COUNT = "COUNT";
-string PCDHeader::NAME_WIDTH = "WIDTH";
-string PCDHeader::NAME_HEIGHT = "HEIGHT";
-string PCDHeader::NAME_VIEWPOINT = "VIEWPOINT";
-string PCDHeader::NAME_POINTS = "POINTS";
-string PCDHeader::NAME_DATA = "DATA";
+std::string PCDHeader::NAME_VERSION = "VERSION";
+std::string PCDHeader::NAME_FIELDS = "FIELDS";
+std::string PCDHeader::NAME_SIZE = "SIZE";
+std::string PCDHeader::NAME_TYPE = "TYPE";
+std::string PCDHeader::NAME_COUNT = "COUNT";
+std::string PCDHeader::NAME_WIDTH = "WIDTH";
+std::string PCDHeader::NAME_HEIGHT = "HEIGHT";
+std::string PCDHeader::NAME_VIEWPOINT = "VIEWPOINT";
+std::string PCDHeader::NAME_POINTS = "POINTS";
+std::string PCDHeader::NAME_DATA = "DATA";
 
 PCDHeader::PCDHeader() :
 	fieldCount(0), fields(nullptr), size(nullptr), type(nullptr), count(nullptr), width(0), height(0), points(0)
 {
 }
 
-PCDHeader::PCDHeader(ifstream& file) : PCDHeader()
+PCDHeader::PCDHeader(std::istream& stream) : PCDHeader()
 {
-	load(file);
+	load(stream);
+}
+
+PCDHeader::PCDHeader(const PCDHeader& header) : PCDHeader()
+{
+	version = header.version;
+	fieldCount = header.fieldCount;
+
+	if(fieldCount > 0)
+	{
+		fields = new std::string[fieldCount];
+		std::copy(header.fields, header.fields + fieldCount, fields);
+
+		size = new std::size_t[fieldCount];
+		std::copy(header.size, header.size + fieldCount, size);
+
+		type = new char[fieldCount];
+		std::copy(header.type, header.type + fieldCount, type);
+
+		count = new std::size_t[fieldCount];
+		std::copy(header.count, header.count + fieldCount, count);
+	}
+
+	width = header.width;
+	height = header.height;
+	viewpoint = header.viewpoint;
+	points = header.points;
+	data = header.data;
 }
 
 PCDHeader::~PCDHeader()
@@ -58,10 +83,10 @@ PCDHeader::~PCDHeader()
 	delete[] count;
 }
 
-void PCDHeader::load(ifstream& file)
+void PCDHeader::load(std::istream& stream)
 {
-	string line;
-	while(getline(file, line))
+	std::string line;
+	while(std::getline(stream, line))
 	{
 		if(line.empty()) continue;
 
@@ -69,9 +94,9 @@ void PCDHeader::load(ifstream& file)
 		if(firstChar == '#') continue;
 		else
 		{
-			istringstream lineStream(line);
+			std::istringstream lineStream(line);
 
-			string command;
+			std::string command;
 			lineStream >> command;
 			lineStream.get();
 
@@ -80,12 +105,12 @@ void PCDHeader::load(ifstream& file)
 			{
 				fieldCount = std::count(line.begin(), line.end(), ' ');
 
-				fields = new string[fieldCount];
+				fields = new std::string[fieldCount];
 				loadFields(lineStream, fields);
 			}
 			else if(command == NAME_SIZE)
 			{
-				size = new unsigned int[fieldCount];
+				size = new std::size_t[fieldCount];
 				loadFields(lineStream, size);
 			}
 			else if(command == NAME_TYPE)
@@ -95,7 +120,7 @@ void PCDHeader::load(ifstream& file)
 			}
 			else if(command == NAME_COUNT)
 			{
-				count = new unsigned int[fieldCount];
+				count = new std::size_t[fieldCount];
 				loadFields(lineStream, count);
 			}
 			else if(command == NAME_WIDTH) lineStream >> width;
@@ -111,20 +136,20 @@ void PCDHeader::load(ifstream& file)
 	}
 }
 
-void PCDHeader::save(ofstream& file)
+void PCDHeader::save(std::ostream& stream)
 {
-	file << NAME_VERSION << ' ' << version << endl;
+	stream << NAME_VERSION << ' ' << version << std::endl;
 
-	saveFields(file, NAME_FIELDS, fields);
-	saveFields(file, NAME_SIZE, size);
-	saveFields(file, NAME_TYPE, type);
-	saveFields(file, NAME_COUNT, count);
+	saveFields(stream, NAME_FIELDS, fields);
+	saveFields(stream, NAME_SIZE, size);
+	saveFields(stream, NAME_TYPE, type);
+	saveFields(stream, NAME_COUNT, count);
 
-	file << NAME_WIDTH << ' ' << width << endl;
-	file << NAME_HEIGHT << ' ' << height << endl;
-	file << NAME_VIEWPOINT << ' ' << viewpoint << endl;
-	file << NAME_POINTS << ' ' << points << endl;
-	file << NAME_DATA << ' ' << data << endl;
+	stream << NAME_WIDTH << ' ' << width << std::endl;
+	stream << NAME_HEIGHT << ' ' << height << std::endl;
+	stream << NAME_VIEWPOINT << ' ' << viewpoint << std::endl;
+	stream << NAME_POINTS << ' ' << points << std::endl;
+	stream << NAME_DATA << ' ' << data << std::endl;
 }
 
 }}

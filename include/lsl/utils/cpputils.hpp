@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,7 +22,6 @@
 #ifndef LSL_UTILS_CPPUTILS_HPP
 #define LSL_UTILS_CPPUTILS_HPP
 
-#include <cstddef>
 #include <iostream>
 #include <type_traits>
 

@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -19,23 +19,4 @@
  *
  */
 
-#ifndef LSL_UTILS_IMAGEUTILS_HPP
-#define LSL_UTILS_IMAGEUTILS_HPP
-
-#include <string>
-#include <limits>
-
-namespace lsl {
-namespace utils {
-
-class ImageUtils
-{
-public:
-	static void saveToImage(const std::string& filename, double ** const data, std::size_t rowCount, std::size_t columnCount);
-	static void saveToImage(const std::string& filename, double ** const data, std::size_t rowCount, std::size_t columnCount, double maxValue);
-	static void saveToImage(const std::string& filename, double ** const data, std::size_t rowCount, std::size_t columnCount, double minValue, double maxValue);
-};
-
-}}
-
-#endif // LSL_UTILS_IMAGEUTILS_HPP
+#define EIGEN_MATRIXBASE_PLUGIN "lsl/utils/eigen/matrixbaseaddons.hpp"

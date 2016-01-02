@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -19,26 +19,24 @@
  *
  */
 
-#include "lsl/probability/normaldistribution.hpp"
-
-#include <cmath>
-#include "lsl/utils/mathutils.hpp"
-
-using namespace std;
-using namespace lsl::utils;
+#include "lsl/geom/splitmerge.hpp"
 
 namespace lsl {
-namespace probability {
+namespace geom {
 
-NormalDistribution::NormalDistribution(double mean, double stdDev)
+SplitMerge::SplitMerge()
 {
-	this->mean = mean;
-	this->stdDev = stdDev;
 }
 
-double NormalDistribution::operator()(double x) const
+SplitMerge::SplitMerge(std::size_t minModelSize, double maxError) :
+	minModelSize(minModelSize), maxError(maxError)
 {
-	return 1 / (stdDev * MathUtils::SQRT_TWO_PI) * exp(- pow(x - mean, 2) / (2 * getVariance()));
+}
+
+void SplitMerge::set(std::size_t minModelSize, double maxError)
+{
+	this->minModelSize = minModelSize;
+	this->maxError = maxError;
 }
 
 }}

@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -26,9 +26,9 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <map>
 #include <set>
 #include <vector>
-
 
 #include "cpputils.hpp"
 
@@ -42,7 +42,7 @@ public:
 	static T* createFilledArray(std::size_t size, T defaultValue);
 
 	template <typename T>
-	static void deleteArray(T **array, std::size_t size);
+	static void deleteArrayContent(T **array, std::size_t size);
 
 	template <typename T>
 	static T** create2dArray(std::size_t rowCount, std::size_t columnCount);
@@ -50,11 +50,17 @@ public:
 	template <typename T>
 	static T** create2dFilledArray(std::size_t rowCount, std::size_t columnCount, T defaultValue);
 
+	template <typename T, std::size_t rowCount, std::size_t columnCount>
+	static T** create2dFilledArray(T array[rowCount][columnCount]);
+
+	template <typename T>
+	static void fill2dArray(T **array, std::size_t rowCount, std::size_t columnCount, T defaultValue);
+
 	template <typename T>
 	static void delete2dArray(T **array, std::size_t rowCount);
 
 	template <typename T>
-	static void delete2dArray(T ***array, std::size_t rowCount, std::size_t columnCount);
+	static void delete2dArrayContent(T ***array, std::size_t rowCount, std::size_t columnCount);
 
 	template <typename T>
 	static void printArray(std::ostream& out, const T *array, std::size_t size);
@@ -68,30 +74,30 @@ public:
 	static void eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardIterator end);
 
 	template <typename T>
+	static void deleteAll(T **array, std::size_t size);
+
+	template <typename T>
 	static void deleteAll(const std::vector<T>& v);
+
+	template<typename ForwardIterator>
+	static void deleteAll(ForwardIterator begin, ForwardIterator end);
 };
 
 template <typename T>
 T* ArrayUtils::createFilledArray(std::size_t size, T defaultValue)
 {
 	T *array = new T[size];
-	for(std::size_t i = 0; i < size; i++)
-	{
-		array[i] = defaultValue;
-	}
+	std::fill(array, array + size, defaultValue);
 
 	return array;
 }
 
 template <typename T>
-void ArrayUtils::deleteArray(T **array, std::size_t size)
+void ArrayUtils::deleteArrayContent(T **array, std::size_t size)
 {
 	if(array != nullptr)
 	{
-		for(std::size_t i = 0; i < size; i++)
-		{
-			delete array[i];
-		}
+		deleteAll(array, size);
 		delete array;
 	}
 }
@@ -112,12 +118,29 @@ template <typename T>
 T** ArrayUtils::create2dFilledArray(std::size_t rowCount, std::size_t columnCount, T defaultValue)
 {
 	T **array = create2dArray<T>(rowCount, columnCount);
+	fill2dArray(array, rowCount, columnCount, defaultValue);
+
+	return array;
+}
+
+template <typename T, std::size_t rowCount, std::size_t columnCount>
+T** ArrayUtils::create2dFilledArray(T array[rowCount][columnCount])
+{
+	T **output = create2dArray<T>(rowCount, columnCount);
+	for(std::size_t r = 0; r < rowCount; r++)
+		for(std::size_t c = 0; c < columnCount; c++)
+			output[r][c] = array[r][c];
+
+	return output;
+}
+
+template <typename T>
+void ArrayUtils::fill2dArray(T **array, std::size_t rowCount, std::size_t columnCount, T defaultValue)
+{
 	for(std::size_t r = 0; r < rowCount; r++)
 	{
 		std::fill(array[r], array[r] + columnCount, defaultValue);
 	}
-
-	return array;
 }
 
 template <typename T>
@@ -131,7 +154,7 @@ void ArrayUtils::delete2dArray(T **array, std::size_t rowCount)
 }
 
 template <typename T>
-void ArrayUtils::delete2dArray(T ***array, std::size_t rowCount, std::size_t columnCount)
+void ArrayUtils::delete2dArrayContent(T ***array, std::size_t rowCount, std::size_t columnCount)
 {
 	for(std::size_t r = 0; r < rowCount; r++)
 	{
@@ -153,7 +176,7 @@ void ArrayUtils::printArray(std::ostream& out, const T* array, std::size_t size)
 		out << array[0];
 		for(std::size_t i = 1; i < size; i++)
 		{
-			out << ',' << ' ' << array[i];
+			out << /*',' <<*/ ' ' << array[i];
 		}
 	}
 }
@@ -188,11 +211,26 @@ void ArrayUtils::eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardItera
 }
 
 template <typename T>
+void ArrayUtils::deleteAll(T **array, std::size_t size)
+{
+	if(array != nullptr)
+	{
+		deleteAll(array, array + size);
+	}
+}
+
+template <typename T>
 void ArrayUtils::deleteAll(const std::vector<T>& v)
 {
-	for(auto& item : v)
+	deleteAll(v.begin(), v.end());
+}
+
+template<typename ForwardIterator>
+void ArrayUtils::deleteAll(ForwardIterator begin, ForwardIterator end)
+{
+	for(ForwardIterator it = begin; it != end; it++)
 	{
-		delete item;
+		delete *it;
 	}
 }
 
@@ -213,13 +251,8 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
 			else break;
 		}
 	}
-	else
-	{
-		out << "--empty--";
-	}
-	out << ']';
 
-	return out;
+	return out << ']';
 }
 
 template<typename T>
@@ -238,13 +271,8 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T*>& v)
 			else break;
 		}
 	}
-	else
-	{
-		out << "--empty--";
-	}
-	out << ']';
 
-	return out;
+	return out << ']';
 }
 
 
@@ -263,13 +291,8 @@ std::ostream& operator<<(std::ostream& out, const std::set<T>& v)
 			else break;
 		}
 	}
-	else
-	{
-		out << "--empty--";
-	}
-	out << ']';
 
-	return out;
+	return out << ']';
 }
 
 template<typename T>
@@ -288,13 +311,49 @@ std::ostream& operator<<(std::ostream& out, const std::set<T*>& v)
 			else break;
 		}
 	}
-	else
-	{
-		out << "--empty--";
-	}
-	out << ']';
 
-	return out;
+	return out << ']';
+}
+
+template<typename Key, typename T>
+std::ostream& operator<<(std::ostream& out, const std::map<Key, T>& m)
+{
+	out << '{';
+	if(m.size() > 0)
+	{
+		typename std::map<Key, T>::const_iterator it = m.begin();
+		while(true)
+		{
+			out << it->first << ": " << it->second;
+
+			if(++it != m.end()) out << ", ";
+			else break;
+		}
+	}
+
+	return out << '}';
+}
+
+template<typename Key, typename T>
+std::ostream& operator<<(std::ostream& out, const std::map<Key, T*>& m)
+{
+	out << '{';
+	if(m.size() > 0)
+	{
+		typename std::map<Key, T*>::const_iterator it = m.begin();
+		while(true)
+		{
+			out << it->first << ": ";
+
+			if(*it->second == nullptr) out << "nullptr";
+			else out << *it->second;
+
+			if(++it != m.end()) out << ", ";
+			else break;
+		}
+	}
+
+	return out << '}';
 }
 
 #endif // LSL_UTILS_ARRAYUTILS_HPP

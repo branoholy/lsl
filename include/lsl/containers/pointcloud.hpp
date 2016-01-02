@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,126 +22,148 @@
 #ifndef LSL_CONTAINERS_POINTCLOUD_HPP
 #define LSL_CONTAINERS_POINTCLOUD_HPP
 
-#include <algorithm>
-#include <functional>
 #include <iostream>
 #include <vector>
 
-#include "lsl/utils/arrayutils.hpp"
-#include "lsl/io/pcdheader.hpp"
-#include "lsl/io/pcdstream.hpp"
+#include "lsl/geom/transformable.hpp"
 
 namespace lsl {
 namespace containers {
 
-template<typename T>
-class PointCloud : public std::vector<T>
+template<typename ScalarT, int dim>
+class PointCloud : public std::vector<Eigen::Matrix<ScalarT, dim + 1, 1>>, geom::Transformable<ScalarT, dim>
 {
+public:
+	typedef Eigen::Matrix<ScalarT, dim + 1, 1> Point; // x, y, w;;; x, y, z, w
+	typedef typename geom::Transformable<ScalarT, dim>::Location Location;
+	typedef typename geom::Transformable<ScalarT, dim>::Transformation Transformation;
+	typedef Eigen::Vector3i Color;
+
 private:
-	io::PCDHeader *header;
+	Location realLocation;
+	Location odomLocation;
+	Location correctedLocation;
+
+	Color color;
+	std::size_t pointSize;
+
+public:
+	typedef ScalarT ScalarType;
+	static const int dimension;
+
+	PointCloud();
+	PointCloud(const PointCloud& pointCloud);
+
+	inline Location& getRealLocation() { return realLocation; }
+	inline const Location& getRealLocation() const { return realLocation; }
+
+	inline Location& getOdomLocation() { return odomLocation; }
+	inline const Location& getOdomLocation() const { return odomLocation; }
+
+	inline Location& getCorrectedLocation() { return correctedLocation; }
+	inline const Location& getCorrectedLocation() const { return correctedLocation; }
+
+	inline const Color& getColor() const { return color; }
+	inline void setColor(const Color& color) { this->color = color; }
+
+	inline std::size_t getPointSize() const { return pointSize; }
+	inline void setPointSize(std::size_t pointSize) { this->pointSize = pointSize; }
 
 	void correctIds();
 
-public:
-	PointCloud();
-	PointCloud(const std::string& fileName);
-	~PointCloud();
+	void transform(const Transformation& transformation);
 
-	inline io::PCDHeader* getHeader() const { return header; }
+	void getBounds(Point& low, Point& high) const;
 
-	/**
-	 * @brief Load a PCD file.
-	 * @param fileName Path to the file.
-	 */
-	void loadPCD(const std::string& fileName);
-
-	/**
-	 * @brief Save points to a PCD file.
-	 * @param fileName Path to the save location.
-	 */
-	void savePCD(const std::string& fileName) const;
-
-	void transform2D(double angle, double tx, double ty);
-	void transform2D(double c, double s, double tx, double ty);
-
-	template<typename T_>
-	friend std::ostream& operator<<(std::ostream& out, const PointCloud<T_>& pointCloud);
+	template<typename ScalarT_, int dim_>
+	friend std::ostream& operator<<(std::ostream& out, const PointCloud<ScalarT_, dim_>& pointCloud);
 };
 
-template<typename T>
-PointCloud<T>::PointCloud() :
-	header(nullptr)
+typedef PointCloud<double, 2> PointCloud2d;
+typedef PointCloud<double, 3> PointCloud3d;
+
+template<typename ScalarT, int dim>
+const int PointCloud<ScalarT, dim>::dimension = dim;
+
+template<typename ScalarT, int dim>
+PointCloud<ScalarT, dim>::PointCloud() :
+	realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
+	color(Color::Zero()), pointSize(1)
 {
 }
 
-template<typename T>
-PointCloud<T>::PointCloud(const std::string& fileName) : PointCloud()
+template<typename ScalarT, int dim>
+PointCloud<ScalarT, dim>::PointCloud(const PointCloud<ScalarT, dim>& pointCloud) : std::vector<Point>(pointCloud)
 {
-	loadPCD(fileName);
+	realLocation = pointCloud.realLocation;
+	odomLocation = pointCloud.odomLocation;
+	correctedLocation = pointCloud.correctedLocation;
+	color = pointCloud.color;
+	pointSize = pointCloud.pointSize;
 }
 
-template<typename T>
-PointCloud<T>::~PointCloud()
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::correctIds()
 {
-	delete header;
-}
+	std::sort(this->begin(), this->end(), [](const Point& a, const Point& b) { return a.getAngle2D() < b.getAngle2D(); });
 
-template<typename T>
-void PointCloud<T>::correctIds()
-{
-	std::sort(this->begin(), this->end(), [](const T& a, const T& b) { return a.getAngle2D() < b.getAngle2D(); });
-
-	size_t size = this->size();
-	for(size_t i = 0; i < size; i++)
+	std::size_t size = this->size();
+	for(std::size_t i = 0; i < size; i++)
 	{
-		(*this)[i].setId(i);
+		this->at(i).setId(i);
 	}
 }
 
-template<typename T>
-void PointCloud<T>::loadPCD(const std::string& fileName)
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::transform(const Transformation& transformation)
 {
-	std::ifstream pcdFile(fileName);
-
-	header = new io::PCDHeader(pcdFile);
-	this->reserve(header->points);
-
-	io::PCDStream::loadDataEmplace(pcdFile, header->fieldCount, *this);
+	for(Point& point : *this)
+	{
+		point = transformation * point;
+	}
 	correctIds();
 }
 
-template<typename T>
-void PointCloud<T>::savePCD(const std::string& fileName) const
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high) const
 {
-	if(header != nullptr)
+	for(int d = 0; d < dim; d++)
 	{
-		std::ofstream pcdFile(fileName);
+		low[d] = std::numeric_limits<double>::max();
+		high[d] = std::numeric_limits<double>::min();
+	}
+	low[2] = 1;
+	high[2] = 1;
 
-		header->save(pcdFile);
-		io::PCDStream::saveData(pcdFile, this->cbegin(), this->cend());
+	for(const Point& point : *this)
+	{
+		for(int d = 0; d < dim; d++)
+		{
+			if(point[d] < low[d]) low[d] = point[d];
+			if(point[d] > high[d]) high[d] = point[d];
+		}
 	}
 }
 
-template<typename T>
-void PointCloud<T>::transform2D(double angle, double tx, double ty)
+template<typename ScalarT_, int dim_>
+std::ostream& operator<<(std::ostream& out, const PointCloud<ScalarT_, dim_>& pointCloud)
 {
-	transform2D(cos(angle), sin(angle), tx, ty);
-}
+	out << '[';
 
-template<typename T>
-void PointCloud<T>::transform2D(double c, double s, double tx, double ty)
-{
-	for(T& point : *this)
+	if(!pointCloud.empty())
 	{
-		point.transform2D(c, s, tx, ty);
-	}
-}
+		Eigen::IOFormat cleanFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, "", ", ", "", "", "[", "]");
 
-template<typename T>
-std::ostream& operator<<(std::ostream& out, const PointCloud<T>& pointCloud)
-{
-	using ::operator<<;
-	return out << static_cast<const std::vector<T>&>(pointCloud);
+		out << pointCloud.front().format(cleanFormat);
+		for(std::size_t i = 1; i < pointCloud.size(); i++)
+		{
+			out << ", " << pointCloud[i].format(cleanFormat);
+		}
+	}
+
+	out << ']';
+
+	return out;
 }
 
 }}

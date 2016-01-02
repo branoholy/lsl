@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -19,44 +19,16 @@
  *
  */
 
-#ifndef LSL_GUI_LSLAPP_HPP
-#define LSL_GUI_LSLAPP_HPP
-
-#include <string>
-#include <functional>
-
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
-#include "window.hpp"
-
-#include "lsl/system/event.hpp"
-
-namespace lsl {
-namespace gui {
-
-class LSLApp : public wxApp
-{
-private:
-	std::string title;
-	wxSize windowSize;
-	Window *window;
+protected:
+	int id;
 
 public:
-	system::Event<void(Window*)> onInit;
+	inline Scalar at(uint i, uint j) const { return this->operator()(i,j); }
+	inline Scalar& at(uint i, uint j) { return this->operator()(i,j); }
+	inline Scalar at(uint i) const { return this->operator[](i); }
+	inline Scalar& at(uint i) { return this->operator[](i); }
 
-	LSLApp(const std::string& title = "LSL App", const wxSize& windowSize = wxDefaultSize);
-	virtual bool OnInit();
+	inline int getId() const { return id; }
+	inline void setId(int id) { this->id = id; }
 
-	int FilterEvent(wxEvent& event);
-
-	inline Window* getWindow() const { return window; }
-
-	static void Display(LSLApp *app, int& argc, char **argv);
-};
-
-}}
-
-#endif // LSL_GUI_LSLAPP_HPP
+	inline double getAngle2D() const { return std::atan2(at(1), at(0)); }

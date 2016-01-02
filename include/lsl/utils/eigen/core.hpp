@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -19,29 +19,10 @@
  *
  */
 
-#include "lsl/gui/events/paintevents.hpp"
+#ifndef LSL_UTILS_EIGEN_CORE_HPP
+#define LSL_UTILS_EIGEN_CORE_HPP
 
-using namespace std;
-using namespace lsl::system;
+#include "eigenaddons.hpp"
+#include <Eigen/Core>
 
-namespace lsl {
-namespace gui {
-namespace events {
-
-PaintEvents::PaintEvents(wxWindow *window) :
-	window(window)
-{
-	window->Bind(wxEVT_PAINT, &PaintEvents::evtPaint, this);
-}
-
-void PaintEvents::evtPaint(wxPaintEvent& e)
-{
-	if(!onRepaint.isEmpty())
-	{
-		wxPaintDC dc(window);
-		onRepaint(dc, e);
-	}
-	else e.Skip();
-}
-
-}}}
+#endif // LSL_UTILS_EIGEN_CORE_HPP

@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,14 +22,12 @@
 #ifndef LSL_GEOM_RANSAC_HPP
 #define LSL_GEOM_RANSAC_HPP
 
-#include <algorithm>
+//#include <algorithm>
 #include <limits>
 #include <random>
 #include <set>
-#include <vector>
 
 #include "line2.hpp"
-#include "vector.hpp"
 
 #include "lsl/utils/arrayutils.hpp"
 #include "lsl/utils/cpputils.hpp"
@@ -40,27 +38,30 @@ namespace geom {
 class Ransac
 {
 private:
-	std::mt19937 rnd;
+	static std::mt19937 rnd;
 
-	int iterations;
-	int initModelSize;
-	int minModelSize;
+	std::size_t iterations;
+	std::size_t initModelSize;
+	std::size_t minModelSize;
 	double maxError;
 
-	int getRandom(int max);
+	static std::size_t getRandom(std::size_t max);
 
 public:
-	Ransac(int iterations, int initModelSize, int minModelSize, double maxError);
+	Ransac();
+	Ransac(std::size_t iterations, std::size_t initModelSize, std::size_t minModelSize, double maxError);
+
+	void set(std::size_t iterations, std::size_t initModelSize, std::size_t minModelSize, double maxError);
 
 	template<typename T>
-	std::vector<T> run(const std::vector<T>& points);
+	std::vector<T> run(const std::vector<T>& points) const;
 
 	template<typename R, typename T>
-	std::vector<R> run(const std::vector<T>& points, unsigned int outterIterations);
+	std::vector<R> run(const std::vector<T>& points, std::size_t outterIterations) const;
 };
 
 template<typename T>
-std::vector<T> Ransac::run(const std::vector<T>& points)
+std::vector<T> Ransac::run(const std::vector<T>& points) const
 {
 	typedef typename std::remove_pointer<T>::type PointType;
 	typedef typename std::conditional<std::is_pointer<T>::value, PointType*, const PointType*>::type ModelValueType;
@@ -71,10 +72,10 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 	double bestError2 = std::numeric_limits<double>::max();
 	double maxError2 = maxError * maxError;
 
-	for(int i = 0; i < iterations; i++)
+	for(std::size_t i = 0; i < iterations; i++)
 	{
 		modelData.clear();
-		int tries = 0;
+		std::size_t tries = 0;
 		while(modelData.size() < initModelSize && tries < initModelSize * 10)
 		{
 			const T& point = points.at(getRandom(points.size()));
@@ -86,18 +87,19 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 
 		modelData.clear();
 		double error2 = 0;
-		unsigned int lastPointId = -1;
-		for(int j = 0; j < points.size(); j++)
+		ModelValueType lastPointPointer = nullptr;
+		for(std::size_t j = 0; j < points.size(); j++)
 		{
 			const T& point = points.at(j);
 			ModelValueType pointPointer = utils::CppUtils::getPointer(point);
 			double distance2 = model.distance2To(*pointPointer);
 
-			if(distance2 < maxError2 && (lastPointId == -1 || pointPointer->getId() == lastPointId + 1))
+			if(distance2 < maxError2 && (lastPointPointer == nullptr || ((pointPointer->getId() == lastPointPointer->getId() + 1)
+				&& (*pointPointer - *lastPointPointer).squaredNorm() /* pointPointer->getDistanceTo2(*lastPointPointer) */ < 100 * maxError2)))
 			{
 				modelData.insert(pointPointer);
 				error2 += distance2;
-				lastPointId = pointPointer->getId();
+				lastPointPointer = pointPointer;
 			}
 			else
 			{
@@ -142,20 +144,24 @@ std::vector<T> Ransac::run(const std::vector<T>& points)
 }
 
 template<typename R, typename T>
-std::vector<R> Ransac::run(const std::vector<T>& points, unsigned int outterIterations)
+std::vector<R> Ransac::run(const std::vector<T>& points, std::size_t outterIterations) const
 {
 	std::vector<R> allModelData;
 	std::vector<T> remainingPoints = points;
 
-	for(unsigned int i = 0; i < outterIterations; i++)
+	for(std::size_t i = 0; i < outterIterations; i++)
 	{
 		if(remainingPoints.size() == 0) break;
 
 		std::vector<T> modelData = run(remainingPoints);
 		if(modelData.size() > 0)
 		{
-			allModelData.emplace_back(modelData);
-			utils::ArrayUtils::eraseAll(remainingPoints, modelData.begin(), modelData.end());
+			try
+			{
+				allModelData.emplace_back(modelData);
+				utils::ArrayUtils::eraseAll(remainingPoints, modelData.begin(), modelData.end());
+			}
+			catch(const std::invalid_argument&){}
 		}
 	}
 

@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -25,14 +25,12 @@
 #include <iostream>
 
 #include "line2.hpp"
-#include "vector.hpp"
-
-#include "lsl/utils/mathutils.hpp"
+#include "transformable.hpp"
 
 namespace lsl {
 namespace geom {
 
-class LidarLine2
+class LidarLine2 : public Transformable<double, 2>
 {
 private:
 	double l;
@@ -41,20 +39,42 @@ private:
 	double phiA;
 	double phiB;
 
-	Vector2d endPointA;
-	Vector2d endPointB;
+	Eigen::Vector3d endPointA;
+	Eigen::Vector3d endPointB;
+
+	bool managed;
+
+	void setLine(const Line2& line);
+
+	void setEndPointA(double phiA);
+	void setEndPointA(const Eigen::Vector3d& endPointA, bool testBounds_);
+
+	void setEndPointB(double phiB);
+	void setEndPointB(const Eigen::Vector3d& endPointB, bool testBounds_);
+
+	void testBounds(double alpha, double phiA, double phiB);
+	void testBounds(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB);
 
 public:
-	LidarLine2(double l, double alpha, double phiA, double phiB);
-	LidarLine2(const Line2& line);
-	LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB);
-	LidarLine2(const std::vector<Vector2d>& points);
+	LidarLine2(double l, double alpha, double phiA, double phiB, bool managed = true);
+	LidarLine2(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed = true);
+	LidarLine2(const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed = true);
+	LidarLine2(const std::vector<Eigen::Vector3d>& points, bool managed = true);
+
+	std::size_t *intervalEndIndexA;
+	std::size_t *intervalEndIndexB;
 
 	inline double getL() const { return l; }
 	inline double getAlpha() const { return alpha; }
+
+	inline bool getManaged() const { return managed; }
+	inline void setManaged(bool managed) { this->managed = managed; }
+
 	void set(const Line2& line);
+	void set(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB);
 
 	double getValue(double phi) const;
+	double getLineValue(double phi) const;
 
 	inline double getPhiA() const { return phiA; }
 	void setPhiA(double phiA);
@@ -62,22 +82,34 @@ public:
 	inline double getPhiB() const { return phiB; }
 	void setPhiB(double phiB);
 
-	inline Vector2d getEndPointA() const { return endPointA; }
-	void setEndPointA(const Vector2d& endPointA);
+	void setPhiAB(double phiA, double phiB);
 
-	inline Vector2d getEndPointB() const { return endPointB; }
-	void setEndPointB(const Vector2d& endPointB);
+	inline Eigen::Vector3d getEndPointA() const { return endPointA; }
+	void setEndPointA(const Eigen::Vector3d& endPointA);
+
+	inline Eigen::Vector3d getEndPointB() const { return endPointB; }
+	void setEndPointB(const Eigen::Vector3d& endPointB);
 
 	double getPhiLow() const;
 	double getPhiHigh() const;
 
-	bool isVisible() const;
+	double getDomainLow() const;
+	double getDomainHigh() const;
 
-	void transform(double angle, double tx, double ty);
-	void transform(double angle, double c, double s, double tx, double ty);
-	static void transform(std::vector<LidarLine2>& lidarLines, double angle, double tx, double ty);
+	bool isVisible() const;
+	bool inBounds(double phi) const;
+	bool inDomain(double phi) const;
+	bool checkBounds() const;
+
+	void transform(const Transformation& transformation);
+
+	static void transform(std::vector<LidarLine2>& lidarLines, const Transformation& transformation, bool removeInvalid = false);
+	static void transformToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid = false);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
+	Eigen::Vector3d gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
+
+	bool operator==(const LidarLine2& other) const;
 
 	static double sumDf(const std::vector<LidarLine2>& lidarLines);
 

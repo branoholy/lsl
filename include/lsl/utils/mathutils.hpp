@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,8 +22,6 @@
 #ifndef LSL_UTILS_MATHUTILS_HPP
 #define LSL_UTILS_MATHUTILS_HPP
 
-// #include <cstring>
-
 namespace lsl {
 namespace utils {
 
@@ -39,18 +37,22 @@ public:
 	static const double ONE__TWO_PI;
 	static const double SQRT_TWO_PI;
 
-	// static double isNegative(double x, double c = 10000000000000.0);
+	static const double EPSILON_10;
+
 	static double normAngle(double angle);
+	static double normAnglePi(double angle);
+
 	static double toDegrees(double radians);
 	static double toRadians(double degrees);
 
 	static double to01(double value, double minValue, double maxValue);
-
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size);
-	// static size_t cyclicDistance(size_t i, size_t j, size_t size, bool& isCyclic);
-	// static bool isCyclic(size_t i, size_t j, size_t size);
-	// static size_t cyclicIncrement(size_t i, int direction, size_t size);
 };
+
+double cot(double x);
+double sec(double x);
+double sec2(double x);
+double csc(double x);
+double csc2(double x);
 
 }}
 

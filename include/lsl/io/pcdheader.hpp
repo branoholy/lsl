@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,7 +22,7 @@
 #ifndef LSL_IO_PCDHEADER_HPP
 #define LSL_IO_PCDHEADER_HPP
 
-#include <fstream>
+#include <iostream>
 
 namespace lsl {
 namespace io {
@@ -49,29 +49,30 @@ private:
 
 public:
 	std::string version;
-	unsigned int fieldCount;
+	std::size_t fieldCount;
 	std::string *fields;
-	unsigned int *size;
+	std::size_t *size;
 	char *type;
-	unsigned int *count;
-	unsigned int width;
-	unsigned int height;
+	std::size_t *count;
+	std::size_t width;
+	std::size_t height;
 	std::string viewpoint;
-	unsigned int points;
+	std::size_t points;
 	std::string data;
 
 	PCDHeader();
-	PCDHeader(std::ifstream& file);
+	PCDHeader(std::istream& stream);
+	PCDHeader(const PCDHeader& header);
 	~PCDHeader();
 
-	void load(std::ifstream& file);
-	void save(std::ofstream& file);
+	void load(std::istream& stream);
+	void save(std::ostream& stream);
 };
 
 template<typename T>
 void PCDHeader::loadFields(std::istream& in, T *array)
 {
-	for(unsigned int i = 0; i < fieldCount; i++)
+	for(std::size_t i = 0; i < fieldCount; i++)
 	{
 		in >> array[i];
 	}
@@ -83,7 +84,7 @@ void PCDHeader::saveFields(std::ostream& out, const std::string& name, T *array)
 	if(fieldCount > 0)
 	{
 		out << name;
-		for(unsigned int i = 0; i < fieldCount; i++)
+		for(std::size_t i = 0; i < fieldCount; i++)
 		{
 			out << ' ' << array[i];
 		}

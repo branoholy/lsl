@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,10 +22,10 @@
 #ifndef LSL_GEOM_LINE2_HPP
 #define LSL_GEOM_LINE2_HPP
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
-#include "vector.hpp"
+#include "lsl/utils/eigen/core.hpp"
 #include "lsl/utils/cpputils.hpp"
 
 namespace lsl {
@@ -38,36 +38,44 @@ private:
 	double b;
 	double c;
 
-	std::vector<Vector2d> points;
+	std::vector<Eigen::Vector3d> points;
 public:
 	Line2(double a, double b, double c);
-	Line2(double a, double b, double c, const std::vector<Vector2d>& points);
-	Line2(double a, double b, double c, std::vector<Vector2d>&& points);
+	Line2(double a, double b, double c, const std::vector<Eigen::Vector3d>& points);
+	Line2(double a, double b, double c, std::vector<Eigen::Vector3d>&& points);
+	Line2(const Eigen::Vector3d& pointA, const Eigen::Vector3d& pointB, bool savePoints = false);
 	Line2(const Line2& line);
 
 	inline double getA() const { return a; }
 	inline double getB() const { return b; }
 	inline double getC() const { return c; }
 
-	inline const std::vector<Vector2d>& getPoints() const { return points; }
+	inline const std::vector<Eigen::Vector3d>& getPoints() const { return points; }
 
 	inline double getK() const { return - a / b; }
 	inline double getQ() const { return - c / b; }
 
 	void setParams(double a, double b, double c);
 
-	double distanceTo(const Vector2d& point) const;
-	double distance2To(const Vector2d& point) const;
+	double distanceTo(const Eigen::Vector3d& point) const;
+	double distance2To(const Eigen::Vector3d& point) const;
+	double sumOfDistance2To(const std::vector<Eigen::Vector3d>& points, double maxDistance2 = std::numeric_limits<double>::max()) const;
 
 	double getX(double y) const;
 	double getY(double x) const;
 
-	Vector2d getNormal() const;
-	Vector2d getOrientedNormal() const;
+	Eigen::Vector2d getNormal() const;
+	// Eigen::Vector2d getOrientedNormal() const;
 
-	Vector2d getClosestPoint(const Vector2d& point) const;
+	Eigen::Vector3d getClosestPoint(const Eigen::Vector3d& point) const;
+
+	Eigen::Vector3d intersect(const Line2& other) const;
+	bool tryIntersect(const Line2& other, Eigen::Vector3d& point) const;
 
 	std::ostream& printSlopeInterceptForm(std::ostream& out) const;
+
+	template<typename ForwardIterator>
+	static Line2 leastSquareLine(ForwardIterator begin, ForwardIterator end, bool savePoints = true);
 
 	template<typename ContainerT>
 	static Line2 leastSquareLine(const ContainerT& points, bool savePoints = true);
@@ -75,61 +83,60 @@ public:
 	friend std::ostream& operator<<(std::ostream& out, const Line2& line);
 };
 
-template<typename ContainerT>
-Line2 Line2::leastSquareLine(const ContainerT& points, bool savePoints)
+template<typename ForwardIterator>
+Line2 Line2::leastSquareLine(ForwardIterator begin, ForwardIterator end, bool savePoints)
 {
-	typedef typename ContainerT::value_type T;
-	typedef typename std::remove_pointer<T>::type PointType;
+	std::size_t size = std::distance(begin, end);
+	double one__size = 1.0 / size;
 
-	double sumX = 0;
-	double sumXX = 0;
-	double sumY = 0;
-	double sumXY = 0;
-	std::size_t size = points.size();
-
-	std::vector<Vector2d> linePoints;
-
+	std::vector<Eigen::Vector3d> linePoints;
 	if(savePoints) linePoints.reserve(size);
 
-	for(const T& item : points)
+	double x_ = 0, y_ = 0;
+	for(ForwardIterator it = begin; it != end; it++)
 	{
-		const PointType *point = utils::CppUtils::getPointer(item);
+		const auto *point = utils::CppUtils::getPointer(*it);
 
 		double x = (*point)[0];
 		double y = (*point)[1];
 
-		sumX += x;
-		sumXX += x * x;
-		sumY += y;
-		sumXY += x * y;
+		x_ += x;
+		y_ += y;
 
 		if(savePoints) linePoints.push_back(*point);
 	}
+	x_ *= one__size;
+	y_ *= one__size;
 
-	double d = size * sumXX - sumX * sumX;
-
-	double a = 0;
-	double b = 0;
-	double c = 0;
-
-	if(d == 0)
+	double sumX_ = 0, sumY_ = 0, b_ = 0;
+	for(ForwardIterator it = begin; it != end; it++)
 	{
-		a = 1;
-		b = 0;
-		c = -sumX / size;
-	}
-	else
-	{
-		double k = (size * sumXY - sumX * sumY) / d;
-		double q = (sumY * sumXX - sumX * sumXY) / d;
+		const auto *point = utils::CppUtils::getPointer(*it);
 
-		a = k;
-		b = -1;
-		c = q;
+		double x = (*point)[0];
+		double y = (*point)[1];
+
+		double x_i = x - x_;
+		double y_i = y - y_;
+
+		sumX_ += x_i * x_i;
+		sumY_ += y_i * y_i;
+		b_ += x_i * y_i;
 	}
+	double a_ = sumX_ - sumY_;
+
+	double a = 2 * b_;
+	double b = -(a_ + std::sqrt(a_ * a_ + 4 * b_ * b_));
+	double c = -(a * x_ + b * y_);
 
 	if(savePoints) return Line2(a, b, c, std::move(linePoints));
 	else return Line2(a, b, c);
+}
+
+template<typename ContainerT>
+Line2 Line2::leastSquareLine(const ContainerT& points, bool savePoints)
+{
+	return leastSquareLine(points.begin(), points.end(), savePoints);
 }
 
 }}

@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -21,103 +21,182 @@
 
 #include "lsl/geom/lidarline2.hpp"
 
-#include <cmath>
 #include <limits>
 #include <iostream>
+#include <sstream>
 
-using namespace std;
-using namespace lsl::utils;
+#include "lsl/utils/mathutils.hpp"
 
 namespace lsl {
 namespace geom {
 
-LidarLine2::LidarLine2(double l, double alpha, double phiA, double phiB) :
-	l(l), alpha(alpha)
+LidarLine2::LidarLine2(double l, double alpha, double phiA, double phiB, bool managed) :
+	l(l), alpha(alpha), managed(managed)
 {
-	setPhiA(phiA);
-	setPhiB(phiB);
+	setPhiAB(phiA, phiB);
 }
 
-LidarLine2::LidarLine2(const Line2& line)
+LidarLine2::LidarLine2(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed) :
+	managed(managed)
 {
-	set(line);
+	set(line, endPointA, endPointB);
 }
 
-LidarLine2::LidarLine2(const Line2& line, const Vector2d& endPointA, const Vector2d& endPointB) : LidarLine2(line)
+LidarLine2::LidarLine2(const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed) : LidarLine2(Line2(endPointA, endPointB), endPointA, endPointB, managed)
 {
-	setEndPointA(endPointA);
-	setEndPointB(endPointB);
 }
 
-LidarLine2::LidarLine2(const std::vector<Vector2d>& points)
+LidarLine2::LidarLine2(const std::vector<Eigen::Vector3d>& points, bool managed) :
+	managed(managed)
 {
 	Line2 line = Line2::leastSquareLine(points);
-	set(line);
 
-	size_t indexEndPointA = 0, indexEndPointB = 0;
-	for(size_t i = 1; i < points.size(); i++)
+	std::size_t indexEndPointA = 0, indexEndPointB = 0;
+	for(std::size_t i = 1; i < points.size(); i++)
 	{
 		if(points[i].getId() < points[indexEndPointA].getId()) indexEndPointA = i;
 		if(points[i].getId() > points[indexEndPointB].getId()) indexEndPointB = i;
 	}
 
-	setEndPointA(line.getClosestPoint(points[indexEndPointA]));
-	setEndPointB(line.getClosestPoint(points[indexEndPointB]));
+	Eigen::Vector3d endPointA = points[indexEndPointA];
+	Eigen::Vector3d endPointB = points[indexEndPointB];
+	bool visibility = endPointA.getAngle2D() < endPointB.getAngle2D();
+
+	Eigen::Vector3d closestEndPointA = line.getClosestPoint(points[indexEndPointA]);
+	Eigen::Vector3d closestEndPointB = line.getClosestPoint(points[indexEndPointB]);
+	bool closestVisibility = closestEndPointA.getAngle2D() < closestEndPointB.getAngle2D();
+	if(visibility == closestVisibility)
+	{
+		endPointA = std::move(closestEndPointA);
+		endPointB = std::move(closestEndPointB);
+	}
+
+	set(line, endPointA, endPointB);
 }
 
-void LidarLine2::set(const Line2& line)
+void LidarLine2::setLine(const Line2& line)
 {
-	Vector2d normal = line.getNormal();
-	l = abs(line.getC() / normal.getLength());
+	Eigen::Vector2d normal = line.getNormal();
+	l = abs(line.getC() / normal.norm());
 
 	normal *= -line.getC();
 	alpha = normal.getAngle2D();
 }
 
+void LidarLine2::set(const Line2& line)
+{
+	testBounds(line, endPointA, endPointB);
+	setLine(line);
+}
+
+void LidarLine2::set(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB)
+{
+	testBounds(line, endPointA, endPointB);
+
+	setLine(line);
+	setEndPointA(endPointA, false);
+	setEndPointB(endPointB, false);
+}
+
 double LidarLine2::getValue(double phi) const
 {
-	if(phi >= getPhiLow() && phi <= getPhiHigh()) return l / cos(phi - alpha);
-	else return numeric_limits<double>::max();
+	if(inBounds(phi)) return l / std::cos(phi - alpha);
+	else return std::numeric_limits<double>::max();
+}
+
+double LidarLine2::getLineValue(double phi) const
+{
+	if(inDomain(phi)) return l / std::cos(phi - alpha);
+	else return std::numeric_limits<double>::max();
 }
 
 void LidarLine2::setPhiA(double phiA)
 {
-	this->phiA = phiA;
+	testBounds(alpha, phiA, phiB);
 
+	this->phiA = phiA;
+	setEndPointA(phiA);
+}
+
+void LidarLine2::setPhiB(double phiB)
+{
+	testBounds(alpha, phiA, phiB);
+
+	this->phiB = phiB;
+	setEndPointB(phiB);
+}
+
+void LidarLine2::setPhiAB(double phiA, double phiB)
+{
+	testBounds(alpha, phiA, phiB);
+
+	this->phiA = phiA;
+	this->phiB = phiB;
+
+	setEndPointA(phiA);
+	setEndPointB(phiB);
+}
+
+void LidarLine2::setEndPointA(double phiA)
+{
 	double value = getValue(phiA);
 	endPointA[0] = value * cos(phiA);
 	endPointA[1] = value * sin(phiA);
 }
 
-void LidarLine2::setPhiB(double phiB)
+void LidarLine2::setEndPointB(double phiB)
 {
-	this->phiB = phiB;
-
 	double value = getValue(phiB);
 	endPointB[0] = value * cos(phiB);
 	endPointB[1] = value * sin(phiB);
 }
 
-void LidarLine2::setEndPointA(const Vector2d& endPointA)
+void LidarLine2::setEndPointA(const Eigen::Vector3d& endPointA)
 {
-	this->endPointA.set(endPointA);
-	phiA = endPointA.getAngle2D();
+	setEndPointA(endPointA, true);
 }
 
-void LidarLine2::setEndPointB(const Vector2d& endPointB)
+void LidarLine2::setEndPointA(const Eigen::Vector3d& endPointA, bool testBounds_)
 {
-	this->endPointB.set(endPointB);
-	phiB = endPointB.getAngle2D();
+	double phiA = endPointA.getAngle2D();
+	if(testBounds_) testBounds(alpha, phiA, phiB);
+
+	this->endPointA = endPointA;
+	this->phiA = phiA;
+}
+
+void LidarLine2::setEndPointB(const Eigen::Vector3d& endPointB)
+{
+	setEndPointB(endPointB, true);
+}
+
+void LidarLine2::setEndPointB(const Eigen::Vector3d& endPointB, bool testBounds_)
+{
+	double phiB = endPointB.getAngle2D();
+	if(testBounds_) testBounds(alpha, phiA, phiB);
+
+	this->endPointB = endPointB;
+	this->phiB = phiB;
 }
 
 double LidarLine2::getPhiLow() const
 {
-	return min(phiA, phiB);
+	return std::min(phiA, phiB);
 }
 
 double LidarLine2::getPhiHigh() const
 {
-	return max(phiA, phiB);
+	return std::max(phiA, phiB);
+}
+
+double LidarLine2::getDomainLow() const
+{
+	return alpha - utils::MathUtils::PI__TWO;
+}
+
+double LidarLine2::getDomainHigh() const
+{
+	return alpha + utils::MathUtils::PI__TWO;
 }
 
 bool LidarLine2::isVisible() const
@@ -125,60 +204,117 @@ bool LidarLine2::isVisible() const
 	return phiA < phiB;
 }
 
-void LidarLine2::transform(double angle, double tx, double ty)
+bool LidarLine2::inBounds(double phi) const
 {
-	double c = cos(angle);
-	double s = sin(angle);
-
-	transform(angle, c, s, tx, ty);
+	return phi >= getPhiLow() && phi <= getPhiHigh();
 }
 
-void LidarLine2::transform(double angle, double c, double s, double tx, double ty)
+bool LidarLine2::inDomain(double phi) const
 {
-	alpha += angle;
-	l += tx * cos(alpha) + ty * sin(alpha);
+	double phi0 = utils::MathUtils::normAnglePi(phi - alpha);
+	return phi0 > -utils::MathUtils::PI__TWO && phi0 < utils::MathUtils::PI__TWO;
+}
 
-	endPointA.transform2D(c, s, tx, ty);
-	endPointB.transform2D(c, s, tx, ty);
+void LidarLine2::testBounds(double alpha, double phiA, double phiB)
+{
+	if(!managed) return;
 
-	phiA = endPointA.getAngle2D();
-	phiB = endPointB.getAngle2D();
+	double phiA0 = utils::MathUtils::normAnglePi(phiA - alpha);
+	double phiB0 = utils::MathUtils::normAnglePi(phiB - alpha);
+
+	if(!(phiA0 > -utils::MathUtils::PI__TWO && phiA0 < utils::MathUtils::PI__TWO && phiB0 > -utils::MathUtils::PI__TWO && phiB0 < utils::MathUtils::PI__TWO))
+	{
+		std::ostringstream oss;
+		oss << *this;
+
+		throw std::invalid_argument("Both bounds (" + std::to_string(phiA) + ", " + std::to_string(phiB) + ") are not in the domain (" + std::to_string(alpha) + " ± π/2) of line " + oss.str() + ".");
+	}
+}
+
+void LidarLine2::testBounds(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB)
+{
+	if(!managed) return;
+
+	Eigen::Vector2d normal = line.getNormal();
+	normal *= -line.getC();
+
+	double alpha = normal.getAngle2D();
+	double phiA = endPointA.getAngle2D();
+	double phiB = endPointB.getAngle2D();
+
+	testBounds(alpha, phiA, phiB);
+}
+
+bool LidarLine2::checkBounds() const
+{
+	return inDomain(phiA) && inDomain(phiB);
+}
+
+void LidarLine2::transform(const Transformation& transformation)
+{
+	double alpha = this->alpha + std::atan2(transformation(1, 0), transformation(0, 0));
+	Eigen::Vector3d endPointA = transformation * this->endPointA;
+	Eigen::Vector3d endPointB = transformation * this->endPointB;
+
+	double phiA = endPointA.getAngle2D();
+	double phiB = endPointB.getAngle2D();
+	testBounds(alpha, phiA, phiB);
+
+	this->alpha = alpha;
+	l += transformation(0, 2) * std::cos(this->alpha) + transformation(1, 2) * std::sin(this->alpha);
+
+	this->endPointA = std::move(endPointA);
+	this->endPointB = std::move(endPointB);
+
+	this->phiA = phiA;
+	this->phiB = phiB;
 
 	if(l < 0)
 	{
-		alpha = MathUtils::normAngle(alpha - MathUtils::PI);
+		this->alpha = utils::MathUtils::normAngle(this->alpha - utils::MathUtils::PI);
 		l *= -1;
 	}
 }
 
-void LidarLine2::transform(vector<LidarLine2>& lidarLines, double angle, double tx, double ty)
+void LidarLine2::transform(std::vector<LidarLine2>& lidarLines, const Transformation& transformation, bool removeInvalid)
 {
-	double c = cos(angle);
-	double s = sin(angle);
-
-	vector<LidarLine2> linesToAdd;
-	for(LidarLine2& line : lidarLines)
+	std::vector<LidarLine2> linesToAdd;
+	for(size_t i = 0; i < lidarLines.size(); i++)
 	{
-		line.transform(angle, c, s, tx, ty);
+		LidarLine2& line = lidarLines[i];
+
+		try
+		{
+			line.transform(transformation);
+		}
+		catch(const std::invalid_argument&)
+		{
+			if(removeInvalid)
+			{
+				lidarLines.erase(lidarLines.begin() + i);
+				i--;
+				continue;
+			}
+			else throw;
+		}
 
 		// Divide lines crossing x+ axis (could happened only after transformation)
 		double phiL = line.getPhiLow();
 		double phiH = line.getPhiHigh();
 
 		double phiDiff = phiH - phiL;
-		if(phiDiff > MathUtils::PI)
+		if(phiDiff > utils::MathUtils::PI)
 		{
 			LidarLine2 lineDown = line;
-
 			if(phiL == line.getPhiA())
 			{
 				line.setPhiB(0);
-				lineDown.setPhiA(MathUtils::TWO_PI_EXCLUSIVE);
+				lineDown.setPhiA(utils::MathUtils::TWO_PI_EXCLUSIVE);
 			}
 			else
 			{
 				line.setPhiA(0);
-				lineDown.setPhiB(MathUtils::TWO_PI_EXCLUSIVE);
+				lineDown.setPhiB(utils::MathUtils::TWO_PI_EXCLUSIVE);
 			}
 
 			linesToAdd.push_back(lineDown);
@@ -188,34 +324,92 @@ void LidarLine2::transform(vector<LidarLine2>& lidarLines, double angle, double 
 	lidarLines.insert(lidarLines.end(), linesToAdd.begin(), linesToAdd.end());
 }
 
+void LidarLine2::transformToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid)
+{
+	transform(lidarLines, createTransformation(location), removeInvalid);
+}
+
 double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh) const
 {
 	double l2 = l * l;
 
-	double l1 = other.getL();
-	double l12 = l1 * l1;
-	double alpha1 = other.getAlpha();
+	double l_ = other.getL();
+	double l_2 = l_ * l_;
+	double alpha_ = other.getAlpha();
 
-	double one__sin = 2 * l * l1;
+	double one__sin = 2 * l * l_;
 	double errLow = 0;
 	double errHigh = 0;
 
-	if(abs(alpha - alpha1) <= numeric_limits<double>::epsilon())
+	double err;
+	if(std::abs(utils::MathUtils::normAnglePi(alpha - alpha_)) <= utils::MathUtils::EPSILON_10)
 	{
-		double tanLow = tan(phiLow - alpha);
-		double tanHigh = tan(phiHigh - alpha);
+		double tanLow = std::tan(phiLow - alpha);
+		double tanHigh = std::tan(phiHigh - alpha);
 
-		errLow = l2 * tanLow + l12 * tanLow - one__sin * tanLow;
-		errHigh = l2 * tanHigh + l12 * tanHigh - one__sin * tanHigh;
+		errLow = l2 * tanLow + l_2 * tanLow - one__sin * tanLow;
+		errHigh = l2 * tanHigh + l_2 * tanHigh - one__sin * tanHigh;
+
+		err = errHigh - errLow;
+		if(err < 0) std::cerr << "---> " << err << std::endl;
+		if(err < 0 && std::abs(err) <= utils::MathUtils::EPSILON_10) err = 0;
 	}
 	else
 	{
-		one__sin /= sin(alpha - alpha1);
-		errLow = l2 * tan(phiLow - alpha) + l12 * tan(phiLow - alpha1) - one__sin * log(cos(alpha - phiLow) / cos(alpha1 - phiLow));
-		errHigh = l2 * tan(phiHigh - alpha) + l12 * tan(phiHigh - alpha1) - one__sin * log(cos(alpha - phiHigh) / cos(alpha1 - phiHigh));
+		one__sin /= std::sin(alpha - alpha_);
+		errLow = l2 * std::tan(phiLow - alpha) + l_2 * std::tan(phiLow - alpha_) - one__sin * std::log(cos(alpha - phiLow) / std::cos(alpha_ - phiLow));
+		errHigh = l2 * std::tan(phiHigh - alpha) + l_2 * std::tan(phiHigh - alpha_) - one__sin * std::log(cos(alpha - phiHigh) / std::cos(alpha_ - phiHigh));
+
+		err = errHigh - errLow;
+		if(err < 0) std::cerr << "->>> " << err << ", " << utils::MathUtils::normAngle(alpha - alpha_) << std::endl;
 	}
 
-	return errHigh - errLow;
+	return err;
+}
+
+Eigen::Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2 &other, double phiLow, double phiHigh) const
+{
+	double l_ = other.getL();
+	double alpha_ = other.getAlpha();
+
+	Eigen::Vector3d gradient;
+
+	double one__cosLow = 1 / cos(phiLow - alpha_);
+	double one__cosHigh = 1 / cos(phiHigh - alpha_);
+
+	double pLow, pHigh, gradient2;
+	if(std::abs(utils::MathUtils::normAnglePi(alpha - alpha_)) <= utils::MathUtils::EPSILON_10)
+	{
+		pLow = std::tan(phiLow - alpha);
+		pHigh = std::tan(phiHigh - alpha);
+
+		gradient2 = - l_ * l_ * one__cosHigh * one__cosHigh + 2 * l * l_ * one__cosHigh * one__cosHigh;
+		gradient2 -= - l_ * l_ * one__cosLow * one__cosLow + 2 * l * l_ * one__cosLow * one__cosLow;
+	}
+	else
+	{
+		double one__sin = 1.0 / std::sin(alpha - alpha_);
+		pLow = one__sin * std::log(cos(alpha - phiLow) / std::cos(alpha_ - phiLow));
+		pHigh = one__sin * std::log(cos(alpha - phiHigh) / std::cos(alpha_ - phiHigh));
+
+		gradient2 = -2 * l * l_ * utils::csc(alpha - alpha_) * std::tan(alpha_ - phiHigh) - 2 * l * l_ * utils::cot(alpha - alpha_) * utils::csc(alpha - alpha_) * std::log(cos(alpha - phiHigh) * utils::sec(alpha_ - phiHigh)) - l_ * l_ * utils::sec2(alpha_ - phiHigh);
+		gradient2 -= -2 * l * l_ * utils::csc(alpha - alpha_) * std::tan(alpha_ - phiLow) - 2 * l * l_ * utils::cot(alpha - alpha_) * utils::csc(alpha - alpha_) * std::log(cos(alpha - phiLow) * utils::sec(alpha_ - phiLow)) - l_ * l_ * utils::sec2(alpha_ - phiLow);
+	}
+
+	double tanP = (l_ * std::tan(phiHigh - alpha_) - l * pHigh) - (l_ * std::tan(phiLow - alpha_) - l * pLow);
+	double gradient0 = 2 * cos(alpha_) * tanP;
+	double gradient1 = 2 * sin(alpha_) * tanP;
+
+	gradient[0] = gradient0;
+	gradient[1] = gradient1;
+	gradient[2] = gradient2;
+
+	return gradient;
+}
+
+bool LidarLine2::operator==(const LidarLine2& other) const
+{
+	return (l == other.l && alpha == other.alpha && phiA == other.phiA && phiB == other.phiB);
 }
 
 double LidarLine2::sumDf(const std::vector<LidarLine2>& lidarLines)
@@ -229,7 +423,7 @@ double LidarLine2::sumDf(const std::vector<LidarLine2>& lidarLines)
 	return sum;
 }
 
-ostream& operator<<(ostream& out, const LidarLine2& lidarLine)
+std::ostream& operator<<(std::ostream& out, const LidarLine2& lidarLine)
 {
 	return out << "LL(|" << lidarLine.l << "|, " << lidarLine.alpha << ", <" << lidarLine.phiA << ", " << lidarLine.phiB << ">)";
 }

@@ -1,6 +1,6 @@
 /*
  * LIDAR System Library
- * Copyright (C) 2014  Branislav Holý <branoholy@gmail.com>
+ * Copyright (C) 2014-2016  Branislav Holý <branoholy@gmail.com>
  *
  * This file is part of LIDAR System Library.
  *
@@ -22,106 +22,125 @@
 #ifndef LSL_IO_PCDSTREAM_HPP
 #define LSL_IO_PCDSTREAM_HPP
 
-#include <fstream>
 #include <sstream>
-#include <vector>
-
-#include "lsl/geom/vector.hpp"
 
 #include "lsl/io/pcdheader.hpp"
+#include "lsl/io/stream.hpp"
 
 namespace lsl {
 namespace io {
 
-class PCDStream
+template<typename PointCloudT>
+class PCDStream : public Stream<PointCloudT>
 {
+protected:
+	PCDHeader *header;
+
+	virtual PointCloudT loadData(std::istream& stream);
+	virtual void saveData(const PointCloudT& pointCloud, std::ostream& stream);
+
 public:
-	static PCDHeader* loadHeader(const std::string& fileName);
+	PCDStream();
+	PCDStream(const std::string& filePath);
+	PCDStream(std::istream& stream);
+	virtual ~PCDStream();
 
-	template<typename OutputIterator>
-	static void loadData(std::ifstream& file, std::size_t fieldCount, OutputIterator result);
-
-	template<typename Container>
-	static void loadDataEmplace(std::ifstream& file, std::size_t fieldCount, Container& container);
-
-	template<typename InputIterator>
-	static void saveData(std::ofstream& file, InputIterator begin, InputIterator end);
+	inline PCDHeader* getHeader() { return header; }
+	PCDHeader* loadHeader(const std::string& filePath);
+	PCDHeader* loadHeader(std::istream& stream);
 };
 
-template<typename OutputIterator>
-void PCDStream::loadData(std::ifstream& file, std::size_t fieldCount, OutputIterator result)
+template<typename PointCloudT>
+PCDStream<PointCloudT>::PCDStream() : Stream<PointCloudT>(),
+	header(nullptr)
 {
-	typedef typename OutputIterator::container_type::value_type::value_type value_t;
+}
 
-	int i = 0;
+template<typename PointCloudT>
+PCDStream<PointCloudT>::PCDStream(const std::string& filePath) : Stream<PointCloudT>(filePath)
+{
+}
+
+template<typename PointCloudT>
+PCDStream<PointCloudT>::~PCDStream()
+{
+	delete header;
+}
+
+template<typename PointCloudT>
+PCDHeader* PCDStream<PointCloudT>::loadHeader(const std::string& filePath)
+{
+	std::ifstream file(filePath);
+	return loadHeader(file);
+}
+
+template<typename PointCloudT>
+PCDHeader* PCDStream<PointCloudT>::loadHeader(std::istream& stream)
+{
+	header = new PCDHeader(stream);
+	return header;
+}
+
+template<typename PointCloudT>
+PointCloudT PCDStream<PointCloudT>::loadData(std::istream& stream)
+{
+	delete header;
+	loadHeader(stream);
+
+	int id = 0;
+
+	if(PointCloudT::Point::RowsAtCompileTime != header->fieldCount + 1)
+	{
+		throw std::ios_base::failure("Field count does not match.");
+	}
+
+	typename PointCloudT::ScalarType data[PointCloudT::Point::RowsAtCompileTime];
+
+	PointCloudT pointCloud;
+	pointCloud.reserve(header->points);
+
 	std::string line;
-	value_t *data = new value_t[fieldCount + 1];
-
-	while(getline(file, line))
+	while(std::getline(stream, line))
 	{
 		if(line.empty()) continue;
 
 		char firstChar = line.at(0);
 		if(firstChar == '#') continue;
 
-		data[0] = i++;
-
 		std::istringstream lineStream(line);
-		for(std::size_t j = 1; j < fieldCount; j++)
+		for(std::size_t i = 0; i < header->fieldCount; i++)
 		{
-			lineStream >> data[j];
+			lineStream >> data[i];
 		}
+		data[header->fieldCount] = 1;
 
-		*result = PointType(data, fieldCount);
-		result++;
+		pointCloud.emplace_back(data);
+		pointCloud.back().setId(id++);
 	}
 
-	delete[] data;
+	return pointCloud;
 }
 
-template<typename Container>
-void PCDStream::loadDataEmplace(std::ifstream& file, std::size_t fieldCount, Container& container)
+template<typename PointCloudT>
+void PCDStream<PointCloudT>::saveData(const PointCloudT& pointCloud, std::ostream& stream)
 {
-	typedef typename Container::value_type::value_type value_t;
+	header->save(stream);
 
-	int i = 0;
-	std::string line;
-	fieldCount++;
-	value_t *data = new value_t[fieldCount];
-
-	while(getline(file, line))
-	{
-		if(line.empty()) continue;
-
-		char firstChar = line.at(0);
-		if(firstChar == '#') continue;
-
-		data[0] = i++;
-
-		std::istringstream lineStream(line);
-		for(std::size_t j = 1; j < fieldCount; j++)
-		{
-			lineStream >> data[j];
-		}
-
-		container.emplace_back(data, fieldCount);
-	}
-
-	delete[] data;
-}
-
-template<typename InputIterator>
-void PCDStream::saveData(std::ofstream& file, InputIterator begin, InputIterator end)
-{
 	// TODO: Set precision based on header/point type.
-	std::streamsize precision = file.precision();
-	file.precision(8);
-	while(begin != end)
+	std::streamsize precision = stream.precision();
+	stream.precision(8);
+
+	for(const auto& point : pointCloud)
 	{
-		file << *begin << std::endl;
-		begin++;
+		stream << point[0];
+		for(std::size_t i = 1; i < header->fieldCount; i++)
+		{
+			stream << ' ' << point[i];
+		}
+		stream << std::endl;
 	}
-	file.precision(precision);
+
+	stream.precision(precision);
 }
 
 }}
