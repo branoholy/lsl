@@ -42,12 +42,12 @@ protected:
 public:
 	PCDStream();
 	PCDStream(const std::string& filePath);
-	PCDStream(std::istream& stream);
 	virtual ~PCDStream();
 
 	inline PCDHeader* getHeader() { return header; }
 	PCDHeader* loadHeader(const std::string& filePath);
 	PCDHeader* loadHeader(std::istream& stream);
+	PCDHeader* loadHeader(const PointCloudT& pointCloud);
 };
 
 template<typename PointCloudT>
@@ -57,7 +57,8 @@ PCDStream<PointCloudT>::PCDStream() : Stream<PointCloudT>(),
 }
 
 template<typename PointCloudT>
-PCDStream<PointCloudT>::PCDStream(const std::string& filePath) : Stream<PointCloudT>(filePath)
+PCDStream<PointCloudT>::PCDStream(const std::string& filePath) : Stream<PointCloudT>(filePath),
+	header(nullptr)
 {
 }
 
@@ -78,6 +79,50 @@ template<typename PointCloudT>
 PCDHeader* PCDStream<PointCloudT>::loadHeader(std::istream& stream)
 {
 	header = new PCDHeader(stream);
+	return header;
+}
+
+template<typename PointCloudT>
+PCDHeader* PCDStream<PointCloudT>::loadHeader(const PointCloudT& pointCloud)
+{
+	typedef typename PointCloudT::ScalarType ScalarType;
+
+	std::size_t size = sizeof(ScalarType);
+
+	char type = '-';
+	if(std::is_integral<ScalarType>::value)
+	{
+		if(std::is_signed<ScalarType>::value) type = 'I';
+		else if(std::is_unsigned<ScalarType>::value) type = 'U';
+	}
+	else if(std::is_floating_point<ScalarType>::value) type = 'F';
+
+	delete[] header;
+	header = new PCDHeader();
+
+	header->version = "0.7";
+	header->fieldCount = PointCloudT::dimension;
+
+	header->fields = new std::string[header->fieldCount];
+	header->size = new std::size_t[header->fieldCount];
+	header->type = new char[header->fieldCount];
+	header->count = new std::size_t[header->fieldCount];
+
+	for(std::size_t d = 0; d < header->fieldCount; d++)
+	{
+		header->fields[d] = 'x' + d;
+		header->size[d] = size;
+		header->type[d] = type;
+		header->count[d] = 1;
+	}
+
+	header->width = pointCloud.size();
+	header->height = 1;
+	header->viewpoint = "0 0 0 1 0 0 0";
+	header->points = pointCloud.size();
+
+	header->data = "ascii";
+
 	return header;
 }
 
@@ -115,7 +160,11 @@ PointCloudT PCDStream<PointCloudT>::loadData(std::istream& stream)
 		data[header->fieldCount] = 1;
 
 		pointCloud.emplace_back(data);
-		pointCloud.back().setId(id++);
+
+		auto& point = pointCloud.back();
+
+		point.setId(id++);
+		point.realPoint = true;
 	}
 
 	return pointCloud;
@@ -124,6 +173,7 @@ PointCloudT PCDStream<PointCloudT>::loadData(std::istream& stream)
 template<typename PointCloudT>
 void PCDStream<PointCloudT>::saveData(const PointCloudT& pointCloud, std::ostream& stream)
 {
+	loadHeader(pointCloud);
 	header->save(stream);
 
 	// TODO: Set precision based on header/point type.

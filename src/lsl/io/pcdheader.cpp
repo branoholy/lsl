@@ -77,14 +77,13 @@ PCDHeader::PCDHeader(const PCDHeader& header) : PCDHeader()
 
 PCDHeader::~PCDHeader()
 {
-	delete[] fields;
-	delete[] size;
-	delete[] type;
-	delete[] count;
+	deleteArrays();
 }
 
 void PCDHeader::load(std::istream& stream)
 {
+	deleteArrays();
+
 	std::string line;
 	while(std::getline(stream, line))
 	{
@@ -134,6 +133,12 @@ void PCDHeader::load(std::istream& stream)
 			}
 		}
 	}
+
+	if(count == nullptr)
+	{
+		count = new std::size_t[fieldCount];
+		std::fill(count, count + fieldCount, 1);
+	}
 }
 
 void PCDHeader::save(std::ostream& stream)
@@ -150,6 +155,14 @@ void PCDHeader::save(std::ostream& stream)
 	stream << NAME_VIEWPOINT << ' ' << viewpoint << std::endl;
 	stream << NAME_POINTS << ' ' << points << std::endl;
 	stream << NAME_DATA << ' ' << data << std::endl;
+}
+
+void PCDHeader::deleteArrays()
+{
+	delete[] fields;
+	delete[] size;
+	delete[] type;
+	delete[] count;
 }
 
 }}

@@ -41,6 +41,8 @@ private:
 	static std::string NAME_POINTS;
 	static std::string NAME_DATA;
 
+	void deleteArrays();
+
 	template<typename T>
 	void loadFields(std::istream& in, T *array);
 

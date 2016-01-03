@@ -44,8 +44,8 @@ private:
 	Location odomLocation;
 	Location correctedLocation;
 
-	Color color;
-	std::size_t pointSize;
+	Color realColor, unrealColor;
+	std::size_t realPointSize, unrealPointSize;
 
 public:
 	typedef ScalarT ScalarType;
@@ -63,17 +63,31 @@ public:
 	inline Location& getCorrectedLocation() { return correctedLocation; }
 	inline const Location& getCorrectedLocation() const { return correctedLocation; }
 
-	inline const Color& getColor() const { return color; }
-	inline void setColor(const Color& color) { this->color = color; }
+	inline const Color& getRealColor() const { return realColor; }
+	inline const Color& getUnrealColor() const { return unrealColor; }
 
-	inline std::size_t getPointSize() const { return pointSize; }
-	inline void setPointSize(std::size_t pointSize) { this->pointSize = pointSize; }
+	inline void setColors(const Color& realColor) { setColors(realColor, realColor); }
+	inline void setColors(const Color& realColor, const Color& unrealColor)
+	{
+		this->realColor = realColor;
+		this->unrealColor = unrealColor;
+	}
+
+	inline std::size_t getRealPointSize() const { return realPointSize; }
+	inline std::size_t getUnrealPointSize() const { return unrealPointSize; }
+
+	inline void setPointSizes(std::size_t realPointSize) { setPointSizes(realPointSize, realPointSize); }
+	inline void setPointSizes(std::size_t realPointSize, std::size_t unrealPointSize)
+	{
+		this->realPointSize = realPointSize;
+		this->unrealPointSize = unrealPointSize;
+	}
 
 	void correctIds();
 
 	void transform(const Transformation& transformation);
 
-	void getBounds(Point& low, Point& high) const;
+	void getBounds(Point& low, Point& high, bool onlyReal = true) const;
 
 	template<typename ScalarT_, int dim_>
 	friend std::ostream& operator<<(std::ostream& out, const PointCloud<ScalarT_, dim_>& pointCloud);
@@ -88,7 +102,7 @@ const int PointCloud<ScalarT, dim>::dimension = dim;
 template<typename ScalarT, int dim>
 PointCloud<ScalarT, dim>::PointCloud() :
 	realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
-	color(Color::Zero()), pointSize(1)
+	realColor(Color::Zero()), realPointSize(1)
 {
 }
 
@@ -98,8 +112,8 @@ PointCloud<ScalarT, dim>::PointCloud(const PointCloud<ScalarT, dim>& pointCloud)
 	realLocation = pointCloud.realLocation;
 	odomLocation = pointCloud.odomLocation;
 	correctedLocation = pointCloud.correctedLocation;
-	color = pointCloud.color;
-	pointSize = pointCloud.pointSize;
+	realColor = pointCloud.realColor;
+	realPointSize = pointCloud.realPointSize;
 }
 
 template<typename ScalarT, int dim>
@@ -125,7 +139,7 @@ void PointCloud<ScalarT, dim>::transform(const Transformation& transformation)
 }
 
 template<typename ScalarT, int dim>
-void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high) const
+void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high, bool onlyReal) const
 {
 	for(int d = 0; d < dim; d++)
 	{
@@ -137,6 +151,8 @@ void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high) const
 
 	for(const Point& point : *this)
 	{
+		if(onlyReal && !point.realPoint) continue;
+
 		for(int d = 0; d < dim; d++)
 		{
 			if(point[d] < low[d]) low[d] = point[d];

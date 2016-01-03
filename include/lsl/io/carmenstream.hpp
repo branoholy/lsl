@@ -229,7 +229,10 @@ void CARMENStream<PointCloudT>::fillPointCloud(const CARMENCommandFLaser *comman
 		data[2] = 1;
 
 		pointCloud.emplace_back(data);
-		pointCloud.back().setId(i);
+
+		typename PointCloudT::Point& point = pointCloud.back();
+		point.setId(i);
+		point.realPoint = true;
 	}
 }
 
