@@ -29,19 +29,19 @@ Line2::Line2(double a, double b, double c) :
 {
 }
 
-Line2::Line2(double a, double b, double c, const std::vector<Eigen::Vector3d>& points) :
+Line2::Line2(double a, double b, double c, const std::vector<geom::Vector3d>& points) :
 	a(a), b(b), c(c), points(points)
 {
 }
 
-Line2::Line2(double a, double b, double c, std::vector<Eigen::Vector3d>&& points) :
+Line2::Line2(double a, double b, double c, std::vector<geom::Vector3d>&& points) :
 	a(a), b(b), c(c), points(std::move(points))
 {
 }
 
-Line2::Line2(const Eigen::Vector3d& pointA, const Eigen::Vector3d& pointB, bool savePoints)
+Line2::Line2(const geom::Vector3d& pointA, const geom::Vector3d& pointB, bool savePoints)
 {
-	Eigen::Vector3d normal = pointB - pointA;
+	geom::Vector3d normal = pointB - pointA;
 	std::swap(normal[0], normal[1]);
 
 	a = -normal[0];
@@ -66,18 +66,18 @@ void Line2::setParams(double a, double b, double c)
 	this->c = c;
 }
 
-double Line2::distanceTo(const Eigen::Vector3d& point) const
+double Line2::distanceTo(const geom::Vector3d& point) const
 {
 	return std::abs(a * point[0] + b * point[1] + c) / std::sqrt(a * a + b * b);
 }
 
-double Line2::distance2To(const Eigen::Vector3d& point) const
+double Line2::distance2To(const geom::Vector3d& point) const
 {
 	double dt = a * point[0] + b * point[1] + c;
 	return dt * dt / (a * a + b * b);
 }
 
-double Line2::sumOfDistance2To(const std::vector<Eigen::Vector3d>& points, double maxDistance2) const
+double Line2::sumOfDistance2To(const std::vector<geom::Vector3d>& points, double maxDistance2) const
 {
 	double sum = 0;
 	for(const auto& point : points)
@@ -100,21 +100,21 @@ double Line2::getY(double x) const
 	return -(a * x + c) / b;
 }
 
-Eigen::Vector2d Line2::getNormal() const
+geom::Vector2d Line2::getNormal() const
 {
-	return Eigen::Vector2d({a, b});
+	return geom::Vector2d(a, b);
 }
 /*
-Eigen::Vector2d Line2::getOrientedNormal() const
+geom::Vector2d Line2::getOrientedNormal() const
 {
-	Eigen::Vector2d n = getNormal();
+	geom::Vector2d n = getNormal();
 
 	if(points.size() > 1)
 	{
-		Eigen::Vector3d pa = points.at(0);
-		Eigen::Vector3d pb = points.at(1);
+		geom::Vector3d pa = points.at(0);
+		geom::Vector3d pb = points.at(1);
 
-		Eigen::Vector2d n_ {pa[1] - pb[1], pb[0] - pa[0]};
+		geom::Vector2d n_ {pa[1] - pb[1], pb[0] - pa[0]};
 		n_ *= pb.getId() - pa.getId();
 
 		// abs(n * n_) ???
@@ -128,7 +128,7 @@ Eigen::Vector2d Line2::getOrientedNormal() const
 	return n;
 }
 */
-Eigen::Vector3d Line2::getClosestPoint(const Eigen::Vector3d& point) const
+geom::Vector3d Line2::getClosestPoint(const geom::Vector3d& point) const
 {
 	double cx, cy;
 	if(a == 0)
@@ -151,15 +151,15 @@ Eigen::Vector3d Line2::getClosestPoint(const Eigen::Vector3d& point) const
 	return {cx, cy, 1};
 }
 
-Eigen::Vector3d Line2::intersect(const Line2& other) const
+geom::Vector3d Line2::intersect(const Line2& other) const
 {
-	Eigen::Vector3d point;
+	geom::Vector3d point;
 	if(!tryIntersect(other, point)) throw std::invalid_argument("Lines are parallel.");
 
 	return point;
 }
 
-bool Line2::tryIntersect(const Line2& other, Eigen::Vector3d& point) const
+bool Line2::tryIntersect(const Line2& other, geom::Vector3d& point) const
 {
 	double determinant = b * other.a - a * other.b;
 	if(determinant == 0) return false;

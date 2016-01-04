@@ -36,17 +36,17 @@ LidarLine2::LidarLine2(double l, double alpha, double phiA, double phiB, bool ma
 	setPhiAB(phiA, phiB);
 }
 
-LidarLine2::LidarLine2(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed) :
+LidarLine2::LidarLine2(const Line2& line, const geom::Vector3d& endPointA, const geom::Vector3d& endPointB, bool managed) :
 	managed(managed)
 {
 	set(line, endPointA, endPointB);
 }
 
-LidarLine2::LidarLine2(const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed) : LidarLine2(Line2(endPointA, endPointB), endPointA, endPointB, managed)
+LidarLine2::LidarLine2(const geom::Vector3d& endPointA, const geom::Vector3d& endPointB, bool managed) : LidarLine2(Line2(endPointA, endPointB), endPointA, endPointB, managed)
 {
 }
 
-LidarLine2::LidarLine2(const std::vector<Eigen::Vector3d>& points, bool managed) :
+LidarLine2::LidarLine2(const std::vector<geom::Vector3d>& points, bool managed) :
 	managed(managed)
 {
 	Line2 line = Line2::leastSquareLine(points);
@@ -58,12 +58,12 @@ LidarLine2::LidarLine2(const std::vector<Eigen::Vector3d>& points, bool managed)
 		if(points[i].getId() > points[indexEndPointB].getId()) indexEndPointB = i;
 	}
 
-	Eigen::Vector3d endPointA = points[indexEndPointA];
-	Eigen::Vector3d endPointB = points[indexEndPointB];
+	geom::Vector3d endPointA = points[indexEndPointA];
+	geom::Vector3d endPointB = points[indexEndPointB];
 	bool visibility = endPointA.getAngle2D() < endPointB.getAngle2D();
 
-	Eigen::Vector3d closestEndPointA = line.getClosestPoint(points[indexEndPointA]);
-	Eigen::Vector3d closestEndPointB = line.getClosestPoint(points[indexEndPointB]);
+	geom::Vector3d closestEndPointA = line.getClosestPoint(points[indexEndPointA]);
+	geom::Vector3d closestEndPointB = line.getClosestPoint(points[indexEndPointB]);
 	bool closestVisibility = closestEndPointA.getAngle2D() < closestEndPointB.getAngle2D();
 	if(visibility == closestVisibility)
 	{
@@ -76,7 +76,7 @@ LidarLine2::LidarLine2(const std::vector<Eigen::Vector3d>& points, bool managed)
 
 void LidarLine2::setLine(const Line2& line)
 {
-	Eigen::Vector2d normal = line.getNormal();
+	geom::Vector2d normal = line.getNormal();
 	l = abs(line.getC() / normal.norm());
 
 	normal *= -line.getC();
@@ -89,7 +89,7 @@ void LidarLine2::set(const Line2& line)
 	setLine(line);
 }
 
-void LidarLine2::set(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB)
+void LidarLine2::set(const Line2& line, const geom::Vector3d& endPointA, const geom::Vector3d& endPointB)
 {
 	testBounds(line, endPointA, endPointB);
 
@@ -151,12 +151,12 @@ void LidarLine2::setEndPointB(double phiB)
 	endPointB[1] = value * sin(phiB);
 }
 
-void LidarLine2::setEndPointA(const Eigen::Vector3d& endPointA)
+void LidarLine2::setEndPointA(const geom::Vector3d& endPointA)
 {
 	setEndPointA(endPointA, true);
 }
 
-void LidarLine2::setEndPointA(const Eigen::Vector3d& endPointA, bool testBounds_)
+void LidarLine2::setEndPointA(const geom::Vector3d& endPointA, bool testBounds_)
 {
 	double phiA = endPointA.getAngle2D();
 	if(testBounds_) testBounds(alpha, phiA, phiB);
@@ -165,12 +165,12 @@ void LidarLine2::setEndPointA(const Eigen::Vector3d& endPointA, bool testBounds_
 	this->phiA = phiA;
 }
 
-void LidarLine2::setEndPointB(const Eigen::Vector3d& endPointB)
+void LidarLine2::setEndPointB(const geom::Vector3d& endPointB)
 {
 	setEndPointB(endPointB, true);
 }
 
-void LidarLine2::setEndPointB(const Eigen::Vector3d& endPointB, bool testBounds_)
+void LidarLine2::setEndPointB(const geom::Vector3d& endPointB, bool testBounds_)
 {
 	double phiB = endPointB.getAngle2D();
 	if(testBounds_) testBounds(alpha, phiA, phiB);
@@ -231,11 +231,11 @@ void LidarLine2::testBounds(double alpha, double phiA, double phiB)
 	}
 }
 
-void LidarLine2::testBounds(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB)
+void LidarLine2::testBounds(const Line2& line, const geom::Vector3d& endPointA, const geom::Vector3d& endPointB)
 {
 	if(!managed) return;
 
-	Eigen::Vector2d normal = line.getNormal();
+	geom::Vector2d normal = line.getNormal();
 	normal *= -line.getC();
 
 	double alpha = normal.getAngle2D();
@@ -253,8 +253,8 @@ bool LidarLine2::checkBounds() const
 void LidarLine2::transform(const Transformation& transformation)
 {
 	double alpha = this->alpha + std::atan2(transformation(1, 0), transformation(0, 0));
-	Eigen::Vector3d endPointA = transformation * this->endPointA;
-	Eigen::Vector3d endPointB = transformation * this->endPointB;
+	geom::Vector3d endPointA = transformation * this->endPointA;
+	geom::Vector3d endPointB = transformation * this->endPointB;
 
 	double phiA = endPointA.getAngle2D();
 	double phiB = endPointB.getAngle2D();
@@ -367,12 +367,12 @@ double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh)
 	return err;
 }
 
-Eigen::Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2 &other, double phiLow, double phiHigh) const
+geom::Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2 &other, double phiLow, double phiHigh) const
 {
 	double l_ = other.getL();
 	double alpha_ = other.getAlpha();
 
-	Eigen::Vector3d gradient;
+	geom::Vector3d gradient;
 
 	double one__cosLow = 1 / cos(phiLow - alpha_);
 	double one__cosHigh = 1 / cos(phiHigh - alpha_);

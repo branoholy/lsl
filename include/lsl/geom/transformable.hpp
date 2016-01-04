@@ -25,7 +25,7 @@
 #undef NDEBUG
 #include <cassert>
 
-#include "lsl/utils/eigen/core.hpp"
+#include "matrix.hpp"
 
 namespace lsl {
 namespace geom {
@@ -34,8 +34,8 @@ template<typename ScalarType, int dim>
 class Transformable
 {
 public:
-	typedef Eigen::Matrix<ScalarType, 3 * dim - 3, 1> Location; // x, y, theta;;; x, y, z, roll, pitch, yaw ?
-	typedef Eigen::Matrix<ScalarType, dim + 1, dim + 1> Transformation; // counter-clockwise rotation
+	typedef Matrix<ScalarType, 3 * dim - 3, 1> Location; // x, y, theta;;; x, y, z, roll, pitch, yaw ?
+	typedef Matrix<ScalarType, dim + 1, dim + 1> Transformation; // counter-clockwise rotation
 
 	virtual void transform(const Transformation& transformation) = 0;
 	virtual void transformToLocation(const Location& location);

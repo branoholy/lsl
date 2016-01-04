@@ -31,13 +31,13 @@ namespace lsl {
 namespace containers {
 
 template<typename ScalarT, int dim>
-class PointCloud : public std::vector<Eigen::Matrix<ScalarT, dim + 1, 1>>, geom::Transformable<ScalarT, dim>
+class PointCloud : public std::vector<geom::Matrix<ScalarT, dim + 1, 1>>, geom::Transformable<ScalarT, dim>
 {
 public:
-	typedef Eigen::Matrix<ScalarT, dim + 1, 1> Point; // x, y, w;;; x, y, z, w
+	typedef geom::Matrix<ScalarT, dim + 1, 1> Point; // x, y, w;;; x, y, z, w
 	typedef typename geom::Transformable<ScalarT, dim>::Location Location;
 	typedef typename geom::Transformable<ScalarT, dim>::Transformation Transformation;
-	typedef Eigen::Vector3i Color;
+	typedef geom::Vector3i Color;
 
 private:
 	Location realLocation;

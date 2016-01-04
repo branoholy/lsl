@@ -39,27 +39,27 @@ private:
 	double phiA;
 	double phiB;
 
-	Eigen::Vector3d endPointA;
-	Eigen::Vector3d endPointB;
+	geom::Vector3d endPointA;
+	geom::Vector3d endPointB;
 
 	bool managed;
 
 	void setLine(const Line2& line);
 
 	void setEndPointA(double phiA);
-	void setEndPointA(const Eigen::Vector3d& endPointA, bool testBounds_);
+	void setEndPointA(const geom::Vector3d& endPointA, bool testBounds_);
 
 	void setEndPointB(double phiB);
-	void setEndPointB(const Eigen::Vector3d& endPointB, bool testBounds_);
+	void setEndPointB(const geom::Vector3d& endPointB, bool testBounds_);
 
 	void testBounds(double alpha, double phiA, double phiB);
-	void testBounds(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB);
+	void testBounds(const Line2& line, const geom::Vector3d& endPointA, const geom::Vector3d& endPointB);
 
 public:
 	LidarLine2(double l, double alpha, double phiA, double phiB, bool managed = true);
-	LidarLine2(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed = true);
-	LidarLine2(const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB, bool managed = true);
-	LidarLine2(const std::vector<Eigen::Vector3d>& points, bool managed = true);
+	LidarLine2(const Line2& line, const geom::Vector3d& endPointA, const geom::Vector3d& endPointB, bool managed = true);
+	LidarLine2(const geom::Vector3d& endPointA, const geom::Vector3d& endPointB, bool managed = true);
+	LidarLine2(const std::vector<geom::Vector3d>& points, bool managed = true);
 
 	std::size_t *intervalEndIndexA;
 	std::size_t *intervalEndIndexB;
@@ -71,7 +71,7 @@ public:
 	inline void setManaged(bool managed) { this->managed = managed; }
 
 	void set(const Line2& line);
-	void set(const Line2& line, const Eigen::Vector3d& endPointA, const Eigen::Vector3d& endPointB);
+	void set(const Line2& line, const geom::Vector3d& endPointA, const geom::Vector3d& endPointB);
 
 	double getValue(double phi) const;
 	double getLineValue(double phi) const;
@@ -84,11 +84,11 @@ public:
 
 	void setPhiAB(double phiA, double phiB);
 
-	inline Eigen::Vector3d getEndPointA() const { return endPointA; }
-	void setEndPointA(const Eigen::Vector3d& endPointA);
+	inline geom::Vector3d getEndPointA() const { return endPointA; }
+	void setEndPointA(const geom::Vector3d& endPointA);
 
-	inline Eigen::Vector3d getEndPointB() const { return endPointB; }
-	void setEndPointB(const Eigen::Vector3d& endPointB);
+	inline geom::Vector3d getEndPointB() const { return endPointB; }
+	void setEndPointB(const geom::Vector3d& endPointB);
 
 	double getPhiLow() const;
 	double getPhiHigh() const;
@@ -107,7 +107,7 @@ public:
 	static void transformToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid = false);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
-	Eigen::Vector3d gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
+	geom::Vector3d gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
 
 	bool operator==(const LidarLine2& other) const;
 

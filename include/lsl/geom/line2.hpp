@@ -25,7 +25,7 @@
 #include <iostream>
 #include <vector>
 
-#include "lsl/utils/eigen/core.hpp"
+#include "matrix.hpp"
 #include "lsl/utils/cpputils.hpp"
 
 namespace lsl {
@@ -38,39 +38,39 @@ private:
 	double b;
 	double c;
 
-	std::vector<Eigen::Vector3d> points;
+	std::vector<geom::Vector3d> points;
 public:
 	Line2(double a, double b, double c);
-	Line2(double a, double b, double c, const std::vector<Eigen::Vector3d>& points);
-	Line2(double a, double b, double c, std::vector<Eigen::Vector3d>&& points);
-	Line2(const Eigen::Vector3d& pointA, const Eigen::Vector3d& pointB, bool savePoints = false);
+	Line2(double a, double b, double c, const std::vector<geom::Vector3d>& points);
+	Line2(double a, double b, double c, std::vector<geom::Vector3d>&& points);
+	Line2(const geom::Vector3d& pointA, const geom::Vector3d& pointB, bool savePoints = false);
 	Line2(const Line2& line);
 
 	inline double getA() const { return a; }
 	inline double getB() const { return b; }
 	inline double getC() const { return c; }
 
-	inline const std::vector<Eigen::Vector3d>& getPoints() const { return points; }
+	inline const std::vector<geom::Vector3d>& getPoints() const { return points; }
 
 	inline double getK() const { return - a / b; }
 	inline double getQ() const { return - c / b; }
 
 	void setParams(double a, double b, double c);
 
-	double distanceTo(const Eigen::Vector3d& point) const;
-	double distance2To(const Eigen::Vector3d& point) const;
-	double sumOfDistance2To(const std::vector<Eigen::Vector3d>& points, double maxDistance2 = std::numeric_limits<double>::max()) const;
+	double distanceTo(const geom::Vector3d& point) const;
+	double distance2To(const geom::Vector3d& point) const;
+	double sumOfDistance2To(const std::vector<geom::Vector3d>& points, double maxDistance2 = std::numeric_limits<double>::max()) const;
 
 	double getX(double y) const;
 	double getY(double x) const;
 
-	Eigen::Vector2d getNormal() const;
-	// Eigen::Vector2d getOrientedNormal() const;
+	geom::Vector2d getNormal() const;
+	// geom::Vector2d getOrientedNormal() const;
 
-	Eigen::Vector3d getClosestPoint(const Eigen::Vector3d& point) const;
+	geom::Vector3d getClosestPoint(const geom::Vector3d& point) const;
 
-	Eigen::Vector3d intersect(const Line2& other) const;
-	bool tryIntersect(const Line2& other, Eigen::Vector3d& point) const;
+	geom::Vector3d intersect(const Line2& other) const;
+	bool tryIntersect(const Line2& other, geom::Vector3d& point) const;
 
 	std::ostream& printSlopeInterceptForm(std::ostream& out) const;
 
@@ -89,7 +89,7 @@ Line2 Line2::leastSquareLine(ForwardIterator begin, ForwardIterator end, bool sa
 	std::size_t size = std::distance(begin, end);
 	double one__size = 1.0 / size;
 
-	std::vector<Eigen::Vector3d> linePoints;
+	std::vector<geom::Vector3d> linePoints;
 	if(savePoints) linePoints.reserve(size);
 
 	double x_ = 0, y_ = 0;
