@@ -62,6 +62,8 @@ private:
 	PointCloudType::Transformation finalTransformation;
 	std::vector<geom::LidarLine2> targetLines, sourceLines;
 
+	PointCloudType::Transformation detectionTransformation;
+
 	double getAvgDiffL(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines) const;
 	std::size_t iterAllLines(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, iterFunc f) const;
 	std::size_t iterLines(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, iterFunc f, bool onlyCorresponding = true) const;
@@ -124,6 +126,9 @@ public:
 	inline double getSumOfErrors() const { return sumOfErrors; }
 	inline double getCoverFactor() const { return coverFactor; }
 	inline double getCoverAngleFactor() const { return coverAngleFactor; }
+
+	inline void setDetectionTransformation(const PointCloudType::Transformation& transformation) { this->detectionTransformation = transformation; }
+	inline const PointCloudType::Transformation& getDetectionTransformation() const { return detectionTransformation; }
 
 	std::vector<geom::LidarLine2> detectLines(const PointCloudType& points, std::size_t maxLineCount = -1) const;
 	void removeInvisible(std::vector<geom::LidarLine2>& lines) const;

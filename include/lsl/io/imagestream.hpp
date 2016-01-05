@@ -124,7 +124,7 @@ void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClou
 	typename PointCloudT::Point size = (highBound - lowBound);
 	for(std::size_t d = 0; d < PointCloudT::dimension; d++) size[d] += 2 * padding;
 
-	cv::Mat image(size[1], size[0], CV_8UC3);
+	cv::Mat image(std::ceil(size[1]), std::ceil(size[0]), CV_8UC3);
 	image = cv::Scalar(255, 255, 255);
 
 	for(const auto& pointCloud : pointClouds)
@@ -159,7 +159,7 @@ void ImageStream<PointCloudT>::addPointCloud(const PointCloudT& pointCloud, cv::
 		}
 
 		std::size_t x = point[0] - lowBound[0] + padding;
-		std::size_t y = image.rows - (point[1] - lowBound[1] + padding);
+		std::size_t y = image.rows - (point[1] - lowBound[1] + padding) - 1;
 
 		if(pointSize == 1)
 		{

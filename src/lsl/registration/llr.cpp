@@ -36,12 +36,16 @@
 namespace lsl {
 namespace registration {
 
-LLR::LLR() : Registration()
+LLR::LLR() : Registration(),
+	maxLineCount(10),
+	maxDiffL(std::numeric_limits<double>::max()),
+	maxAvgDiffL(std::numeric_limits<double>::max()),
+	maxIterations(50),
+	maxTries(20),
+	minFinalError(0.0001),
+	gammas({0.1, 0.1, 0.00001}),
+	detectionTransformation(PointCloudType::Transformation::Identity())
 {
-	maxLineCount = 10;
-	maxDiffL = std::numeric_limits<double>::max();
-	maxAvgDiffL = std::numeric_limits<double>::max();
-	maxTries = 20;
 }
 
 void LLR::loadConfig(const std::string& path)
@@ -90,35 +94,13 @@ LLR::PointCloudType::Location LLR::getFinalLocation() const
 
 void LLR::setTarget(const PointCloudType& target)
 {
-/*
-	double c = std::cos(utils::MathUtils::PI);
-	double s = std::sin(utils::MathUtils::PI);
-
-	PointCloud<Vector2d> targetT = target;
-	targetT.transform(0, 0, c, s);
-*/
 	targetLines = detectLines(target, maxLineCount);
-/*
-	geom::LidarLine2::transform(targetLines, 0, 0, -utils::MathUtils::PI);
-	removeInvisible(targetLines);
-*/
 }
 
 void LLR::setSource(const PointCloudType& source, bool setOldSourceAsTarget)
 {
 	if(setOldSourceAsTarget) targetLines = std::move(sourceLines);
-/*
-	double c = std::cos(utils::MathUtils::PI);
-	double s = std::sin(utils::MathUtils::PI);
-
-	PointCloud<Vector2d> sourceT = source;
-	sourceT.transform(0, 0, c, s);
-*/
 	sourceLines = detectLines(source, maxLineCount);
-/*
-	LidarLine2::transform(sourceLines, 0, 0, -utils::MathUtils::PI);
-	removeInvisible(sourceLines);
-*/
 }
 
 void LLR::setTargetLines(const std::vector<geom::LidarLine2>& targetLines)
@@ -137,7 +119,16 @@ std::vector<geom::LidarLine2> LLR::detectLines(const PointCloudType& points, std
 	if(maxLineCount == std::size_t(-1)) maxLineCount = this->maxLineCount;
 
 	PointCloudType remainingPoints;
-	std::vector<geom::LidarLine2> lines = splitMerge.run<geom::LidarLine2>(points, remainingPoints);
+	std::vector<geom::LidarLine2> lines;
+
+	if(detectionTransformation.isIdentity()) lines = splitMerge.run<geom::LidarLine2>(points, remainingPoints);
+	else
+	{
+		PointCloudType pointsT = points;
+		pointsT.transform(detectionTransformation);
+
+		lines = splitMerge.run<geom::LidarLine2>(pointsT, remainingPoints);
+	}
 
 	if(lines.size() < maxLineCount)
 	{
@@ -145,7 +136,12 @@ std::vector<geom::LidarLine2> LLR::detectLines(const PointCloudType& points, std
 		lines.insert(lines.end(), linesRansac.begin(), linesRansac.end());
 	}
 
-	removeInvisible(lines); // TODO: Change to orderLines() ?
+	if(!detectionTransformation.isIdentity())
+	{
+		lsl::geom::LidarLine2::transform(lines, detectionTransformation.transpose(), true);
+	}
+
+	removeInvisible(lines);
 
 	return lines;
 }
@@ -429,6 +425,7 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 			if(tries > maxTries) goto mainLoopEnd;
 		}
 		while(newFinalError > tmpFinalError);
+		std::cout << "Error = " << tmpFinalError << std::endl;
 
 		input = newInput;
 
