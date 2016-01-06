@@ -103,8 +103,8 @@ public:
 
 	void transform(const Transformation& transformation);
 
-	static void transform(std::vector<LidarLine2>& lidarLines, const Transformation& transformation, bool removeInvalid = false);
-	static void transformToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid = false);
+	static void transformAll(std::vector<LidarLine2>& lidarLines, const Transformation& transformation, bool removeInvalid = false);
+	static void transformAllToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid = false);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
 	geom::Vector3d gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;

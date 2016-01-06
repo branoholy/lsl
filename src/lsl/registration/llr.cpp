@@ -138,7 +138,7 @@ std::vector<geom::LidarLine2> LLR::detectLines(const PointCloudType& points, std
 
 	if(!detectionTransformation.isIdentity())
 	{
-		lsl::geom::LidarLine2::transform(lines, detectionTransformation.transpose(), true);
+		lsl::geom::LidarLine2::transformAll(lines, detectionTransformation.transpose(), true);
 	}
 
 	removeInvisible(lines);
@@ -316,7 +316,7 @@ double LLR::error(const std::vector<geom::LidarLine2>& targetLines, const std::v
 
 double LLR::errorTransform(const std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2> sourceLines, PointCloudType::Transformation transformation)
 {
-	geom::LidarLine2::transform(sourceLines, transformation, true);
+	geom::LidarLine2::transformAll(sourceLines, transformation, true);
 	removeInvisible(sourceLines);
 
 	return error(targetLines, sourceLines);
@@ -324,7 +324,7 @@ double LLR::errorTransform(const std::vector<geom::LidarLine2>& targetLines, std
 
 LLR::PointCloudType LLR::errorAreas(const std::vector<geom::LidarLine2> &targetLines, std::vector<geom::LidarLine2> sourceLines, PointCloudType::Transformation transformation) const
 {
-	geom::LidarLine2::transform(sourceLines, transformation, true);
+	geom::LidarLine2::transformAll(sourceLines, transformation, true);
 	removeInvisible(sourceLines);
 
 	PointCloudType areas;
@@ -367,7 +367,7 @@ void LLR::alignSteps(std::size_t steps)
 void LLR::alignSteps(const PointCloudType::Transformation& guess, std::size_t steps)
 {
 	std::vector<geom::LidarLine2> sourceLinesT = sourceLines;
-	geom::LidarLine2::transform(sourceLinesT, guess, true);
+	geom::LidarLine2::transformAll(sourceLinesT, guess, true);
 	removeInvisible(sourceLinesT);
 
 	align(targetLines, sourceLinesT, steps);
@@ -411,7 +411,7 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 			globalGamma *= 0.5;
 
 			sourceLinesT = sourceLines;
-			geom::LidarLine2::transformToLocation(sourceLinesT, newInput, true);
+			geom::LidarLine2::transformAllToLocation(sourceLinesT, newInput, true);
 			removeInvisible(sourceLinesT);
 			newFinalError = error(targetLines, sourceLinesT);
 
@@ -425,7 +425,6 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 			if(tries > maxTries) goto mainLoopEnd;
 		}
 		while(newFinalError > tmpFinalError);
-		std::cout << "Error = " << tmpFinalError << std::endl;
 
 		input = newInput;
 

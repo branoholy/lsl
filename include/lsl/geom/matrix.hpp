@@ -27,6 +27,8 @@
 
 #include <Eigen/Dense>
 
+#include "lsl/utils/mathutils.hpp"
+
 namespace lsl {
 namespace geom {
 
@@ -61,7 +63,7 @@ public:
 	inline int getId() const { return id; }
 	inline void setId(int id) { this->id = id; }
 
-	inline double getAngle2D() const { return std::atan2(at(1), at(0)); }
+	inline double getAngle2D() const { return utils::MathUtils::normAngle(std::atan2(at(1), at(0))); }
 
 	Matrix& operator=(const Matrix& other);
 

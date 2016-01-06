@@ -276,7 +276,7 @@ void LidarLine2::transform(const Transformation& transformation)
 	}
 }
 
-void LidarLine2::transform(std::vector<LidarLine2>& lidarLines, const Transformation& transformation, bool removeInvalid)
+void LidarLine2::transformAll(std::vector<LidarLine2>& lidarLines, const Transformation& transformation, bool removeInvalid)
 {
 	std::vector<LidarLine2> linesToAdd;
 	for(size_t i = 0; i < lidarLines.size(); i++)
@@ -324,9 +324,9 @@ void LidarLine2::transform(std::vector<LidarLine2>& lidarLines, const Transforma
 	lidarLines.insert(lidarLines.end(), linesToAdd.begin(), linesToAdd.end());
 }
 
-void LidarLine2::transformToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid)
+void LidarLine2::transformAllToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid)
 {
-	transform(lidarLines, createTransformation(location), removeInvalid);
+	transformAll(lidarLines, createTransformation(location), removeInvalid);
 }
 
 double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh) const

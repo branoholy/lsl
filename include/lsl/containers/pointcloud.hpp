@@ -31,7 +31,7 @@ namespace lsl {
 namespace containers {
 
 template<typename ScalarT, int dim>
-class PointCloud : public std::vector<geom::Matrix<ScalarT, dim + 1, 1>>, geom::Transformable<ScalarT, dim>
+class PointCloud : public std::vector<geom::Matrix<ScalarT, dim + 1, 1>>, public geom::Transformable<ScalarT, dim>
 {
 public:
 	typedef geom::Matrix<ScalarT, dim + 1, 1> Point; // x, y, w;;; x, y, z, w
@@ -85,9 +85,12 @@ public:
 
 	void correctIds();
 
+	void getBounds(Point& low, Point& high, bool onlyReal = true) const;
+
 	void transform(const Transformation& transformation);
 
-	void getBounds(Point& low, Point& high, bool onlyReal = true) const;
+	static void transformAll(std::vector<PointCloud>& clouds, const Transformation& transformation);
+	static void transformAllToLocation(std::vector<PointCloud>& clouds, const Location& location);
 
 	template<typename ScalarT_, int dim_>
 	friend std::ostream& operator<<(std::ostream& out, const PointCloud<ScalarT_, dim_>& pointCloud);
@@ -129,16 +132,6 @@ void PointCloud<ScalarT, dim>::correctIds()
 }
 
 template<typename ScalarT, int dim>
-void PointCloud<ScalarT, dim>::transform(const Transformation& transformation)
-{
-	for(Point& point : *this)
-	{
-		point = transformation * point;
-	}
-	correctIds();
-}
-
-template<typename ScalarT, int dim>
 void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high, bool onlyReal) const
 {
 	for(int d = 0; d < dim; d++)
@@ -159,6 +152,33 @@ void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high, bool onlyReal)
 			if(point[d] > high[d]) high[d] = point[d];
 		}
 	}
+}
+
+
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::transform(const Transformation& transformation)
+{
+	for(Point& point : *this)
+	{
+		point = transformation * point;
+	}
+	correctIds();
+}
+
+
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::transformAll(std::vector<PointCloud>& clouds, const Transformation& transformation)
+{
+	for(PointCloud& cloud : clouds)
+	{
+		cloud.transform(transformation);
+	}
+}
+
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::transformAllToLocation(std::vector<PointCloud>& clouds, const Location& location)
+{
+	transformAll(clouds, geom::Transformable<ScalarT, dim>::createTransformation(location));
 }
 
 template<typename ScalarT_, int dim_>
