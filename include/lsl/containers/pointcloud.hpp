@@ -52,6 +52,7 @@ public:
 	static const int dimension;
 
 	PointCloud();
+	PointCloud(std::initializer_list<Point> data);
 	PointCloud(const PointCloud& pointCloud);
 
 	inline Location& getRealLocation() { return realLocation; }
@@ -87,6 +88,8 @@ public:
 
 	void getBounds(Point& low, Point& high, bool onlyReal = true) const;
 
+	Point getCentroid() const;
+
 	void transform(const Transformation& transformation);
 
 	static void transformAll(std::vector<PointCloud>& clouds, const Transformation& transformation);
@@ -104,6 +107,13 @@ const int PointCloud<ScalarT, dim>::dimension = dim;
 
 template<typename ScalarT, int dim>
 PointCloud<ScalarT, dim>::PointCloud() :
+	realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
+	realColor(Color::Zero()), realPointSize(1)
+{
+}
+
+template<typename ScalarT, int dim>
+PointCloud<ScalarT, dim>::PointCloud(std::initializer_list<Point> data) : std::vector<Point>(data),
 	realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
 	realColor(Color::Zero()), realPointSize(1)
 {
@@ -154,6 +164,18 @@ void PointCloud<ScalarT, dim>::getBounds(Point& low, Point& high, bool onlyReal)
 	}
 }
 
+template<typename ScalarT, int dim>
+typename PointCloud<ScalarT, dim>::Point PointCloud<ScalarT, dim>::getCentroid() const
+{
+	Point centroid = Point::Zero();
+	for(const Point& point : *this)
+	{
+		centroid += point;
+	}
+	centroid *= 1.0 / this->size();
+
+	return centroid;
+}
 
 template<typename ScalarT, int dim>
 void PointCloud<ScalarT, dim>::transform(const Transformation& transformation)
@@ -164,7 +186,6 @@ void PointCloud<ScalarT, dim>::transform(const Transformation& transformation)
 	}
 	correctIds();
 }
-
 
 template<typename ScalarT, int dim>
 void PointCloud<ScalarT, dim>::transformAll(std::vector<PointCloud>& clouds, const Transformation& transformation)

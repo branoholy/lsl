@@ -104,25 +104,27 @@ Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Scalar
 }
 
 template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(std::initializer_list<Scalar>& data) : Base(data)
+Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(std::initializer_list<Scalar>& data) : Base(data),
+	id(-1), realPoint(true)
 {
 }
 
 template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix::Matrix(const Scalar *data) : Base(data)
+Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix::Matrix(const Scalar *data) : Base(data),
+	id(-1), realPoint(true)
 {
 }
 
 template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& other) : Base(other)
+Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& other) : Base(other),
+	id(other.id), realPoint(other.realPoint)
 {
-	id = other.id;
-	realPoint = other.realPoint;
 }
 
 template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
 template<typename OtherDerived>
-Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Eigen::MatrixBase<OtherDerived>& other) : Base(other)
+Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::Matrix(const Eigen::MatrixBase<OtherDerived>& other) : Base(other),
+	id(-1), realPoint(true)
 {
 }
 
