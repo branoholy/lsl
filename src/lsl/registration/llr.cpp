@@ -87,11 +87,6 @@ void LLR::loadConfig(const std::string& path)
 	}
 }
 
-LLR::PointCloudType::Location LLR::getFinalLocation() const
-{
-	return {finalTransformation(0, 2), finalTransformation(1, 2), std::atan2(finalTransformation(1, 0), finalTransformation(0, 0))};
-}
-
 void LLR::setTarget(const PointCloudType& target)
 {
 	targetLines = detectLines(target, maxLineCount);

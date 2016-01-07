@@ -24,13 +24,13 @@
 
 #include <functional>
 
+#include "registration.hpp"
+
 #include "lsl/containers/pointcloud.hpp"
 
 #include "lsl/geom/lidarline2.hpp"
 #include "lsl/geom/ransac.hpp"
 #include "lsl/geom/splitmerge.hpp"
-
-#include "registration.hpp"
 
 namespace lsl {
 namespace registration {
@@ -89,7 +89,6 @@ public:
 
 	inline double getFinalError() const { return finalError; }
 	inline PointCloudType::Transformation getFinalTransformation() const { return finalTransformation; }
-	PointCloudType::Location getFinalLocation() const;
 
 	void setTarget(const PointCloudType& target);
 	void setSource(const PointCloudType& source, bool setOldSourceAsTarget = false);

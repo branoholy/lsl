@@ -49,6 +49,7 @@ public:
 
 	virtual double getFinalError() const = 0;
 	virtual typename PointCloudT::Transformation getFinalTransformation() const = 0;
+	virtual inline typename PointCloudType::Location getFinalLocation() const { return PointCloudT::createLocation(getFinalTransformation()); }
 
 	virtual void setTarget(const PointCloudT& target) = 0;
 	virtual void setSource(const PointCloudT& source, bool setOldSourceAsTarget = false) = 0;
