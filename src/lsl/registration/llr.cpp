@@ -44,6 +44,8 @@ LLR::LLR() : Registration(),
 	maxTries(20),
 	minFinalError(0.0001),
 	gammas({0.1, 0.1, 0.00001}),
+	finalError(0),
+	finalTransformation(PointCloudType::Transformation::Identity()),
 	detectionTransformation(PointCloudType::Transformation::Identity())
 {
 }
@@ -143,7 +145,7 @@ std::vector<geom::LidarLine2> LLR::detectLines(const PointCloudType& points, std
 
 void LLR::removeInvisible(std::vector<geom::LidarLine2>& lines) const
 {
-	if(lines.size() == 0) return;
+	if(lines.empty()) return;
 
 	std::set<IntervalEndpoint> intervals;
 	for(geom::LidarLine2& line : lines)
@@ -417,7 +419,11 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 			evaluationCount++;
 
 			tries++;
-			if(tries > maxTries) goto mainLoopEnd;
+			if(tries > maxTries)
+			{
+				converged = true;
+				goto mainLoopEnd;
+			}
 		}
 		while(newFinalError > tmpFinalError);
 

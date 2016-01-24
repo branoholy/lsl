@@ -145,6 +145,7 @@ std::vector<PointCloudT> CARMENStream<PointCloudT>::loadAll(std::istream& stream
 		tryLoadCommands(stream, [this, &pointClouds, &i, n](CARMENCommand& command)
 		{
 			pointClouds.emplace_back();
+			pointClouds.back().setId(command.id);
 			fillPointCloud(command.flaser(), pointClouds.back());
 
 			return (++i < n);
@@ -213,8 +214,8 @@ void CARMENStream<PointCloudT>::fillPointCloud(const CARMENCommandFLaser *comman
 
 	typename PointCloudT::ScalarType data[PointCloudT::Point::RowsAtCompileTime];
 
-	pointCloud.reserve(commandFLaser->numReadings);
 	pointCloud.getOdomLocation() << commandFLaser->x, commandFLaser->y, commandFLaser->theta;
+	pointCloud.reserve(commandFLaser->numReadings);
 
 	double deltaAngle = utils::MathUtils::PI / commandFLaser->numReadings;
 	for(std::size_t i = 0; i < commandFLaser->numReadings; i++)
@@ -244,6 +245,7 @@ PointCloudT CARMENStream<PointCloudT>::loadData(std::istream& stream)
 	CARMENCommand command;
 	if(tryLoadCommand(stream, command, CARMENCommand::CMD_FLASER))
 	{
+		pointCloud.setId(command.id);
 		fillPointCloud(command.flaser(), pointCloud);
 	}
 

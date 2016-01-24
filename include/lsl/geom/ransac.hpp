@@ -45,8 +45,6 @@ private:
 	std::size_t minModelSize;
 	double maxError;
 
-	static std::size_t getRandom(std::size_t max);
-
 public:
 	Ransac();
 	Ransac(std::size_t iterations, std::size_t initModelSize, std::size_t minModelSize, double maxError);
@@ -58,6 +56,8 @@ public:
 
 	template<typename R, typename T>
 	std::vector<R> run(const std::vector<T>& points, std::size_t outterIterations) const;
+
+	static std::size_t getRandom(std::size_t max);
 };
 
 template<typename T>

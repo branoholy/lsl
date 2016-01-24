@@ -84,10 +84,10 @@ public:
 
 	void setPhiAB(double phiA, double phiB);
 
-	inline geom::Vector3d getEndPointA() const { return endPointA; }
+	inline const geom::Vector3d& getEndPointA() const { return endPointA; }
 	void setEndPointA(const geom::Vector3d& endPointA);
 
-	inline geom::Vector3d getEndPointB() const { return endPointB; }
+	inline const geom::Vector3d& getEndPointB() const { return endPointB; }
 	void setEndPointB(const geom::Vector3d& endPointB);
 
 	double getPhiLow() const;

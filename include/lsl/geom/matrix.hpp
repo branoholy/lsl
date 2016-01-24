@@ -39,6 +39,8 @@ protected:
 	int id;
 
 public:
+	typedef _Scalar value_type;
+
 	typedef Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> Base;
 	EIGEN_DENSE_PUBLIC_INTERFACE(Matrix)
 

@@ -25,6 +25,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include "lsl/geom/lidarline2.hpp"
 #include "lsl/io/stream.hpp"
 
 namespace lsl {
@@ -36,6 +37,9 @@ class ImageStream : public Stream<PointCloudT>
 protected:
 	virtual void addPointCloud(const PointCloudT& pointCloud, cv::Mat& image, const typename PointCloudT::Point& lowBound) const;
 	virtual void addAxes(cv::Mat& image, const typename PointCloudT::Point& lowBound, const typename PointCloudT::Point& highBound) const;
+	virtual void addPath(cv::Mat& image, const typename PointCloudT::Point& lowBound, const typename PointCloudT::Location& start, const typename PointCloudT::Location& end, const typename PointCloudT::Color& color) const;
+	virtual void addLines(const std::vector<geom::LidarLine2>& lines, cv::Mat& image, const typename PointCloudT::Point& lowBound, const typename PointCloudT::Color& color) const;
+
 	virtual void saveImage(cv::Mat& image, const std::string& filePath) const;
 
 	virtual PointCloudT loadData(std::istream& stream);
@@ -53,8 +57,10 @@ public:
 	virtual void save(const PointCloudT& pointCloud, const std::string& filePath);
 	virtual void save(const PointCloudT& pointCloud, std::ostream& stream);
 
-	virtual void saveAll(const std::vector<PointCloudT>& pointClouds);
+	virtual void saveAll(const std::vector<PointCloudT>& pointClouds, const std::vector<std::vector<geom::LidarLine2>>& lines = std::vector<std::vector<geom::LidarLine2>>());
 	virtual void saveAll(const std::vector<PointCloudT>& pointClouds, const std::string& filePath);
+	virtual void saveAll(const std::vector<PointCloudT>& pointClouds, const std::vector<std::vector<geom::LidarLine2>>& lines, const std::string& filePath);
+
 };
 
 template<typename PointCloudT>
@@ -99,13 +105,19 @@ void ImageStream<PointCloudT>::save(const PointCloudT&, std::ostream&)
 }
 
 template<typename PointCloudT>
-void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClouds)
+void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClouds, const std::vector<std::vector<geom::LidarLine2>>& lines)
 {
-	saveAll(pointClouds, this->filePath);
+	saveAll(pointClouds, lines, this->filePath);
 }
 
 template<typename PointCloudT>
 void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClouds, const std::string& filePath)
+{
+	saveAll(pointClouds, std::vector<std::vector<geom::LidarLine2>>(), filePath);
+}
+
+template<typename PointCloudT>
+void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClouds, const std::vector<std::vector<geom::LidarLine2>>& lines, const std::string& filePath)
 {
 	PointCloudT boundCloud;
 	boundCloud.reserve(2 * pointClouds.size());
@@ -127,12 +139,22 @@ void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClou
 	cv::Mat image(std::ceil(size[1]), std::ceil(size[0]), CV_8UC3);
 	image = cv::Scalar(255, 255, 255);
 
-	for(const auto& pointCloud : pointClouds)
-	{
-		addPointCloud(pointCloud, image, lowBound);
-	}
-
 	addAxes(image, lowBound, highBound);
+
+	for(std::size_t i = 0; i < pointClouds.size(); i++)
+	{
+		addPointCloud(pointClouds[i], image, lowBound);
+
+		if(!lines.empty())
+		{
+			addLines(lines.at(i), image, lowBound, pointClouds[i].getRealColor());
+		}
+
+		if(i > 0)
+		{
+			addPath(image, lowBound, pointClouds[i - 1].getCorrectedLocation(), pointClouds[i].getCorrectedLocation(), {0, 0, 255});
+		}
+	}
 
 	saveImage(image, filePath);
 }
@@ -179,6 +201,29 @@ void ImageStream<PointCloudT>::addAxes(cv::Mat& image, const typename PointCloud
 {
 	if(lowBound[1] < 0 && highBound[1] > 0) cv::line(image, cv::Point(0, image.rows + lowBound[1] - padding), cv::Point(image.cols, image.rows + lowBound[1] - padding), cv::Scalar(0, 0, 0));
 	if(lowBound[0] < 0 && highBound[0] > 0) cv::line(image, cv::Point(-lowBound[0] + padding, 0), cv::Point(-lowBound[0] + padding, image.rows), cv::Scalar(0, 0, 0));
+}
+
+template<typename PointCloudT>
+void ImageStream<PointCloudT>::addPath(cv::Mat& image, const typename PointCloudT::Point& lowBound, const typename PointCloudT::Location& start, const typename PointCloudT::Location& end, const typename PointCloudT::Color& color) const
+{
+	cv::Point cvStart(start[0] - lowBound[0] + padding, image.rows - (start[1] - lowBound[1] + padding) - 1);
+	cv::Point cvEnd(end[0] - lowBound[0] + padding, image.rows - (end[1] - lowBound[1] + padding) - 1);
+	cv::Scalar cvColor(color[0], color[1], color[2]);
+
+	cv::line(image, cvStart, cvEnd, cvColor, 2);
+}
+
+template<typename PointCloudT>
+void ImageStream<PointCloudT>::addLines(const std::vector<geom::LidarLine2>& lines, cv::Mat& image, const typename PointCloudT::Point& lowBound, const typename PointCloudT::Color& color) const
+{
+	cv::Scalar cvColor(color[0], color[1], color[2]);
+	for(const geom::LidarLine2& line : lines)
+	{
+		cv::Point cvStart(line.getEndPointA()[0] - lowBound[0] + padding, image.rows - (line.getEndPointA()[1] - lowBound[1] + padding) - 1);
+		cv::Point cvEnd(line.getEndPointB()[0] - lowBound[0] + padding, image.rows - (line.getEndPointB()[1] - lowBound[1] + padding) - 1);
+
+		cv::line(image, cvStart, cvEnd, cvColor);
+	}
 }
 
 template<typename PointCloudT>

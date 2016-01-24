@@ -27,8 +27,6 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 
-#include "lsl/geom/lidarline2.hpp"
-
 #include "lsl/utils/arrayutils.hpp"
 #include "lsl/utils/mathutils.hpp"
 
@@ -38,7 +36,9 @@ namespace registration {
 ICP::ICP() : Registration(),
 	maxIterations(50),
 	minFinalError(0.0001),
-	maxDistance2(1)
+	maxDistance2(1),
+	finalError(0),
+	finalTransformation(PointCloudType::Transformation::Identity())
 {
 }
 

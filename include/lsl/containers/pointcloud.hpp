@@ -40,6 +40,7 @@ public:
 	typedef geom::Vector3i Color;
 
 private:
+	std::size_t id;
 	Location realLocation;
 	Location odomLocation;
 	Location correctedLocation;
@@ -54,6 +55,9 @@ public:
 	PointCloud();
 	PointCloud(std::initializer_list<Point> data);
 	PointCloud(const PointCloud& pointCloud);
+
+	inline std::size_t getId() const { return id; }
+	inline void setId(std::size_t id) { this->id = id; }
 
 	inline Location& getRealLocation() { return realLocation; }
 	inline const Location& getRealLocation() const { return realLocation; }
@@ -84,6 +88,8 @@ public:
 		this->unrealPointSize = unrealPointSize;
 	}
 
+	void zoom(double zoomSize);
+
 	void correctIds();
 
 	void getBounds(Point& low, Point& high, bool onlyReal = true) const;
@@ -107,14 +113,14 @@ const int PointCloud<ScalarT, dim>::dimension = dim;
 
 template<typename ScalarT, int dim>
 PointCloud<ScalarT, dim>::PointCloud() :
-	realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
+	id(-1), realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
 	realColor(Color::Zero()), realPointSize(1)
 {
 }
 
 template<typename ScalarT, int dim>
 PointCloud<ScalarT, dim>::PointCloud(std::initializer_list<Point> data) : std::vector<Point>(data),
-	realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
+	id(-1), realLocation(Location::Zero()), odomLocation(Location::Zero()), correctedLocation(Location::Zero()),
 	realColor(Color::Zero()), realPointSize(1)
 {
 }
@@ -122,11 +128,28 @@ PointCloud<ScalarT, dim>::PointCloud(std::initializer_list<Point> data) : std::v
 template<typename ScalarT, int dim>
 PointCloud<ScalarT, dim>::PointCloud(const PointCloud<ScalarT, dim>& pointCloud) : std::vector<Point>(pointCloud)
 {
+	id = pointCloud.id;
 	realLocation = pointCloud.realLocation;
 	odomLocation = pointCloud.odomLocation;
 	correctedLocation = pointCloud.correctedLocation;
 	realColor = pointCloud.realColor;
 	realPointSize = pointCloud.realPointSize;
+}
+
+template<typename ScalarT, int dim>
+void PointCloud<ScalarT, dim>::zoom(double zoomSize)
+{
+	Transformation zoomTransform = Transformation::Identity();
+	for(std::size_t i = 0; i < dim; i++)
+	{
+		zoomTransform(i, i) = zoomSize;
+
+		realLocation[i] *= zoomSize;
+		odomLocation[i] *= zoomSize;
+		correctedLocation[i] *= zoomSize;
+	}
+
+	transform(zoomTransform);
 }
 
 template<typename ScalarT, int dim>
