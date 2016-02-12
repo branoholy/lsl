@@ -27,10 +27,10 @@
 #include "registration.hpp"
 
 #include "lsl/containers/pointcloud.hpp"
-
 #include "lsl/geom/lidarline2.hpp"
-#include "lsl/geom/ransac.hpp"
-#include "lsl/geom/splitmerge.hpp"
+
+#include "lsl/detection/ransac.hpp"
+#include "lsl/detection/splitmerge.hpp"
 
 namespace lsl {
 namespace registration {
@@ -41,8 +41,8 @@ public:
 	typedef std::function<void(std::size_t, const geom::LidarLine2&, const geom::LidarLine2&, double, double)> iterFunc;
 
 private:
-	geom::Ransac ransac;
-	geom::SplitMerge splitMerge;
+	detection::Ransac ransac;
+	detection::SplitMerge splitMerge;
 	std::size_t maxLineCount;
 
 	double maxDiffL;
@@ -99,8 +99,8 @@ public:
 	inline const std::vector<geom::LidarLine2>& getSourceLines() const { return sourceLines; }
 	void setSourceLines(const std::vector<geom::LidarLine2>& sourceLines, bool setOldSourceAsTarget = false);
 
-	inline geom::Ransac& getRansac() { return ransac; }
-	inline geom::SplitMerge& getSplitMerge() { return splitMerge; }
+	inline detection::Ransac& getRansac() { return ransac; }
+	inline detection::SplitMerge& getSplitMerge() { return splitMerge; }
 
 	inline std::size_t getMaxLineCount() const { return maxLineCount; }
 	inline void setMaxLineCount(std::size_t maxLineCount) { this->maxLineCount = maxLineCount; }

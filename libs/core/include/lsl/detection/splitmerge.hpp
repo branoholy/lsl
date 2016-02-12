@@ -19,18 +19,18 @@
  *
  */
 
-#ifndef LSL_GEOM_SPLITMERGE_HPP
-#define LSL_GEOM_SPLITMERGE_HPP
+#ifndef LSL_DETECTION_SPLITMERGE_HPP
+#define LSL_DETECTION_SPLITMERGE_HPP
 
 #include <limits>
 #include <vector>
 
-#include "line2.hpp"
+#include "lsl/geom/line2.hpp"
 
 #include "lsl/utils/cpputils.hpp"
 
 namespace lsl {
-namespace geom {
+namespace detection {
 
 class SplitMerge
 {
@@ -68,7 +68,7 @@ void SplitMerge::run(const std::vector<T>& points, std::size_t start, std::size_
 		lists.push_back(start);
 		lists.push_back(end);
 
-		Line2 model(points.at(start), points.at(end - 1), false);
+		geom::Line2 model(points.at(start), points.at(end - 1), false);
 
 		size_t i = start;
 		int worstId = -1;
@@ -165,4 +165,4 @@ std::vector<std::size_t> SplitMerge::getLists(const std::vector<T>& points) cons
 
 }}
 
-#endif // LSL_GEOM_SPLITMERGE_HPP
+#endif // LSL_DETECTION_SPLITMERGE_HPP

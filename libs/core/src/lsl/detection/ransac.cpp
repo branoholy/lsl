@@ -19,24 +19,34 @@
  *
  */
 
-#include "lsl/geom/splitmerge.hpp"
+#include "lsl/detection/ransac.hpp"
 
 namespace lsl {
-namespace geom {
+namespace detection {
 
-SplitMerge::SplitMerge()
+std::mt19937 Ransac::rnd(time(0));
+
+Ransac::Ransac()
 {
 }
 
-SplitMerge::SplitMerge(std::size_t minModelSize, double maxError) :
-	minModelSize(minModelSize), maxError(maxError)
+Ransac::Ransac(std::size_t iterations, std::size_t initModelSize, std::size_t minModelSize, double maxError) :
+	iterations(iterations), initModelSize(initModelSize), minModelSize(minModelSize), maxError(maxError)
 {
 }
 
-void SplitMerge::set(std::size_t minModelSize, double maxError)
+void Ransac::set(std::size_t iterations, std::size_t initModelSize, std::size_t minModelSize, double maxError)
 {
+	this->iterations = iterations;
+	this->initModelSize = initModelSize;
 	this->minModelSize = minModelSize;
 	this->maxError = maxError;
+}
+
+std::size_t Ransac::getRandom(std::size_t max)
+{
+	std::uniform_int_distribution<> dist(0, max - 1);
+	return dist(rnd);
 }
 
 }}

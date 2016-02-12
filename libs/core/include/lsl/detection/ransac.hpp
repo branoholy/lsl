@@ -19,21 +19,21 @@
  *
  */
 
-#ifndef LSL_GEOM_RANSAC_HPP
-#define LSL_GEOM_RANSAC_HPP
+#ifndef LSL_DETECTION_RANSAC_HPP
+#define LSL_DETECTION_RANSAC_HPP
 
 //#include <algorithm>
 #include <limits>
 #include <random>
 #include <set>
 
-#include "line2.hpp"
+#include "lsl/geom/line2.hpp"
 
 #include "lsl/utils/arrayutils.hpp"
 #include "lsl/utils/cpputils.hpp"
 
 namespace lsl {
-namespace geom {
+namespace detection {
 
 class Ransac
 {
@@ -83,7 +83,7 @@ std::vector<T> Ransac::run(const std::vector<T>& points) const
 			tries++;
 		}
 
-		Line2 model = Line2::leastSquareLine(modelData, false);
+		geom::Line2 model = geom::Line2::leastSquareLine(modelData, false);
 
 		modelData.clear();
 		double error2 = 0;
@@ -118,7 +118,7 @@ std::vector<T> Ransac::run(const std::vector<T>& points) const
 			if(error2 < bestError2)
 			{
 				bool testOk = true;
-				Line2 testModel = Line2::leastSquareLine(modelData, false);
+				geom::Line2 testModel = geom::Line2::leastSquareLine(modelData, false);
 				for(const ModelValueType& testPoint : modelData)
 				{
 					if(testModel.distance2To(*testPoint) > maxError2)
@@ -170,4 +170,4 @@ std::vector<R> Ransac::run(const std::vector<T>& points, std::size_t outterItera
 
 }}
 
-#endif // LSL_GEOM_RANSAC_HPP
+#endif // LSL_DETECTION_RANSAC_HPP
