@@ -1,7 +1,7 @@
 # lsl-registration
-if(${install-headers} STREQUAL "OFF")
-	set(SUBLIB_NAME ${PROJECT_NAME}-registration)
+set(SUBLIB_NAME ${PROJECT_NAME}-registration)
 
+if(${install-headers} STREQUAL "OFF")
 	# Find libraries
 	include_directories(${LSL_CORE_INCLUDE_DIRS})
 
