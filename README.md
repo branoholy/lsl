@@ -44,7 +44,7 @@ $ make
 Use the following option if you want to build only one sub-library
 
 ```text
-$ cmake -Dlibrary:string=registration
+$ cmake -Dlibrary:string=registration ..
 ```
 
 For a faster build on a multicore processor, you can use:
@@ -117,7 +117,7 @@ can be used in Debian 8. You need to add my key and repository, and then you can
 install the `lsl` packages.
 
 ```text
-$ wget http://download.opensuse.org/repositories/home:/branoholy:/lsl/Debian_8.0/Release.key -O - | sudo apt-key add -
+$ sudo sh -c "wget http://download.opensuse.org/repositories/home:/branoholy:/lsl/Debian_8.0/Release.key -O - | apt-key add -"
 $ sudo sh -c "echo 'deb http://download.opensuse.org/repositories/home:/branoholy:/lsl/Debian_8.0/ ./' >> /etc/apt/sources.list"
 $ sudo apt-get update
 $ sudo apt-get install liblsl-core-dev

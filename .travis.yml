@@ -1,0 +1,31 @@
+sudo: false
+
+language: cpp
+
+compiler: gcc
+
+before_install:
+  - export CXX="g++-4.9"
+  - g++-4.9 --version
+
+before_script:
+  - cd $TRAVIS_BUILD_DIR
+  - mkdir build && cd build
+  - cmake ..
+
+script:
+  - cd $TRAVIS_BUILD_DIR
+  - cd build
+  - make -j$(nproc)
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - boost-latest
+    packages:
+      - g++-4.9
+      - libeigen3-dev
+      - libopencv-dev
+      - libyaml-cpp-dev
+      - libboost-system1.55-dev
