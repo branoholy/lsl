@@ -157,21 +157,26 @@ namespace internal {
 template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
 struct traits<lsl::geom::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
 {
-  typedef _Scalar Scalar;
-  typedef Dense StorageKind;
-  typedef DenseIndex Index;
-  typedef MatrixXpr XprKind;
-  enum {
-	RowsAtCompileTime = _Rows,
-	ColsAtCompileTime = _Cols,
-	MaxRowsAtCompileTime = _MaxRows,
-	MaxColsAtCompileTime = _MaxCols,
-	Flags = compute_matrix_flags<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::ret,
-	CoeffReadCost = NumTraits<Scalar>::ReadCost,
-	Options = _Options,
-	InnerStrideAtCompileTime = 1,
-	OuterStrideAtCompileTime = (Options&RowMajor) ? ColsAtCompileTime : RowsAtCompileTime
-  };
+	typedef _Scalar Scalar;
+	typedef Dense StorageKind;
+#if EIGEN_VERSION_AT_LEAST(3,2,92)
+	typedef Eigen::Index StorageIndex;
+#else
+	typedef DenseIndex Index;
+#endif
+	typedef MatrixXpr XprKind;
+
+	enum {
+		RowsAtCompileTime = _Rows,
+		ColsAtCompileTime = _Cols,
+		MaxRowsAtCompileTime = _MaxRows,
+		MaxColsAtCompileTime = _MaxCols,
+		Flags = compute_matrix_flags<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::ret,
+		CoeffReadCost = NumTraits<Scalar>::ReadCost,
+		Options = _Options,
+		InnerStrideAtCompileTime = 1,
+		OuterStrideAtCompileTime = (Options&RowMajor) ? ColsAtCompileTime : RowsAtCompileTime
+	};
 };
 
 }}
