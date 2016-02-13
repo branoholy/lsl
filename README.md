@@ -1,4 +1,5 @@
 # LSL
+[![Build Status](https://travis-ci.org/branoholy/lsl.svg?branch=master)](https://travis-ci.org/branoholy/lsl)
 
 *A library for working with LIDAR data.*
 
