@@ -24,9 +24,11 @@
 
 #undef NDEBUG
 #include <cassert>
+#include <type_traits>
 
 #include <Eigen/Dense>
 
+#include "lsl/utils/cpputils.hpp"
 #include "lsl/utils/mathutils.hpp"
 
 namespace lsl {
@@ -66,6 +68,15 @@ public:
 	inline void setId(int id) { this->id = id; }
 
 	inline double getAngle2D() const { return utils::MathUtils::normAngle(std::atan2(at(1), at(0))); }
+
+	template<int NewRows, int NewCols = _Cols>
+	Matrix<_Scalar, NewRows, NewCols> to(Scalar defaultValue = 0) const;
+
+	template<typename NewScalar, int NewRows = _Rows, int NewCols = _Cols>
+	Matrix<NewScalar, NewRows, NewCols> to(NewScalar defaultValue = 0) const;
+
+	inline Matrix<_Scalar, _Rows - 1, _Cols> toHeterogenous() const { return to<_Scalar, _Rows - 1, _Cols>(); }
+	inline Matrix<_Scalar, _Rows + 1, _Cols> toHomogenous() const { return to<_Scalar, _Rows + 1, _Cols>(1); }
 
 	Matrix& operator=(const Matrix& other);
 
@@ -147,6 +158,34 @@ Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>& Matrix<_Scalar, _Ro
 {
 	this->Base::operator=(other);
 	return *this;
+}
+
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+template<int NewRows, int NewCols>
+Matrix<_Scalar, NewRows, NewCols> Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::to(Scalar defaultValue) const
+{
+	return to<_Scalar, NewRows, NewCols>(defaultValue);
+}
+
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+template<typename NewScalar, int NewRows, int NewCols>
+Matrix<NewScalar, NewRows, NewCols> Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::to(NewScalar defaultValue) const
+{
+	int minRows = std::min(_Rows, NewRows);
+	int minCols = std::min(_Cols, NewCols);
+
+	auto newMatrix = Matrix<NewScalar, NewRows, NewCols>();
+	newMatrix.fill(defaultValue);
+
+	for(int r = 0; r < minRows; r++)
+	{
+		for(int c = 0; c < minCols; c++)
+		{
+			newMatrix.at(r, c) = NewScalar(at(r, c));
+		}
+	}
+
+	return newMatrix;
 }
 
 }}

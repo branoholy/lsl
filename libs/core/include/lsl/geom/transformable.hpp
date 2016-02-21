@@ -42,7 +42,15 @@ public:
 
 	static Transformation createTransformation(const Location& location);
 	static Location createLocation(const Transformation& transformation);
+
+	static Matrix<ScalarType, dim, 1> transformPoint(const Transformation& T, const Matrix<ScalarType, dim, 1>& point);
 };
+
+typedef Transformable<int, 2> Transformable2i;
+typedef Transformable<int, 3> Transformable3i;
+
+typedef Transformable<double, 2> Transformable2d;
+typedef Transformable<double, 3> Transformable3d;
 
 template<typename ScalarType, int dim>
 void Transformable<ScalarType, dim>::transformToLocation(const Location& location)
@@ -74,6 +82,16 @@ typename Transformable<ScalarType, dim>::Location Transformable<ScalarType, dim>
 	assert(dim == 2 && "Dimension should be 2.");
 
 	return {transformation(0, 2), transformation(1, 2), std::atan2(transformation(1, 0), transformation(0, 0))};
+}
+
+template<typename ScalarType, int dim>
+Matrix<ScalarType, dim, 1> Transformable<ScalarType, dim>::transformPoint(const Transformation& T, const Matrix<ScalarType, dim, 1>& point)
+{
+	// TODO: Implement for 3D as well.
+	assert(dim == 2 && "Dimension should be 2.");
+
+	auto pointH = point.toHomogenous();
+	return (T * pointH).toHeterogenous();
 }
 
 }}
