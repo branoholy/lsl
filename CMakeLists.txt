@@ -36,19 +36,20 @@ if(${INSTALL_LIB_DIR} STREQUAL "OFF")
 	set(INSTALL_LIB_DIR "lib")
 endif()
 
-# Set build type and definitions
-if($ENV{DEBUG})
-	# Debug
-	set(CMAKE_BUILD_TYPE "Debug")
-else()
-	# Release
+# Set build type
+if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 	set(CMAKE_BUILD_TYPE "Release")
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+# Set definitions
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 	add_definitions("-O3")
 endif()
 
 add_definitions("-std=c++11")
-# add_definitions("-Wall -Wextra -pedantic")
-add_definitions("-Wall -Wextra -pedantic -Wno-deprecated-declarations")
+add_definitions("-Wall -Wextra -pedantic")
+add_definitions("-Wno-deprecated-declarations") # Hide a lot of Eigen warnings
 
 # Add core sub-library
 include_directories("libs/core/include")
@@ -85,4 +86,3 @@ endforeach()
 # Add uninstall
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake" IMMEDIATE @ONLY)
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake)
-
