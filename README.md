@@ -1,7 +1,7 @@
 # LSL
 [![Build Status](https://travis-ci.org/branoholy/lsl.svg?branch=master)](https://travis-ci.org/branoholy/lsl)
-[![Latest Version](https://img.shields.io/github/release/branoholy/lsl.svg)](https://github.com/branoholy/lsl/releases)
-[![Downloads](https://img.shields.io/github/downloads/branoholy/lsl/total.svg)](https://github.com/branoholy/lsl#download)
+[![Latest Version](https://badges.branoholy.com/github/lsl/release)](https://github.com/branoholy/lsl/releases)
+[![Downloads](https://badges.branoholy.com/github/lsl/downloads)](https://github.com/branoholy/lsl#download)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
 *A library for working with LIDAR data.*
