@@ -94,8 +94,8 @@ std::vector<T> Ransac::run(const std::vector<T>& points) const
 			ModelValueType pointPointer = utils::CppUtils::getPointer(point);
 			double distance2 = model.distance2To(*pointPointer);
 
-			if(distance2 < maxError2 && (lastPointPointer == nullptr || ((pointPointer->getId() == lastPointPointer->getId() + 1)
-				&& (*pointPointer - *lastPointPointer).squaredNorm() /* pointPointer->getDistanceTo2(*lastPointPointer) */ < 100 * maxError2)))
+			bool useLastPoint = (lastPointPointer == nullptr || ((pointPointer->getId() == lastPointPointer->getId() + 1) && (*pointPointer - *lastPointPointer).squaredNorm() < 100 * maxError2));
+			if(distance2 < maxError2 && useLastPoint)
 			{
 				modelData.insert(pointPointer);
 				error2 += distance2;
@@ -161,7 +161,9 @@ std::vector<R> Ransac::run(const std::vector<T>& points, std::size_t outterItera
 				allModelData.emplace_back(modelData);
 				utils::ArrayUtils::eraseAll(remainingPoints, modelData.begin(), modelData.end());
 			}
-			catch(const std::invalid_argument&){}
+			catch(const std::invalid_argument&)
+			{
+			}
 		}
 	}
 

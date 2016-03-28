@@ -43,7 +43,7 @@ LLR::LLR() : Registration(),
 	maxIterations(50),
 	maxTries(20),
 	minFinalError(0.0001),
-	gammas({0.1, 0.1, 0.00001}),
+	gammas({ 0.1, 0.1, 0.00001 }),
 	finalError(0),
 	finalTransformation(PointCloudType::Transformation::Identity()),
 	detectionTransformation(PointCloudType::Transformation::Identity())
@@ -230,7 +230,7 @@ double LLR::getAvgDiffL(const std::vector<geom::LidarLine2>& targetLines, const 
 {
 	double sumDiffL = 0;
 	std::size_t countDiffL = 0;
-	iterAllLines(targetLines, sourceLines, [&sumDiffL, &countDiffL](std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double, double)
+	iterAllLines(targetLines, sourceLines, [&sumDiffL, &countDiffL] (std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double, double)
 	{
 		sumDiffL += std::abs(targetLine.getL() - sourceLine.getL());
 		countDiffL++;
@@ -285,7 +285,7 @@ double LLR::error(const std::vector<geom::LidarLine2>& targetLines, const std::v
 	sumOfErrors = 0;
 	coverAngleFactor = 0;
 
-	iterLines(targetLines, sourceLines, [this](std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
+	iterLines(targetLines, sourceLines, [this] (std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
 	{
 		double ei = targetLine.error(sourceLine, phiA, phiB);
 
@@ -319,25 +319,25 @@ double LLR::errorTransform(const std::vector<geom::LidarLine2>& targetLines, std
 	return error(targetLines, sourceLines);
 }
 
-LLR::PointCloudType LLR::errorAreas(const std::vector<geom::LidarLine2> &targetLines, std::vector<geom::LidarLine2> sourceLines, PointCloudType::Transformation transformation) const
+LLR::PointCloudType LLR::errorAreas(const std::vector<geom::LidarLine2>& targetLines, std::vector<geom::LidarLine2> sourceLines, PointCloudType::Transformation transformation) const
 {
 	geom::LidarLine2::transformAll(sourceLines, transformation, true);
 	removeInvisible(sourceLines);
 
 	PointCloudType areas;
-	iterLines(targetLines, sourceLines, [&areas](std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
+	iterLines(targetLines, sourceLines, [&areas] (std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
 	{
 		double ei = targetLine.error(sourceLine, phiA, phiB);
 		if(ei >= 0) // TODO: Is it needed?
 		{
-			double coses[] = {std::cos(phiA), std::cos(phiB)};
-			double sins[] = {std::sin(phiA), std::sin(phiB)};
-			double values[] = {targetLine.getValue(phiA), sourceLine.getValue(phiA), sourceLine.getValue(phiB), targetLine.getValue(phiB)};
+			double coses[] = { std::cos(phiA), std::cos(phiB) };
+			double sins[] = { std::sin(phiA), std::sin(phiB) };
+			double values[] = { targetLine.getValue(phiA), sourceLine.getValue(phiA), sourceLine.getValue(phiB), targetLine.getValue(phiB) };
 
 			for(std::size_t i = 0; i < 4; i++)
 			{
 				std::size_t gi = i / 2;
-				areas.emplace_back(PointCloudType::Point({coses[gi] * values[i], sins[gi] * values[i], 1}));
+				areas.emplace_back(PointCloudType::Point({ coses[gi] * values[i], sins[gi] * values[i], 1 }));
 			}
 		}
 	});
@@ -348,7 +348,7 @@ LLR::PointCloudType LLR::errorAreas(const std::vector<geom::LidarLine2> &targetL
 LLR::PointCloudType::Location LLR::gradientErrorAtZero(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines) const
 {
 	PointCloudType::Location gradient = PointCloudType::Location::Zero();
-	iterLines(targetLines, sourceLines, [&gradient](std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
+	iterLines(targetLines, sourceLines, [&gradient] (std::size_t, const geom::LidarLine2& targetLine, const geom::LidarLine2& sourceLine, double phiA, double phiB)
 	{
 		gradient += targetLine.gradientErrorAtZero(sourceLine, phiA, phiB);
 	});
@@ -386,7 +386,7 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 	if(targetLines.size() < 2 || sourceLines.size() < 2) return;
 
 	PointCloudType::Location newInput;
-	PointCloudType::Location input = {0, 0, 0};
+	PointCloudType::Location input = { 0, 0, 0 };
 
 	std::vector<geom::LidarLine2> sourceLinesT = sourceLines;
 	double tmpFinalError = error(targetLines, sourceLinesT);

@@ -133,7 +133,9 @@ std::vector<R> SplitMerge::run(std::vector<T> points, std::vector<T>& remainingP
 			{
 				allModelData.emplace_back(modelData);
 			}
-			catch(const std::invalid_argument&){}
+			catch(const std::invalid_argument&)
+			{
+			}
 		}
 
 		remainingPoints.clear();

@@ -81,7 +81,7 @@ typename Transformable<ScalarType, dim>::Location Transformable<ScalarType, dim>
 	// TODO: Implement for 3D as well.
 	assert(dim == 2 && "Dimension should be 2.");
 
-	return {transformation(0, 2), transformation(1, 2), std::atan2(transformation(1, 0), transformation(0, 0))};
+	return { transformation(0, 2), transformation(1, 2), std::atan2(transformation(1, 0), transformation(0, 0)) };
 }
 
 template<typename ScalarType, int dim>

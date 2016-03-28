@@ -25,8 +25,8 @@
 #include <iostream>
 #include <vector>
 
-#include "matrix.hpp"
 #include "lsl/utils/cpputils.hpp"
+#include "matrix.hpp"
 
 namespace lsl {
 namespace geom {
@@ -39,6 +39,7 @@ private:
 	double c;
 
 	std::vector<geom::Vector3d> points;
+
 public:
 	Line2(double a, double b, double c);
 	Line2(double a, double b, double c, const std::vector<geom::Vector3d>& points);
@@ -52,8 +53,8 @@ public:
 
 	inline const std::vector<geom::Vector3d>& getPoints() const { return points; }
 
-	inline double getK() const { return - a / b; }
-	inline double getQ() const { return - c / b; }
+	inline double getK() const { return -a / b; }
+	inline double getQ() const { return -c / b; }
 
 	void setParams(double a, double b, double c);
 

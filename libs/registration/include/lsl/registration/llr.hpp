@@ -38,7 +38,7 @@ namespace registration {
 class LLR : public Registration<containers::PointCloud2d>
 {
 public:
-	typedef std::function<void(std::size_t, const geom::LidarLine2&, const geom::LidarLine2&, double, double)> iterFunc;
+	typedef std::function<void (std::size_t, const geom::LidarLine2&, const geom::LidarLine2&, double, double)> iterFunc;
 
 private:
 	detection::Ransac ransac;

@@ -21,8 +21,8 @@
 
 #include "lsl/geom/lidarline2.hpp"
 
-#include <limits>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 #include "lsl/utils/mathutils.hpp"
@@ -367,7 +367,7 @@ double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh)
 	return err;
 }
 
-geom::Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2 &other, double phiLow, double phiHigh) const
+geom::Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const
 {
 	double l_ = other.getL();
 	double alpha_ = other.getAlpha();
@@ -383,8 +383,8 @@ geom::Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2 &other, double p
 		pLow = std::tan(phiLow - alpha);
 		pHigh = std::tan(phiHigh - alpha);
 
-		gradient2 = - l_ * l_ * one__cosHigh * one__cosHigh + 2 * l * l_ * one__cosHigh * one__cosHigh;
-		gradient2 -= - l_ * l_ * one__cosLow * one__cosLow + 2 * l * l_ * one__cosLow * one__cosLow;
+		gradient2 = -l_ * l_ * one__cosHigh * one__cosHigh + 2 * l * l_ * one__cosHigh * one__cosHigh;
+		gradient2 -= -l_ * l_ * one__cosLow * one__cosLow + 2 * l * l_ * one__cosLow * one__cosLow;
 	}
 	else
 	{

@@ -36,7 +36,7 @@ namespace io {
  * FLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta
  * RLASER num_readings [range_readings] x y theta odom_x odom_y odom_theta
  * TRUEPOS true_x true_y true_theta odom_x odom_y odom_theta
-*/
+ */
 
 class CARMENCommandType;
 class CARMENCommandParam;
@@ -88,7 +88,7 @@ class CARMENCommandParam : public CARMENCommandType
 public:
 	std::string name, value;
 
-	std::ostream& print(std::ostream &out) const;
+	std::ostream& print(std::ostream& out) const;
 };
 
 class CARMENCommandSync : public CARMENCommandType
@@ -96,7 +96,7 @@ class CARMENCommandSync : public CARMENCommandType
 public:
 	std::string tagName;
 
-	std::ostream& print(std::ostream &out) const;
+	std::ostream& print(std::ostream& out) const;
 };
 
 class CARMENCommandOdom : public CARMENCommandType
@@ -104,7 +104,7 @@ class CARMENCommandOdom : public CARMENCommandType
 public:
 	double x, y, theta, tv, rv, accel;
 
-	std::ostream& print(std::ostream &out) const;
+	std::ostream& print(std::ostream& out) const;
 };
 
 class CARMENCommandFLaser : public CARMENCommandType
@@ -117,7 +117,7 @@ public:
 	CARMENCommandFLaser();
 	virtual ~CARMENCommandFLaser();
 
-	std::ostream& print(std::ostream &out) const;
+	std::ostream& print(std::ostream& out) const;
 };
 
 class CARMENCommandRLaser : public CARMENCommandFLaser
@@ -131,7 +131,7 @@ class CARMENCommandTruepos : public CARMENCommandType
 public:
 	double trueX, trueY, trueTheta, odomX, odomY, odomTheta;
 
-	std::ostream& print(std::ostream &out) const;
+	std::ostream& print(std::ostream& out) const;
 };
 
 }}

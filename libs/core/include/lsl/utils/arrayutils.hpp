@@ -38,52 +38,52 @@ namespace utils {
 class ArrayUtils
 {
 public:
-	template <typename T>
+	template<typename T>
 	static T* createFilledArray(std::size_t size, T defaultValue);
 
-	template <typename T>
+	template<typename T>
 	static void deleteArrayContent(T **array, std::size_t size);
 
-	template <typename T>
+	template<typename T>
 	static T** create2dArray(std::size_t rowCount, std::size_t columnCount);
 
-	template <typename T>
+	template<typename T>
 	static T** create2dFilledArray(std::size_t rowCount, std::size_t columnCount, T defaultValue);
 
-	template <typename T, std::size_t rowCount, std::size_t columnCount>
+	template<typename T, std::size_t rowCount, std::size_t columnCount>
 	static T** create2dFilledArray(T array[rowCount][columnCount]);
 
-	template <typename T>
+	template<typename T>
 	static void fill2dArray(T **array, std::size_t rowCount, std::size_t columnCount, T defaultValue);
 
-	template <typename T>
+	template<typename T>
 	static void delete2dArray(T **array, std::size_t rowCount);
 
-	template <typename T>
+	template<typename T>
 	static void delete2dArrayContent(T ***array, std::size_t rowCount, std::size_t columnCount);
 
-	template <typename T>
+	template<typename T>
 	static void printArray(std::ostream& out, const T *array, std::size_t size);
 
-	template <typename T>
+	template<typename T>
 	static void getMinMaxValues(T ** const array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold = std::numeric_limits<T>::min());
 
 	static void to01(double **array, std::size_t rowCount, std::size_t columnCount, double minValue, double maxValue);
 
-	template <typename T, typename ForwardIterator>
+	template<typename T, typename ForwardIterator>
 	static void eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardIterator end);
 
-	template <typename T>
+	template<typename T>
 	static void deleteAll(T **array, std::size_t size);
 
-	template <typename T>
+	template<typename T>
 	static void deleteAll(const std::vector<T>& v);
 
 	template<typename ForwardIterator>
 	static void deleteAll(ForwardIterator begin, ForwardIterator end);
 };
 
-template <typename T>
+template<typename T>
 T* ArrayUtils::createFilledArray(std::size_t size, T defaultValue)
 {
 	T *array = new T[size];
@@ -92,7 +92,7 @@ T* ArrayUtils::createFilledArray(std::size_t size, T defaultValue)
 	return array;
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::deleteArrayContent(T **array, std::size_t size)
 {
 	if(array != nullptr)
@@ -102,7 +102,7 @@ void ArrayUtils::deleteArrayContent(T **array, std::size_t size)
 	}
 }
 
-template <typename T>
+template<typename T>
 T** ArrayUtils::create2dArray(std::size_t rowCount, std::size_t columnCount)
 {
 	T **array = new T*[rowCount];
@@ -114,7 +114,7 @@ T** ArrayUtils::create2dArray(std::size_t rowCount, std::size_t columnCount)
 	return array;
 }
 
-template <typename T>
+template<typename T>
 T** ArrayUtils::create2dFilledArray(std::size_t rowCount, std::size_t columnCount, T defaultValue)
 {
 	T **array = create2dArray<T>(rowCount, columnCount);
@@ -123,18 +123,22 @@ T** ArrayUtils::create2dFilledArray(std::size_t rowCount, std::size_t columnCoun
 	return array;
 }
 
-template <typename T, std::size_t rowCount, std::size_t columnCount>
+template<typename T, std::size_t rowCount, std::size_t columnCount>
 T** ArrayUtils::create2dFilledArray(T array[rowCount][columnCount])
 {
 	T **output = create2dArray<T>(rowCount, columnCount);
 	for(std::size_t r = 0; r < rowCount; r++)
+	{
 		for(std::size_t c = 0; c < columnCount; c++)
+		{
 			output[r][c] = array[r][c];
+		}
+	}
 
 	return output;
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::fill2dArray(T **array, std::size_t rowCount, std::size_t columnCount, T defaultValue)
 {
 	for(std::size_t r = 0; r < rowCount; r++)
@@ -143,7 +147,7 @@ void ArrayUtils::fill2dArray(T **array, std::size_t rowCount, std::size_t column
 	}
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::delete2dArray(T **array, std::size_t rowCount)
 {
 	for(std::size_t r = 0; r < rowCount; r++)
@@ -153,7 +157,7 @@ void ArrayUtils::delete2dArray(T **array, std::size_t rowCount)
 	delete[] array;
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::delete2dArrayContent(T ***array, std::size_t rowCount, std::size_t columnCount)
 {
 	for(std::size_t r = 0; r < rowCount; r++)
@@ -168,8 +172,8 @@ void ArrayUtils::delete2dArrayContent(T ***array, std::size_t rowCount, std::siz
 	delete[] array;
 }
 
-template <typename T>
-void ArrayUtils::printArray(std::ostream& out, const T* array, std::size_t size)
+template<typename T>
+void ArrayUtils::printArray(std::ostream& out, const T *array, std::size_t size)
 {
 	if(size > 0)
 	{
@@ -181,7 +185,7 @@ void ArrayUtils::printArray(std::ostream& out, const T* array, std::size_t size)
 	}
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::getMinMaxValues(T ** const array, std::size_t rowCount, std::size_t columnCount, T& minValue, T& maxValue, T minThreshold)
 {
 	minValue = std::numeric_limits<T>::max();
@@ -200,7 +204,7 @@ void ArrayUtils::getMinMaxValues(T ** const array, std::size_t rowCount, std::si
 	}
 }
 
-template <typename T, typename ForwardIterator>
+template<typename T, typename ForwardIterator>
 void ArrayUtils::eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardIterator end)
 {
 	while(begin != end)
@@ -210,7 +214,7 @@ void ArrayUtils::eraseAll(std::vector<T>& v, ForwardIterator begin, ForwardItera
 	}
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::deleteAll(T **array, std::size_t size)
 {
 	if(array != nullptr)
@@ -219,7 +223,7 @@ void ArrayUtils::deleteAll(T **array, std::size_t size)
 	}
 }
 
-template <typename T>
+template<typename T>
 void ArrayUtils::deleteAll(const std::vector<T>& v)
 {
 	deleteAll(v.begin(), v.end());
@@ -274,7 +278,6 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T*>& v)
 
 	return out << ']';
 }
-
 
 template<typename T>
 std::ostream& operator<<(std::ostream& out, const std::set<T>& v)

@@ -152,7 +152,7 @@ void ImageStream<PointCloudT>::saveAll(const std::vector<PointCloudT>& pointClou
 
 		if(i > 0)
 		{
-			addPath(image, lowBound, pointClouds[i - 1].getCorrectedLocation(), pointClouds[i].getCorrectedLocation(), {0, 0, 255});
+			addPath(image, lowBound, pointClouds[i - 1].getCorrectedLocation(), pointClouds[i].getCorrectedLocation(), { 0, 0, 255 });
 		}
 	}
 

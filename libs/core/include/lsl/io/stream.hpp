@@ -22,8 +22,8 @@
 #ifndef LSL_IO_STREAM_HPP
 #define LSL_IO_STREAM_HPP
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 namespace lsl {
 namespace io {

@@ -142,7 +142,7 @@ std::vector<PointCloudT> CARMENStream<PointCloudT>::loadAll(std::istream& stream
 		this->loaded = true;
 
 		std::size_t i = 0;
-		tryLoadCommands(stream, [this, &pointClouds, &i, n](CARMENCommand& command)
+		tryLoadCommands(stream, [this, &pointClouds, &i, n] (CARMENCommand& command)
 		{
 			pointClouds.emplace_back();
 			pointClouds.back().setId(command.id);
@@ -205,7 +205,7 @@ bool CARMENStream<PointCloudT>::tryLoadCommands(std::istream& stream, std::funct
 }
 
 template<typename PointCloudT>
-void CARMENStream<PointCloudT>::fillPointCloud(const CARMENCommandFLaser *commandFLaser, PointCloudT &pointCloud)
+void CARMENStream<PointCloudT>::fillPointCloud(const CARMENCommandFLaser *commandFLaser, PointCloudT& pointCloud)
 {
 	if(PointCloudT::Point::RowsAtCompileTime != 3)
 	{

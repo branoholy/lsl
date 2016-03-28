@@ -108,7 +108,7 @@ bool CARMENCommand::parse(const std::string& cmd, const std::string& onlyCmdName
 	{
 		CARMENCommandOdom *commandOdom = new CARMENCommandOdom;
 		cmdStream >> commandOdom->x >> commandOdom->y >> commandOdom->theta
-				>> commandOdom->tv >> commandOdom->rv >> commandOdom->accel;
+				  >> commandOdom->tv >> commandOdom->rv >> commandOdom->accel;
 
 		command = commandOdom;
 	}

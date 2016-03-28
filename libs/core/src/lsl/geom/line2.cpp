@@ -46,7 +46,7 @@ Line2::Line2(const geom::Vector3d& pointA, const geom::Vector3d& pointB, bool sa
 
 	a = -normal[0];
 	b = normal[1];
-	c = - a * pointA[0] - b * pointA[1];
+	c = -a * pointA[0] - b * pointA[1];
 
 	if(savePoints)
 	{
@@ -104,30 +104,7 @@ geom::Vector2d Line2::getNormal() const
 {
 	return geom::Vector2d(a, b);
 }
-/*
-geom::Vector2d Line2::getOrientedNormal() const
-{
-	geom::Vector2d n = getNormal();
 
-	if(points.size() > 1)
-	{
-		geom::Vector3d pa = points.at(0);
-		geom::Vector3d pb = points.at(1);
-
-		geom::Vector2d n_ {pa[1] - pb[1], pb[0] - pa[0]};
-		n_ *= pb.getId() - pa.getId();
-
-		// abs(n * n_) ???
-		double cosAlpha = (n * n_) / (n.norm() * n_.norm());
-		if(cosAlpha != 0)
-		{
-			n *= cosAlpha;
-		}
-	}
-
-	return n;
-}
-*/
 geom::Vector3d Line2::getClosestPoint(const geom::Vector3d& point) const
 {
 	double cx, cy;
@@ -148,7 +125,7 @@ geom::Vector3d Line2::getClosestPoint(const geom::Vector3d& point) const
 		cx = -(b * cy + c) * one__a;
 	}
 
-	return {cx, cy, 1};
+	return { cx, cy, 1 };
 }
 
 geom::Vector3d Line2::intersect(const Line2& other) const

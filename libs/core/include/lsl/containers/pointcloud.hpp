@@ -155,7 +155,10 @@ void PointCloud<ScalarT, dim>::zoom(double zoomSize)
 template<typename ScalarT, int dim>
 void PointCloud<ScalarT, dim>::correctIds()
 {
-	std::sort(this->begin(), this->end(), [](const Point& a, const Point& b) { return a.getAngle2D() < b.getAngle2D(); });
+	std::sort(this->begin(), this->end(), [] (const Point& a, const Point& b)
+	{
+		return a.getAngle2D() < b.getAngle2D();
+	});
 
 	std::size_t size = this->size();
 	for(std::size_t i = 0; i < size; i++)

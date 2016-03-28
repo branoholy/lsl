@@ -1,0 +1,80 @@
+#!/bin/bash
+
+config="uncrustify.cfg"
+
+printHelp()
+{
+	echo "usage: $0 [options] <path>"
+	echo ""
+
+	echo "Run uncrustify and uncrustify-fix.py for the file(s) specified by <path>."
+	echo ""
+
+	echo "The argument <path> can be a path to a single file or directory."
+	echo ""
+
+	echo "Options:"
+	echo "  -d, --dry-run     Dry run just prints the file names. Nothing is changed."
+	echo "  -h, --help        Print this help."
+	echo ""
+
+	exit 0
+}
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]
+then
+	printHelp
+fi
+
+folders="$1"
+dryRun=false
+if [ "$1" == "-d" ] || [ "$1" == "--dry-run" ]
+then
+	folders="$2"
+	dryRun=true
+fi
+
+if [ "$folders" == "" ]
+then
+	printHelp
+fi
+
+base=$(dirname $0)
+config="$base/$config"
+paths=$(find $folders -type f -regex ".+\.\(cpp\|hpp\)\(\.in\)?$")
+
+pythonBins=("python" "python3")
+for pythonBin in ${pythonBins[*]}
+do
+	pythonVer=$($pythonBin -c 'import sys; print(sys.version_info[0])')
+
+	if [ "$pythonVer" == "3" ]
+	then
+		break
+	fi
+done
+
+for path in $paths
+do
+	gitPath=$(git ls-files --exclude-standard $path)
+	if [ "$gitPath" == "" ]
+	then
+		gitOthers=$(git ls-files --exclude-standard -o $path)
+
+		if [ "$gitOthers" != "" ]
+		then
+			gitPath=$path
+		fi
+	fi
+
+	if [ "$gitPath" != "" ]
+	then
+		if $dryRun
+		then
+			echo $gitPath
+		else
+			uncrustify -c "$config" -l CPP --replace --no-backup "$path"
+			$pythonBin "$base/uncrustify-fix.py" "$path" "$path"
+		fi
+	fi
+done
