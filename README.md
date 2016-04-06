@@ -138,6 +138,4 @@ $ sudo dnf install lsl-core-devel
 ```
 
 ## License
-LSL is licensed under GNU GPL v3 (see
-[LICENSE](https://github.com/branoholy/lsl/blob/master/LICENSE) file).
-
+LSL is licensed under GNU GPL v3 (see the [LICENSE](LICENSE) file).
