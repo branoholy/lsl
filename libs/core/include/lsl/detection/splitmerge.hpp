@@ -110,7 +110,7 @@ template<typename R, typename T>
 std::vector<R> SplitMerge::run(std::vector<T> points) const
 {
 	std::vector<T> remainingPoints;
-	return run(points, remainingPoints);
+	return run<R>(points, remainingPoints);
 }
 
 template<typename R, typename T>
