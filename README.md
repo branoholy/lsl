@@ -31,7 +31,7 @@ sub-libraries depends on `core`.
 
 `registration`
 * [yaml-cpp](https://github.com/jbeder/yaml-cpp) library (version 0.5 or newer)
-* [Boost](http://www.boost.org) library (needed only for building - its
+* [Boost](http://www.boost.org) library (needed only for building - it is a
 `yaml-cpp` dependency)
 
 ## Build
