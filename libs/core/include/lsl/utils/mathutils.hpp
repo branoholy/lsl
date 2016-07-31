@@ -54,6 +54,12 @@ double sec2(double x);
 double csc(double x);
 double csc2(double x);
 
+// int cos(x+a)^2
+double intCos2(double x, double a);
+
+// int cos(x+a)*cos(x+b)
+double intCos2(double x, double a, double b);
+
 }}
 
 #endif // LSL_UTILS_MATHUTILS_HPP

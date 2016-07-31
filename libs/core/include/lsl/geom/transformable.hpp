@@ -78,18 +78,27 @@ typename Transformable<ScalarType, dim>::Transformation Transformable<ScalarType
 template<typename ScalarType, int dim>
 typename Transformable<ScalarType, dim>::Location Transformable<ScalarType, dim>::createLocation(const Transformation& transformation)
 {
-	// TODO: Implement for 3D as well.
-	assert(dim == 2 && "Dimension should be 2.");
+	assert((dim == 2 || dim == 3) && "Dimension must be 2 or 3.");
 
-	return { transformation(0, 2), transformation(1, 2), std::atan2(transformation(1, 0), transformation(0, 0)) };
+	Location location = Location::Zero();
+
+	if(dim == 2)
+	{
+		location[0] = transformation(0, 2);
+		location[1] = transformation(1, 2);
+		location[2] = std::atan2(transformation(1, 0), transformation(0, 0));
+	}
+	else if(dim == 3)
+	{
+		location.fill(0);
+	}
+
+	return location;
 }
 
 template<typename ScalarType, int dim>
 Matrix<ScalarType, dim, 1> Transformable<ScalarType, dim>::transformPoint(const Transformation& T, const Matrix<ScalarType, dim, 1>& point)
 {
-	// TODO: Implement for 3D as well.
-	assert(dim == 2 && "Dimension should be 2.");
-
 	auto pointH = point.toHomogenous();
 	return (T * pointH).toHeterogenous();
 }

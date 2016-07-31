@@ -84,9 +84,15 @@ public:
 	Matrix& operator=(const Eigen::MatrixBase<OtherDerived>& other);
 };
 
+template<int Dimension>
+using VectorNi = Matrix<int, Dimension, 1>;
+
 typedef Matrix<int, 2, 1> Vector2i;
 typedef Matrix<int, 3, 1> Vector3i;
 typedef Matrix<int, 4, 1> Vector4i;
+
+template<int Dimension>
+using VectorNd = Matrix<double, Dimension, 1>;
 
 typedef Matrix<double, 2, 1> Vector2d;
 typedef Matrix<double, 3, 1> Vector3d;

@@ -101,4 +101,16 @@ double csc2(double x)
 	return 1 / (s * s);
 }
 
+double intCos2(double x, double a)
+{
+	double x_ = 2 * (x + a);
+	return 0.25 * (x_ + std::sin(x_));
+}
+
+double intCos2(double x, double a, double b)
+{
+	double x_ = 2 * x;
+	return 0.25 * (x_ * std::cos(a - b) + std::sin(a + b + x_));
+}
+
 }}

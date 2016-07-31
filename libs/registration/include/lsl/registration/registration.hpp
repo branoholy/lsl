@@ -31,15 +31,14 @@ template<typename PointCloudT>
 class Registration
 {
 protected:
-	std::size_t evaluationCount;
-	std::size_t iterationCount;
-	bool converged;
+	std::size_t evaluationCount = 0;
+	std::size_t iterationCount = 0;
+	bool converged = false;
 
 public:
 	typedef PointCloudT PointCloudType;
 
-	Registration();
-	virtual ~Registration() {}
+	virtual ~Registration() = default;
 
 	virtual void loadConfig(const std::string& path);
 
@@ -57,12 +56,6 @@ public:
 	virtual void align() = 0;
 	virtual void align(const typename PointCloudT::Transformation& guess) = 0;
 };
-
-template<typename PointCloudT>
-Registration<PointCloudT>::Registration() :
-	evaluationCount(0), iterationCount(0), converged(false)
-{
-}
 
 template<typename PointCloudT>
 void Registration<PointCloudT>::loadConfig(const std::string&)
