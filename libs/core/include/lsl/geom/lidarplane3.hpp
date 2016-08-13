@@ -27,10 +27,12 @@
 #include "plane3.hpp"
 #include "transformable.hpp"
 
+#include "lsl/utils/tostringmixin.hpp"
+
 namespace lsl {
 namespace geom {
 
-class LidarPlane3 : public Transformable<double, 3>
+class LidarPlane3 : public Transformable<double, 3>, public utils::ToStringMixin
 {
 private:
 	double l; ///< A distance from the origin.
@@ -44,9 +46,12 @@ private:
 
 	geom::Vector2d computeNormalAngles(const Plane3& plane) const;
 	void computeNormalAngles(const Plane3& plane, geom::Vector2d& normalAngles) const;
-	geom::Vector2d computeBound(const geom::Vector4d& boundPoint) const;
 
-	void set(const Plane3& plane, const geom::Vector4d& beginBoundPoint, const geom::Vector4d& endBoundPoint);
+	geom::Vector2d computeBound(const geom::Vector4d& boundPoint) const;
+	void computeBounds(const std::vector<geom::Vector4d>& points, geom::Vector2d& beginBound, geom::Vector2d& endBound) const;
+
+	void set(const Plane3& planeWithPoints);
+	void set(const Plane3& plane, const std::vector<geom::Vector4d>& points);
 
 	double getRawDistance(const geom::Vector2d& angles) const;
 	double getRawCloseness(const geom::Vector2d& angles) const;
@@ -101,7 +106,7 @@ public:
 
 	bool operator==(const LidarPlane3& other) const;
 
-	friend std::ostream& operator<<(std::ostream& out, const LidarPlane3& lidarPlane);
+	virtual std::ostream& toStream(std::ostream& out) const override;
 };
 
 }}

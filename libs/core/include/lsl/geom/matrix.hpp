@@ -30,12 +30,13 @@
 
 #include "lsl/utils/cpputils.hpp"
 #include "lsl/utils/mathutils.hpp"
+#include "lsl/utils/tostringmixin.hpp"
 
 namespace lsl {
 namespace geom {
 
 template<typename _Scalar, int _Rows, int _Cols, int _Options = Eigen::ColMajor, int _MaxRows = _Rows, int _MaxCols = _Cols>
-class Matrix : public Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>
+class Matrix : public Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>, public utils::ToStringMixin
 {
 protected:
 	int id;
@@ -61,8 +62,8 @@ public:
 
 	inline Scalar at(std::size_t i, std::size_t j) const { return this->operator()(i, j); }
 	inline Scalar& at(std::size_t i, std::size_t j) { return this->operator()(i, j); }
-	inline Scalar at(std::size_t i) const { return this->operator[](i); }
-	inline Scalar& at(std::size_t i) { return this->operator[](i); }
+	inline Scalar at(std::size_t i) const { return this->operator()(i); }
+	inline Scalar& at(std::size_t i) { return this->operator()(i); }
 
 	inline int getId() const { return id; }
 	inline void setId(int id) { this->id = id; }
@@ -82,6 +83,8 @@ public:
 
 	template<typename OtherDerived>
 	Matrix& operator=(const Eigen::MatrixBase<OtherDerived>& other);
+
+	virtual std::ostream& toStream(std::ostream& out) const override;
 };
 
 template<int Dimension>
@@ -192,6 +195,27 @@ Matrix<NewScalar, NewRows, NewCols> Matrix<_Scalar, _Rows, _Cols, _Options, _Max
 	}
 
 	return newMatrix;
+}
+
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+std::ostream& Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::toStream(std::ostream& out) const
+{
+	if(this->cols() == 1)
+	{
+		out << '[';
+		for(int r = 0; r < this->rows(); r++)
+		{
+			if(r > 0)
+				out << ", ";
+
+			out << at(r);
+		}
+		out << ']';
+
+		return out;
+	}
+	else
+		return out << (Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>)*this;
 }
 
 }}

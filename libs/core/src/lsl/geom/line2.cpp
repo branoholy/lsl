@@ -43,10 +43,14 @@ Line2::Line2(const geom::Vector3d& pointA, const geom::Vector3d& pointB, bool sa
 {
 	geom::Vector3d normal = pointB - pointA;
 	std::swap(normal[0], normal[1]);
+	normal[0] *= -1;
 
-	a = -normal[0];
+	a = normal[0];
 	b = normal[1];
-	c = -a * pointA[0] - b * pointA[1];
+
+	c = 0;
+	for(std::size_t i = 0; i < 2; i++)
+		c -= normal[i] * pointA[i];
 
 	if(savePoints)
 	{
@@ -68,7 +72,7 @@ void Line2::setParams(double a, double b, double c)
 
 double Line2::distanceTo(const geom::Vector3d& point) const
 {
-	return std::abs(a * point[0] + b * point[1] + c) / std::sqrt(a * a + b * b);
+	return std::sqrt(distance2To(point));
 }
 
 double Line2::distance2To(const geom::Vector3d& point) const
@@ -131,7 +135,8 @@ geom::Vector3d Line2::getClosestPoint(const geom::Vector3d& point) const
 geom::Vector3d Line2::intersect(const Line2& other) const
 {
 	geom::Vector3d point;
-	if(!tryIntersect(other, point)) throw std::invalid_argument("Lines are parallel.");
+	if(!tryIntersect(other, point))
+		throw std::invalid_argument("Lines are parallel.");
 
 	return point;
 }

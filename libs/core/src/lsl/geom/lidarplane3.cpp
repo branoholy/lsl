@@ -39,16 +39,17 @@ LidarPlane3::LidarPlane3(double l, const geom::Vector2d& normal, const geom::Vec
 LidarPlane3::LidarPlane3(const Plane3& plane, const geom::Vector4d& beginBoundPoint, const geom::Vector4d& endBoundPoint, int id) :
 	id(id)
 {
-	set(plane, beginBoundPoint, endBoundPoint);
+	std::vector<Vector4d> points;
+	points.push_back(beginBoundPoint);
+	points.push_back(endBoundPoint);
+
+	set(plane, points);
 }
 
 LidarPlane3::LidarPlane3(const std::vector<Vector4d>& points, int id) :
 	id(id)
 {
-	const geom::Vector4d& beginBoundPoint = points.front();
-	const geom::Vector4d& endBoundPoint = points.back();
-
-	set(Plane3::leastSquare(points, false), beginBoundPoint, endBoundPoint);
+	set(Plane3::leastSquare(points, false), points);
 }
 
 geom::Vector2d LidarPlane3::computeNormalAngles(const Plane3& plane) const
@@ -62,28 +63,59 @@ geom::Vector2d LidarPlane3::computeNormalAngles(const Plane3& plane) const
 void LidarPlane3::computeNormalAngles(const Plane3& plane, geom::Vector2d& normalAngles) const
 {
 	geom::Vector3d planeNormal = plane.getNormal();
-	double normalNorm = planeNormal.norm();
 
 	planeNormal *= -plane.getD();
 	normalAngles[0] = planeNormal.getAngle2D();
-	normalAngles[1] = utils::MathUtils::normAngle(std::acos(planeNormal[2] / normalNorm));
+	normalAngles[1] = utils::MathUtils::normAngle(std::acos(planeNormal[2] / planeNormal.norm()));
 }
 
 geom::Vector2d LidarPlane3::computeBound(const geom::Vector4d& boundPoint) const
 {
+	geom::Vector3d point = boundPoint.toHeterogenous();
+
 	geom::Vector2d bound;
-	bound[0] = boundPoint.getAngle2D();
-	bound[1] = utils::MathUtils::normAngle(std::acos(boundPoint[2]));
+	bound[0] = point.getAngle2D();
+	bound[1] = utils::MathUtils::normAngle(std::acos(point[2] / point.norm()));
 
 	return bound;
 }
 
-void LidarPlane3::set(const Plane3& plane, const geom::Vector4d& beginBoundPoint, const geom::Vector4d& endBoundPoint)
+void LidarPlane3::computeBounds(const std::vector<Vector4d>& points, Vector2d& beginBound, Vector2d& endBound) const
+{
+	if(!points.empty())
+	{
+		beginBound = endBound = computeBound(points.front());
+
+		for(const Vector4d& point : points)
+		{
+			geom::Vector2d bound = computeBound(point);
+
+			for(int d = 0; d < 2; d++)
+			{
+				if(bound[d] < beginBound[d])
+					beginBound[d] = bound[d];
+
+				if(bound[d] > endBound[d])
+					endBound[d] = bound[d];
+			}
+		}
+	}
+}
+
+void LidarPlane3::set(const Plane3& planeWithPoints)
+{
+	if(planeWithPoints.getPoints().empty())
+		throw std::invalid_argument("Plane has to contain points.");
+
+	set(planeWithPoints, planeWithPoints.getPoints());
+}
+
+void LidarPlane3::set(const Plane3& plane, const std::vector<Vector4d>& points)
 {
 	geom::Vector2d normalAngles = computeNormalAngles(plane);
-	geom::Vector2d beginBound = computeBound(beginBoundPoint);
-	geom::Vector2d endBound = computeBound(endBoundPoint);
+	geom::Vector2d beginBound, endBound;
 
+	computeBounds(points, beginBound, endBound);
 	checkBounds(normalAngles, beginBound, endBound);
 
 	geom::Vector3d planeNormal = plane.getNormal();
@@ -142,13 +174,7 @@ void LidarPlane3::checkBounds(const geom::Vector2d& normal, const geom::Vector2d
 		double endDiff = utils::MathUtils::normAnglePi(endDiffs[i]);
 
 		if(!(beginDiff > -utils::MathUtils::PI__TWO && beginDiff < utils::MathUtils::PI__TWO && endDiff > -utils::MathUtils::PI__TWO && endDiff < utils::MathUtils::PI__TWO))
-		{
-			std::ostringstream oss;
-			oss << *this;
-
-			// throw std::invalid_argument("Both bounds (" + std::to_string(phiA) + ", " + std::to_string(phiB) + ") are not in the domain (" + std::to_string(alpha) + " ± π/2) of line " + oss.str() + ".");
-			throw std::invalid_argument("Both bounds are not in the domain of plane " + oss.str() + ".");
-		}
+			throw std::invalid_argument("Both bounds (" + beginBound.toString() + ", " + endBound.toString() + ") are not in the domain (" + normal.toString() + " ± π/2) of plane " + toString() + ".");
 	}
 }
 
@@ -335,9 +361,9 @@ bool LidarPlane3::operator==(const LidarPlane3& other) const
 	return (l == other.l && normal == other.normal && beginBound == other.beginBound && endBound == other.endBound);
 }
 
-std::ostream& operator<<(std::ostream& out, const LidarPlane3& lidarPlane)
+std::ostream& LidarPlane3::toStream(std::ostream& out) const
 {
-	return out << "LP(|" << lidarPlane.l << "|, (" << lidarPlane.normal << "), <" << lidarPlane.beginBound << ", " << lidarPlane.endBound << ">)";
+	return out << "LP(|" << l << "|, " << normal << ", <" << beginBound << ", " << endBound << ">)";
 }
 
 }}

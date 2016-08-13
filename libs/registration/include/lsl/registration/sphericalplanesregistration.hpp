@@ -37,7 +37,7 @@ namespace registration {
 class SphericalPlanesRegistration : public Registration<containers::PointCloud3d>
 {
 public:
-	typedef std::function<void (std::size_t, const geom::LidarPlane3&, const geom::LidarPlane3&, const geom::Vector2d&, const geom::Vector2d&)> iterPlanesFunc;
+	typedef std::function<void (std::size_t i, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& beginBound, const geom::Vector2d& endBound)> iterPlanesFunc;
 
 private:
 	class Bound

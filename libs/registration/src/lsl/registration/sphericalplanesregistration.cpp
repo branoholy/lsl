@@ -228,32 +228,6 @@ std::size_t SphericalPlanesRegistration::iterPlanes(const std::vector<geom::Lida
 		}
 	});
 
-	/*
-	while(i1 < size1 && i2 < size2)
-	{
-		const geom::LidarLine2& targetLine = targetLines.at(i1);
-		const geom::LidarLine2& sourceLine = sourceLines.at(i2);
-
-		double maxPhiA = std::max(targetLine.getPhiA(), sourceLine.getPhiA());
-		double minPhiB = std::min(targetLine.getPhiB(), sourceLine.getPhiB());
-
-		if(maxPhiA < minPhiB)
-		{
-			bool callF = !onlyCorresponding;
-			if(onlyCorresponding)
-			{
-				double diffL = std::abs(targetLine.getL() - sourceLine.getL());
-				callF = (diffL < maxDiffL) && (diffL < (avgDiffL + maxAvgDiffL));
-			}
-
-			if(callF) f(counter++, targetLine, sourceLine, maxPhiA, minPhiB);
-		}
-
-		if(minPhiB >= targetLine.getPhiB()) i1++;
-		if(minPhiB >= sourceLine.getPhiB()) i2++;
-	}
-	*/
-
 	return counter;
 }
 
@@ -262,9 +236,9 @@ double SphericalPlanesRegistration::error(const std::vector<geom::LidarPlane3>& 
 	sumOfErrors = 0;
 	// coverAngleFactor = 0;
 
-	iterPlanes(targetPlanes, sourcePlanes, [this] (std::size_t, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& topLeft, const geom::Vector2d& bottomRight)
+	iterPlanes(targetPlanes, sourcePlanes, [this] (std::size_t, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& beginBound, const geom::Vector2d& endBound)
 	{
-		double ei = 0; // targetPlane.error(sourcePlane, phiA, phiB);
+		double ei = targetPlane.error(sourcePlane, beginBound, endBound);
 
 		if(ei >= 0) // TODO: Is it needed?
 		{
@@ -273,7 +247,7 @@ double SphericalPlanesRegistration::error(const std::vector<geom::LidarPlane3>& 
 		}
 		else
 		{
-			std::cerr << "ei < 0: " << topLeft << '-' << bottomRight << ": " << targetPlane << ' ' << sourcePlane << std::endl;
+			std::cerr << "ei < 0: " << beginBound << '-' << endBound << ": " << targetPlane << ' ' << sourcePlane << std::endl;
 		}
 	});
 
@@ -305,9 +279,9 @@ SphericalPlanesRegistration::PointCloudType SphericalPlanesRegistration::errorAr
 	removeInvisible(sourcePlanes);
 
 	PointCloudType areas;
-	iterPlanes(targetPlanes, sourcePlanes, [&areas] (std::size_t, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& topLeft, const geom::Vector2d& bottomRight)
+	iterPlanes(targetPlanes, sourcePlanes, [&areas] (std::size_t, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& beginBound, const geom::Vector2d& endBound)
 	{
-		double ei = 0; // targetPlane.error(sourcePlane, phiA, phiB);
+		double ei = targetPlane.error(sourcePlane, beginBound, endBound);
 		if(ei >= 0) // TODO: Is it needed?
 		{
 			/*
@@ -330,9 +304,9 @@ SphericalPlanesRegistration::PointCloudType SphericalPlanesRegistration::errorAr
 SphericalPlanesRegistration::PointCloudType::Location SphericalPlanesRegistration::gradientErrorAtZero(const std::vector<geom::LidarPlane3>& targetPlanes, const std::vector<geom::LidarPlane3>& sourcePlanes) const
 {
 	PointCloudType::Location gradient = PointCloudType::Location::Zero();
-	iterPlanes(targetPlanes, sourcePlanes, [&gradient] (std::size_t, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& topLeft, const geom::Vector2d& bottomRight)
+	iterPlanes(targetPlanes, sourcePlanes, [&gradient] (std::size_t, const geom::LidarPlane3& targetPlane, const geom::LidarPlane3& sourcePlane, const geom::Vector2d& beginBound, const geom::Vector2d& endBound)
 	{
-		gradient += targetPlane.gradientErrorAtZero(sourcePlane, topLeft, bottomRight);
+		gradient += targetPlane.gradientErrorAtZero(sourcePlane, beginBound, endBound);
 	});
 
 	return gradient;
