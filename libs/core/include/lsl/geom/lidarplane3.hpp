@@ -47,7 +47,7 @@ private:
 	geom::Vector2d computeNormalAngles(const Plane3& plane) const;
 	void computeNormalAngles(const Plane3& plane, geom::Vector2d& normalAngles) const;
 
-	geom::Vector2d computeBound(const geom::Vector4d& boundPoint) const;
+	//geom::Vector2d computeBound(const geom::Vector4d& boundPoint) const;
 	void computeBounds(const std::vector<geom::Vector4d>& points, geom::Vector2d& beginBound, geom::Vector2d& endBound) const;
 
 	void set(const Plane3& planeWithPoints);
@@ -61,6 +61,8 @@ private:
 	void checkBounds(const geom::Vector2d& normal, const geom::Vector2d& beginBound, const geom::Vector2d& endBound);
 
 public:
+	geom::Vector2d computeBound(const geom::Vector4d& boundPoint) const;
+
 	int id = -1;
 
 	LidarPlane3(double l, const geom::Vector2d& normal, const geom::Vector2d& beginBound, const geom::Vector2d& endBound, int id = -1);

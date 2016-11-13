@@ -49,7 +49,7 @@ LidarLine2::LidarLine2(const geom::Vector3d& endPointA, const geom::Vector3d& en
 LidarLine2::LidarLine2(const std::vector<geom::Vector3d>& points, bool managed) :
 	managed(managed)
 {
-	Line2 line = Line2::leastSquareLine(points);
+	Line2 line = Line2::leastSquare(points);
 
 	std::size_t indexEndPointA = 0, indexEndPointB = 0;
 	for(std::size_t i = 1; i < points.size(); i++)
@@ -77,7 +77,7 @@ LidarLine2::LidarLine2(const std::vector<geom::Vector3d>& points, bool managed) 
 void LidarLine2::setLine(const Line2& line)
 {
 	geom::Vector2d normal = line.getNormal();
-	l = abs(line.getC() / normal.norm());
+	l = std::abs(line.getC() / normal.norm());
 
 	normal *= -line.getC();
 	alpha = normal.getAngle2D();

@@ -83,7 +83,7 @@ std::vector<T> Ransac::run(const std::vector<T>& points) const
 			tries++;
 		}
 
-		geom::Line2 model = geom::Line2::leastSquareLine(modelData, false);
+		geom::Line2 model = geom::Line2::leastSquare(modelData, false);
 
 		modelData.clear();
 		double error2 = 0;
@@ -118,7 +118,7 @@ std::vector<T> Ransac::run(const std::vector<T>& points) const
 			if(error2 < bestError2)
 			{
 				bool testOk = true;
-				geom::Line2 testModel = geom::Line2::leastSquareLine(modelData, false);
+				geom::Line2 testModel = geom::Line2::leastSquare(modelData, false);
 				for(const ModelValueType& testPoint : modelData)
 				{
 					if(testModel.distance2To(*testPoint) > maxError2)

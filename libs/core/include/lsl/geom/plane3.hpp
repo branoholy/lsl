@@ -78,56 +78,27 @@ template<typename ForwardIterator>
 Plane3 Plane3::leastSquare(ForwardIterator begin, ForwardIterator end, bool savePoints)
 {
 	// TODO Implement Plane3::leastSquare
-	/*
+
 	std::size_t size = std::distance(begin, end);
-	double one__size = 1.0 / size;
-
-	std::vector<geom::Vector3d> linePoints;
-	if(savePoints) linePoints.reserve(size);
-
-	double x_ = 0, y_ = 0;
-	for(ForwardIterator it = begin; it != end; it++)
+	std::vector<geom::Vector4d> planePoints;
+	if(savePoints)
 	{
-		const auto *point = utils::CppUtils::getPointer(*it);
-
-		double x = (*point)[0];
-		double y = (*point)[1];
-
-		x_ += x;
-		y_ += y;
-
-		if(savePoints) linePoints.push_back(*point);
+		planePoints.reserve(size);
+		planePoints.insert(planePoints.begin(), begin, end);
 	}
-	x_ *= one__size;
-	y_ *= one__size;
 
-	double sumX_ = 0, sumY_ = 0, b_ = 0;
-	for(ForwardIterator it = begin; it != end; it++)
-	{
-		const auto *point = utils::CppUtils::getPointer(*it);
+	geom::Vector4d A = *begin;
+	geom::Vector4d AB = (*(begin + 1) - A);
+	geom::Vector4d AC = (*(begin + 2) - A);
+	geom::Vector3d n = AB.toHeterogenous().cross(AC.toHeterogenous());
 
-		double x = (*point)[0];
-		double y = (*point)[1];
+	double a = n[0];
+	double b = n[1];
+	double c = n[2];
+	double d = -(a * A[0] + b * A[1] + c * A[2]);
 
-		double x_i = x - x_;
-		double y_i = y - y_;
-
-		sumX_ += x_i * x_i;
-		sumY_ += y_i * y_i;
-		b_ += x_i * y_i;
-	}
-	double a_ = sumX_ - sumY_;
-
-	double a = 2 * b_;
-	double b = -(a_ + std::sqrt(a_ * a_ + 4 * b_ * b_));
-	double c = -(a * x_ + b * y_);
-	double d = 21356;
-
-	if(savePoints) return Plane3(a, b, c, d, std::move(linePoints));
+	if(savePoints) return Plane3(a, b, c, d, std::move(planePoints));
 	else return Plane3(a, b, c, d);
-	*/
-
-	return Plane3(0, 0, 0, 0);
 }
 
 template<typename ContainerT>

@@ -66,7 +66,6 @@ public:
 	double getY(double x) const;
 
 	geom::Vector2d getNormal() const;
-	// geom::Vector2d getOrientedNormal() const;
 
 	geom::Vector3d getClosestPoint(const geom::Vector3d& point) const;
 
@@ -78,8 +77,11 @@ public:
 	template<typename ForwardIterator>
 	static Line2 leastSquareLine(ForwardIterator begin, ForwardIterator end, bool savePoints = true);
 
+	template<typename ForwardIterator>
+	static Line2 leastSquare(ForwardIterator begin, ForwardIterator end, bool savePoints = true);
+
 	template<typename ContainerT>
-	static Line2 leastSquareLine(const ContainerT& points, bool savePoints = true);
+	static Line2 leastSquare(const ContainerT& points, bool savePoints = true);
 
 	friend std::ostream& operator<<(std::ostream& out, const Line2& line);
 };
@@ -134,10 +136,47 @@ Line2 Line2::leastSquareLine(ForwardIterator begin, ForwardIterator end, bool sa
 	else return Line2(a, b, c);
 }
 
-template<typename ContainerT>
-Line2 Line2::leastSquareLine(const ContainerT& points, bool savePoints)
+template<typename ForwardIterator>
+Line2 Line2::leastSquare(ForwardIterator begin, ForwardIterator end, bool savePoints)
 {
-	return leastSquareLine(points.begin(), points.end(), savePoints);
+	std::size_t size = std::distance(begin, end);
+
+	std::vector<geom::Vector3d> linePoints;
+	if(savePoints) linePoints.reserve(size);
+
+	double sumX = 0;
+	double sumY = 0;
+	double sumXX = 0;
+	double sumYY = 0;
+	double sumXY = 0;
+	for(ForwardIterator it = begin; it != end; it++)
+	{
+		const auto *point = utils::CppUtils::getPointer(*it);
+
+		double x = (*point)[0];
+		double y = (*point)[1];
+
+		sumX += x;
+		sumY += y;
+		sumXX += x * x;
+		sumYY += y * y;
+		sumXY += x * y;
+
+		if(savePoints) linePoints.push_back(*point);
+	}
+
+	double a = (sumX * sumYY - sumY * sumXY) / (sumXY * sumXY - sumXX * sumYY);
+	double b = (a * sumXX + sumX) / sumXY;
+	double c = 1;
+
+	if(savePoints) return Line2(a, b, c, std::move(linePoints));
+	else return Line2(a, b, c);
+}
+
+template<typename ContainerT>
+Line2 Line2::leastSquare(const ContainerT& points, bool savePoints)
+{
+	return leastSquare(points.begin(), points.end(), savePoints);
 }
 
 }}

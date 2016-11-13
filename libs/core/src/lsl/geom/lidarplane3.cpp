@@ -86,6 +86,9 @@ void LidarPlane3::computeBounds(const std::vector<Vector4d>& points, Vector2d& b
 	{
 		beginBound = endBound = computeBound(points.front());
 
+		// TODO Save points that are used in "beginBound" and "endBound".
+		std::vector<Vector4d> boundPoints;
+
 		for(const Vector4d& point : points)
 		{
 			geom::Vector2d bound = computeBound(point);
@@ -139,7 +142,7 @@ double LidarPlane3::getRawCloseness(const geom::Vector2d& angles) const
 
 geom::Vector4d LidarPlane3::getRawPoint(const geom::Vector2d& angles) const
 {
-	double distance = getDistance(angles);
+	double distance = getRawDistance(angles);
 	double s = std::sin(angles[1]);
 
 	geom::Vector4d point;
@@ -300,7 +303,7 @@ bool LidarPlane3::inBounds(const geom::Vector2d& angles) const
 	return true;
 }
 
-bool LidarPlane3::inDomain(const geom::Vector2d& angles) const
+bool LidarPlane3::inDomain(const Vector2d& angles) const
 {
 	for(int i = 0; i < normal.rows(); i++)
 		if(angles[i] < getLowDomain(i) || angles[i] > getHighDomain(i))
@@ -311,10 +314,23 @@ bool LidarPlane3::inDomain(const geom::Vector2d& angles) const
 
 void LidarPlane3::transform(const Transformation& transformation)
 {
+	std::vector<Vector4d> points;
+	points.push_back(transformation * beginBoundPoint);
+	points.push_back(transformation * endBoundPoint);
+	points.push_back(transformation * getPlanePoint({beginBound[0], endBound[1]}));
+
+	set(Plane3::leastSquare(points));
 }
 
 void LidarPlane3::transformAll(std::vector<LidarPlane3>& lidarPlanes, const Transformation& transformation, bool removeInvalid)
 {
+	for(LidarPlane3& lidarPlane : lidarPlanes)
+		lidarPlane.transform(transformation);
+
+	if(removeInvalid)
+	{
+		// TODO: Remove invliad planes parts.
+	}
 }
 
 void LidarPlane3::transformAllToLocation(std::vector<LidarPlane3>& lidarPlanes, const Location& location, bool removeInvalid)
