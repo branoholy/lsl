@@ -142,6 +142,7 @@ void LidarLine2::setEndPointA(double phiA)
 	double value = getValue(phiA);
 	endPointA[0] = value * cos(phiA);
 	endPointA[1] = value * sin(phiA);
+	endPointA[2] = 1;
 }
 
 void LidarLine2::setEndPointB(double phiB)
@@ -149,6 +150,7 @@ void LidarLine2::setEndPointB(double phiB)
 	double value = getValue(phiB);
 	endPointB[0] = value * cos(phiB);
 	endPointB[1] = value * sin(phiB);
+	endPointB[2] = 1;
 }
 
 void LidarLine2::setEndPointA(const geom::Vector3d& endPointA)
