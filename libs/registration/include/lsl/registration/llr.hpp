@@ -40,7 +40,7 @@ class LLR : public Registration<containers::PointCloud2d>
 public:
 	typedef std::function<void (std::size_t, const geom::LidarLine2&, const geom::LidarLine2&, double, double)> iterFunc;
 
-private:
+protected:
 	detection::Ransac ransac;
 	detection::SplitMerge splitMerge;
 	std::size_t maxLineCount;
@@ -68,7 +68,7 @@ private:
 	std::size_t iterAllLines(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, iterFunc f) const;
 	std::size_t iterLines(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, iterFunc f, bool onlyCorresponding = true) const;
 
-	void align(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, std::size_t maxIterations);
+	virtual void align(const std::vector<geom::LidarLine2>& targetLines, const std::vector<geom::LidarLine2>& sourceLines, std::size_t maxIterations);
 
 	class IntervalEndpoint
 	{

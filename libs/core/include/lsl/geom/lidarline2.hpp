@@ -107,7 +107,12 @@ public:
 	static void transformAllToLocation(std::vector<LidarLine2>& lidarLines, const Location& location, bool removeInvalid = false);
 
 	double error(const LidarLine2& other, double phiLow, double phiHigh) const;
+
+	geom::Vector2d gradientTranslationAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
+	double gradientRotationAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
+
 	geom::Vector3d gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
+	geom::Vector2d gradientTranslationNormAtZero(const LidarLine2& other, double phiLow, double phiHigh) const;
 
 	bool operator==(const LidarLine2& other) const;
 

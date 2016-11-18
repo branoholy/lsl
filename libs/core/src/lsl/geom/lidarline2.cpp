@@ -369,44 +369,77 @@ double LidarLine2::error(const LidarLine2& other, double phiLow, double phiHigh)
 	return err;
 }
 
-Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const
+Vector2d LidarLine2::gradientTranslationAtZero(const LidarLine2& other, double phiLow, double phiHigh) const
 {
 	double l_ = other.getL();
 	double alpha_ = other.getAlpha();
 
-	geom::Vector3d gradient;
-
-	double one__cosLow = 1 / cos(phiLow - alpha_);
-	double one__cosHigh = 1 / cos(phiHigh - alpha_);
-
-	double pLow, pHigh, gradient2;
+	double pLow, pHigh;
 	if(std::abs(utils::MathUtils::normAnglePi(alpha - alpha_)) <= utils::MathUtils::EPSILON_10)
 	{
 		pLow = std::tan(phiLow - alpha);
 		pHigh = std::tan(phiHigh - alpha);
-
-		gradient2 = -l_ * l_ * one__cosHigh * one__cosHigh + 2 * l * l_ * one__cosHigh * one__cosHigh;
-		gradient2 -= -l_ * l_ * one__cosLow * one__cosLow + 2 * l * l_ * one__cosLow * one__cosLow;
 	}
 	else
 	{
 		double one__sin = 1.0 / std::sin(alpha - alpha_);
-		pLow = one__sin * std::log(cos(alpha - phiLow) / std::cos(alpha_ - phiLow));
-		pHigh = one__sin * std::log(cos(alpha - phiHigh) / std::cos(alpha_ - phiHigh));
-
-		gradient2 = -2 * l * l_ * utils::csc(alpha - alpha_) * std::tan(alpha_ - phiHigh) - 2 * l * l_ * utils::cot(alpha - alpha_) * utils::csc(alpha - alpha_) * std::log(cos(alpha - phiHigh) * utils::sec(alpha_ - phiHigh)) - l_ * l_ * utils::sec2(alpha_ - phiHigh);
-		gradient2 -= -2 * l * l_ * utils::csc(alpha - alpha_) * std::tan(alpha_ - phiLow) - 2 * l * l_ * utils::cot(alpha - alpha_) * utils::csc(alpha - alpha_) * std::log(cos(alpha - phiLow) * utils::sec(alpha_ - phiLow)) - l_ * l_ * utils::sec2(alpha_ - phiLow);
+		pLow = one__sin * std::log(std::cos(alpha - phiLow) / std::cos(alpha_ - phiLow));
+		pHigh = one__sin * std::log(std::cos(alpha - phiHigh) / std::cos(alpha_ - phiHigh));
 	}
 
 	double tanP = (l_ * std::tan(phiHigh - alpha_) - l * pHigh) - (l_ * std::tan(phiLow - alpha_) - l * pLow);
-	double gradient0 = 2 * cos(alpha_) * tanP;
-	double gradient1 = 2 * sin(alpha_) * tanP;
 
-	gradient[0] = gradient0;
-	gradient[1] = gradient1;
-	gradient[2] = gradient2;
+	Vector2d gradient;
+	gradient[0] = 2 * std::cos(alpha_) * tanP;
+	gradient[1] = 2 * std::sin(alpha_) * tanP;
 
 	return gradient;
+}
+
+double LidarLine2::gradientRotationAtZero(const LidarLine2& other, double phiLow, double phiHigh) const
+{
+	double l_ = other.getL();
+	double alpha_ = other.getAlpha();
+
+	double gradientPhi;
+	if(std::abs(utils::MathUtils::normAnglePi(alpha - alpha_)) <= utils::MathUtils::EPSILON_10)
+	{
+		double one__cosLow = 1 / std::cos(phiLow - alpha_);
+		double one__cosHigh = 1 / std::cos(phiHigh - alpha_);
+
+		gradientPhi = -l_ * l_ * one__cosHigh * one__cosHigh + 2 * l * l_ * one__cosHigh * one__cosHigh;
+		gradientPhi -= -l_ * l_ * one__cosLow * one__cosLow + 2 * l * l_ * one__cosLow * one__cosLow;
+	}
+	else
+	{
+		gradientPhi = -2 * l * l_ * utils::csc(alpha - alpha_) * std::tan(alpha_ - phiHigh) - 2 * l * l_ * utils::cot(alpha - alpha_) * utils::csc(alpha - alpha_) * std::log(std::cos(alpha - phiHigh) * utils::sec(alpha_ - phiHigh)) - l_ * l_ * utils::sec2(alpha_ - phiHigh);
+		gradientPhi -= -2 * l * l_ * utils::csc(alpha - alpha_) * std::tan(alpha_ - phiLow) - 2 * l * l_ * utils::cot(alpha - alpha_) * utils::csc(alpha - alpha_) * std::log(std::cos(alpha - phiLow) * utils::sec(alpha_ - phiLow)) - l_ * l_ * utils::sec2(alpha_ - phiLow);
+	}
+
+	return gradientPhi;
+}
+
+Vector3d LidarLine2::gradientErrorAtZero(const LidarLine2& other, double phiLow, double phiHigh) const
+{
+	Vector2d translationGradient = gradientTranslationAtZero(other, phiLow, phiHigh);
+	double rotationGradient = gradientRotationAtZero(other, phiLow, phiHigh);
+
+	return Vector3d(translationGradient[0], translationGradient[1], rotationGradient);
+}
+
+Vector2d LidarLine2::gradientTranslationNormAtZero(const LidarLine2& other, double phiLow, double phiHigh) const
+{
+	double alpha_ = other.getAlpha();
+	double cosAlpha_ = std::cos(alpha_);
+	double sinAlpha_ = std::sin(alpha_);
+	double tanDiff = std::tan(phiHigh - alpha_) - std::tan(phiLow - alpha_);
+
+	Vector2d gradientNorm;
+
+	gradientNorm[0] = 2 * cosAlpha_ * cosAlpha_ * tanDiff;
+	gradientNorm[1] = 2 * sinAlpha_ * sinAlpha_ * tanDiff;
+
+	return gradientNorm;
 }
 
 bool LidarLine2::operator==(const LidarLine2& other) const
