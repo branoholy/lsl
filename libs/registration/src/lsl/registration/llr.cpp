@@ -398,6 +398,7 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 	for(i = 0; i < maxIterations; i++)
 	{
 		PointCloudType::Location gradient = gradientErrorAtZero(targetLines, sourceLinesT);
+
 		double newFinalError, newSumOfErrors, newCoverFactor, newCoverAngleFactor;
 		double globalGamma = 1;
 
