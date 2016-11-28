@@ -39,9 +39,8 @@ template<typename PointCloudT>
 class CARMENStream : public Stream<PointCloudT>
 {
 protected:
-	double errorRange;
-
-	std::streampos posg;
+	double errorRange = std::numeric_limits<double>::max();
+	std::streampos posg = 0;
 
 	virtual void fillPointCloud(const CARMENCommandFLaser *commandFLaser, PointCloudT& pointCloud);
 
@@ -51,7 +50,10 @@ protected:
 	void skipToTimestamp(double timestamp, std::size_t pos);
 
 public:
-	CARMENStream();
+	double zoom = 1;
+
+	using Stream<PointCloudT>::Stream;
+
 	CARMENStream(double errorRange);
 	CARMENStream(const std::string& filePath, double errorRange);
 
@@ -75,19 +77,14 @@ public:
 };
 
 template<typename PointCloudT>
-CARMENStream<PointCloudT>::CARMENStream() : CARMENStream(std::numeric_limits<double>::max())
-{
-}
-
-template<typename PointCloudT>
-CARMENStream<PointCloudT>::CARMENStream(double errorRange) : Stream<PointCloudT>(),
-	errorRange(errorRange), posg(0)
+CARMENStream<PointCloudT>::CARMENStream(double errorRange) :
+	errorRange(errorRange)
 {
 }
 
 template<typename PointCloudT>
 CARMENStream<PointCloudT>::CARMENStream(const std::string& filePath, double errorRange) : Stream<PointCloudT>(filePath),
-	errorRange(errorRange), posg(0)
+	errorRange(errorRange)
 {
 }
 
@@ -214,7 +211,7 @@ void CARMENStream<PointCloudT>::fillPointCloud(const CARMENCommandFLaser *comman
 
 	typename PointCloudT::ScalarType data[PointCloudT::Point::RowsAtCompileTime];
 
-	pointCloud.getOdomLocation() << commandFLaser->x, commandFLaser->y, commandFLaser->theta;
+	pointCloud.getOdomLocation() << zoom * commandFLaser->x, zoom * commandFLaser->y, commandFLaser->theta;
 	pointCloud.reserve(commandFLaser->numReadings);
 
 	double deltaAngle = utils::MathUtils::PI / commandFLaser->numReadings;
@@ -223,6 +220,7 @@ void CARMENStream<PointCloudT>::fillPointCloud(const CARMENCommandFLaser *comman
 		double range = commandFLaser->rangeReadings[i];
 		if(range >= errorRange) continue;
 
+		range *= zoom;
 		double angle = i * deltaAngle - utils::MathUtils::PI__TWO;
 
 		data[0] = range * std::cos(angle);

@@ -33,18 +33,18 @@ class Stream
 {
 protected:
 	std::string filePath;
-	bool loaded;
+	bool loaded = false;
 
 	virtual PointCloudT loadData(std::istream& stream) = 0;
 	virtual void saveData(const PointCloudT& pointCloud, std::ostream& stream) = 0;
 
 public:
-	Stream();
+	Stream() = default;
 	Stream(const std::string& filePath);
-	virtual ~Stream();
+	virtual ~Stream() = default;
 
 	inline const std::string& getFilePath() const { return filePath; }
-	inline void setFilePaht(const std::string& filePath) { this->filePath = filePath; }
+	inline void setFilePath(const std::string& filePath) { this->filePath = filePath; }
 
 	inline bool isLoaded() const { return loaded; }
 
@@ -58,19 +58,8 @@ public:
 };
 
 template<typename PointCloudT>
-Stream<PointCloudT>::Stream() :
-	loaded(false)
-{
-}
-
-template<typename PointCloudT>
 Stream<PointCloudT>::Stream(const std::string& filePath) :
-	filePath(filePath), loaded(false)
-{
-}
-
-template<typename PointCloudT>
-Stream<PointCloudT>::~Stream()
+	filePath(filePath)
 {
 }
 

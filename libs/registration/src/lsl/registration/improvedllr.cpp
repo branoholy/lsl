@@ -94,7 +94,8 @@ void ImprovedLLR::align(const std::vector<geom::LidarLine2>& targetLines, const 
 		double gammaMul = 1;
 		double newErrorValue = errorValue;
 
-		while(true)
+		std::size_t tries = 0;
+		while(tries++ < maxTries)
 		{
 			std::vector<geom::LidarLine2> tmpSourceLinesT = sourceLinesT;
 
@@ -137,10 +138,14 @@ void ImprovedLLR::align(const std::vector<geom::LidarLine2>& targetLines, const 
 		bool finished = false;
 		if(newErrorValue < errorValue)
 		{
-			finished = ((errorValue - newErrorValue) < 0.01);
+			finished = ((errorValue - newErrorValue) < minErrorDiff);
 
 			input = newInput;
 			errorValue = newErrorValue;
+		}
+		else
+		{
+			break;
 		}
 
 		if(errorValue < minFinalError || finished)

@@ -85,6 +85,7 @@ void LLR::loadConfig(const std::string& path)
 		if(yamlMinimization["maxIterations"]) maxIterations = yamlMinimization["maxIterations"].as<std::size_t>();
 		if(yamlMinimization["maxTries"]) maxTries = yamlMinimization["maxTries"].as<std::size_t>();
 		if(yamlMinimization["minFinalError"]) minFinalError = yamlMinimization["minFinalError"].as<double>();
+		if(yamlMinimization["minErrorDiff"]) minErrorDiff = yamlMinimization["minErrorDiff"].as<double>();
 		if(yamlMinimization["gammas"]) gammas = yamlMinimization["gammas"].as<std::vector<double>>();
 	}
 }
@@ -428,14 +429,20 @@ void LLR::align(const std::vector<geom::LidarLine2>& targetLines, const std::vec
 		}
 		while(newFinalError > tmpFinalError);
 
-		input = newInput;
+		bool finished = false;
+		if(newFinalError < tmpFinalError)
+		{
+			finished = ((tmpFinalError - newFinalError) < minErrorDiff);
 
-		tmpFinalError = newFinalError;
-		sumOfErrors = newSumOfErrors;
-		coverFactor = newCoverFactor;
-		coverAngleFactor = newCoverAngleFactor;
+			input = newInput;
 
-		if(tmpFinalError < minFinalError)
+			tmpFinalError = newFinalError;
+			sumOfErrors = newSumOfErrors;
+			coverFactor = newCoverFactor;
+			coverAngleFactor = newCoverAngleFactor;
+		}
+
+		if(tmpFinalError < minFinalError || finished)
 		{
 			converged = true;
 			break;

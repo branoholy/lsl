@@ -8,6 +8,8 @@ endif()
 # Set project name
 project("lsl")
 
+message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_VERSION}")
+
 # CMake configuration
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 

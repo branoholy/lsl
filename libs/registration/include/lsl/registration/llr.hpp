@@ -51,6 +51,7 @@ protected:
 	std::size_t maxIterations;
 	std::size_t maxTries;
 	double minFinalError;
+	double minErrorDiff;
 	std::vector<double> gammas;
 
 	double finalError;
@@ -119,6 +120,9 @@ public:
 
 	inline double getMinFinalError() const { return minFinalError; }
 	inline void setMinFinalError(double minFinalError) { this->minFinalError = minFinalError; }
+
+	inline double getMinErrorDiff() const { return minErrorDiff; }
+	inline void setMinErrorDiff(double minErrorDiff) { this->minErrorDiff = minErrorDiff; }
 
 	inline std::vector<double>& getGammas() { return gammas; }
 
