@@ -47,6 +47,7 @@ protected:
 
 	double maxDiffL;
 	double maxAvgDiffL;
+	double maxDiffAlpha;
 
 	std::size_t maxIterations;
 	std::size_t maxTries;
@@ -111,6 +112,9 @@ public:
 
 	inline double getMaxAvgDiffL() const { return maxAvgDiffL; }
 	inline void setMaxAvgDiffL(double maxAvgDiffL) { this->maxAvgDiffL = maxAvgDiffL; }
+
+	inline double getMaxDiffAlpha() const { return maxDiffAlpha; }
+	inline void setMaxDiffAlpha(double maxDiffAlpha) { this->maxDiffAlpha = maxDiffAlpha; }
 
 	inline std::size_t getMaxIterations() const { return maxIterations; }
 	inline void setMaxIterations(std::size_t maxIterations) { this->maxIterations = maxIterations; }

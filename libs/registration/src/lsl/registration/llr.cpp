@@ -40,6 +40,7 @@ LLR::LLR() : Registration(),
 	maxLineCount(10),
 	maxDiffL(std::numeric_limits<double>::max()),
 	maxAvgDiffL(std::numeric_limits<double>::max()),
+	maxDiffAlpha(std::numeric_limits<double>::max()),
 	maxIterations(50),
 	maxTries(20),
 	minFinalError(0.0001),
@@ -78,6 +79,7 @@ void LLR::loadConfig(const std::string& path)
 	{
 		if(yamlCorrespondences["maxDiffL"]) maxDiffL = yamlCorrespondences["maxDiffL"].as<double>();
 		if(yamlCorrespondences["maxAvgDiffL"]) maxAvgDiffL = yamlCorrespondences["maxAvgDiffL"].as<double>();
+		if(yamlCorrespondences["maxDiffAlpha"]) maxDiffAlpha = yamlCorrespondences["maxDiffAlpha"].as<double>();
 	}
 
 	if(yamlMinimization)
@@ -268,7 +270,9 @@ std::size_t LLR::iterLines(const std::vector<geom::LidarLine2>& targetLines, con
 			if(onlyCorresponding)
 			{
 				double diffL = std::abs(targetLine.getL() - sourceLine.getL());
-				callF = (diffL < maxDiffL) && (diffL < (avgDiffL + maxAvgDiffL));
+				double diffAlpha = std::abs(targetLine.getAlpha() - sourceLine.getAlpha());
+
+				callF = (diffL < maxDiffL) && (diffL < (avgDiffL + maxAvgDiffL)) && (diffAlpha < maxDiffAlpha);
 			}
 
 			if(callF) f(counter++, targetLine, sourceLine, maxPhiA, minPhiB);
