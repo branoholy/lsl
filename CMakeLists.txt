@@ -15,21 +15,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(PROJECT_VERSION_MAJOR "0")
 set(PROJECT_VERSION_MINOR "1")
 set(PROJECT_VERSION_PATCH "5")
-set(PROJECT_VERSION_TWEAK "")
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 
 if(${PROJECT_VERSION_PATCH})
 	set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 endif()
 
-if(${PROJECT_VERSION_TWEAK})
-	set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}.${PROJECT_VERSION_TWEAK}")
-endif()
-
 # Set options
 option(library "Specify a library to build")
 option(install-headers "Install the headers only (no library)")
 option(install-library "Install the library only (no headers)")
+option(examples "Build all examples")
+option(examples-only "Build only examples (not the library)")
 
 option(INSTALL_LIB_DIR "Installation directory for libraries")
 if(${INSTALL_LIB_DIR} STREQUAL "OFF")
@@ -49,39 +46,48 @@ endif()
 
 add_definitions("-std=c++11")
 add_definitions("-Wall -Wextra -pedantic")
-add_definitions("-Wno-deprecated-declarations") # Hide a lot of Eigen warnings
 
-# Add core sub-library
-include_directories("libs/core/include")
-add_subdirectory("libs/core")
+# This hides a lot of Eigen warnings
+add_definitions("-Wno-misleading-indentation -Wno-ignored-attributes -Wno-deprecated-declarations")
 
-# Add other libraries
-macro(subdirlist result curdir)
-	file(GLOB children RELATIVE ${curdir} ${curdir}/*)
-	set(dirlist "")
-	foreach(child ${children})
-		if(IS_DIRECTORY ${curdir}/${child})
-			list(APPEND dirlist ${child})
+if(${examples-only} STREQUAL "OFF")
+	# Add core sub-library
+	include_directories("libs/core/include")
+	add_subdirectory("libs/core")
+
+	# Add other libraries
+	macro(subdirlist result curdir)
+		file(GLOB children RELATIVE ${curdir} ${curdir}/*)
+		set(dirlist "")
+		foreach(child ${children})
+			if(IS_DIRECTORY ${curdir}/${child})
+				list(APPEND dirlist ${child})
+			endif()
+		endforeach()
+		set(${result} ${dirlist})
+	endmacro()
+
+	subdirlist(subdirs ${CMAKE_SOURCE_DIR}/libs)
+	list(REMOVE_ITEM subdirs core)
+
+	foreach(subdir ${subdirs})
+		if((${library} STREQUAL "OFF") OR (${library} STREQUAL ${subdir}))
+			message(STATUS "Adding: ${subdir}")
+			include_directories("libs/${subdir}/include")
 		endif()
 	endforeach()
-	set(${result} ${dirlist})
-endmacro()
 
-subdirlist(subdirs ${CMAKE_SOURCE_DIR}/libs)
-list(REMOVE_ITEM subdirs core)
+	foreach(subdir ${subdirs})
+		if((${library} STREQUAL "OFF") OR (${library} STREQUAL ${subdir}))
+			add_subdirectory("libs/${subdir}")
+		endif()
+	endforeach()
+endif()
 
-foreach(subdir ${subdirs})
-	if((${library} STREQUAL "OFF") OR (${library} STREQUAL ${subdir}))
-		message(STATUS "Adding: ${subdir}")
-		include_directories("libs/${subdir}/include")
-	endif()
-endforeach()
-
-foreach(subdir ${subdirs})
-	if((${library} STREQUAL "OFF") OR (${library} STREQUAL ${subdir}))
-		add_subdirectory("libs/${subdir}")
-	endif()
-endforeach()
+# Add examples
+if(${examples})
+	add_subdirectory("examples/lsl-scan-matching")
+endif()
 
 # Add uninstall
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake" IMMEDIATE @ONLY)

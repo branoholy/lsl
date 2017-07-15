@@ -46,12 +46,11 @@ protected:
 	virtual void saveData(const PointCloudT& pointCloud, std::ostream& stream);
 
 public:
-	double zoom;
-	bool onlyReal;
-	std::size_t padding;
+	double zoom = 1;
+	bool onlyReal = true;
+	std::size_t padding = 0;
 
-	ImageStream();
-	ImageStream(const std::string& filePath);
+	using Stream<PointCloudT>::Stream;
 
 	virtual void save(const PointCloudT& pointCloud);
 	virtual void save(const PointCloudT& pointCloud, const std::string& filePath);
@@ -62,18 +61,6 @@ public:
 	virtual void saveAll(const std::vector<PointCloudT>& pointClouds, const std::vector<std::vector<geom::LidarLine2>>& lines, const std::string& filePath);
 
 };
-
-template<typename PointCloudT>
-ImageStream<PointCloudT>::ImageStream() : Stream<PointCloudT>(),
-	zoom(1), onlyReal(true), padding(0)
-{
-}
-
-template<typename PointCloudT>
-ImageStream<PointCloudT>::ImageStream(const std::string& filePath) : Stream<PointCloudT>(filePath),
-	zoom(1), onlyReal(true), padding(0)
-{
-}
 
 template<typename PointCloudT>
 void ImageStream<PointCloudT>::save(const PointCloudT& pointCloud)
